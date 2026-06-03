@@ -36,11 +36,11 @@
         #cameraVideo { width: 100%; height: 100%; object-fit: cover; }
         #cameraFrame { position: absolute; left: 10%; width: 80%; height: 100px; top: 40%; border: 3px solid #4CAF50; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.55); }
         #cameraFrameLabel { position: absolute; top: -28px; left: 0; width: 100%; text-align: center; color: #fff; font-size: 13px; font-weight: bold; }
-        #cameraControls { position: absolute; bottom: 130px; left: 0; width: 100%; display: flex; justify-content: center; gap: 12px; z-index: 10001; flex-wrap: wrap; }
-        #cameraControls button { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #fff; background: rgba(0,0,0,0.6); color: #fff; font-size: 20px; cursor: pointer; }
+        #cameraControls { position: absolute; bottom: 130px; left: 0; width: 100%; display: flex; justify-content: center; gap: 10px; z-index: 10001; flex-wrap: wrap; }
+        #cameraControls button { width: 42px; height: 42px; border-radius: 50%; border: 2px solid #fff; background: rgba(0,0,0,0.6); color: #fff; font-size: 18px; cursor: pointer; }
         #cameraCaptureBtn { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; background: #fff; border: 4px solid #4CAF50; border-radius: 50%; cursor: pointer; z-index: 10001; }
         #cameraCloseBtn { position: absolute; top: 20px; right: 20px; background: none; border: none; color: #fff; font-size: 30px; cursor: pointer; z-index: 10001; }
-        .control-label { color: #fff; font-size: 11px; text-align: center; margin: 2px 0; }
+        .control-label { color: #fff; font-size: 10px; text-align: center; margin: 2px 0; }
     </style>
 </head>
 <body>
@@ -77,13 +77,18 @@
         <div id="cameraControls">
             <div style="text-align:center;">
                 <div class="control-label">Высота</div>
-                <button onclick="changeFrameSize(0, -20)">−</button>
-                <button onclick="changeFrameSize(0, 20)">+</button>
+                <button onclick="changeFrameSize(0, -15)">−</button>
+                <button onclick="changeFrameSize(0, 15)">+</button>
             </div>
             <div style="text-align:center;">
-                <div class="control-label">Ширина</div>
-                <button onclick="changeFrameSize(-10, 0)">◀</button>
-                <button onclick="changeFrameSize(10, 0)">▶</button>
+                <div class="control-label">Шире</div>
+                <button onclick="changeFrameSize(-8, 0)">◀</button>
+                <button onclick="changeFrameSize(8, 0)">▶</button>
+            </div>
+            <div style="text-align:center;">
+                <div class="control-label">Уже</div>
+                <button onclick="changeFrameSize(-4, 0)">◁</button>
+                <button onclick="changeFrameSize(4, 0)">▷</button>
             </div>
         </div>
         <button id="cameraCloseBtn" onclick="closeCamera()">✕</button>
@@ -105,9 +110,7 @@
         var cameraStream = null;
         var currentCameraTarget = null;
         var currentCameraDevice = null;
-        var frameDragging = false;
-        var frameStartY = 0;
-        var frameStartTop = 0;
+        var frameDragging = false, frameStartY = 0, frameStartTop = 0;
 
         window.addEventListener('load', function() {
             setStatus('Загрузка справочников...', 'loading');
@@ -154,10 +157,7 @@
             var names = [];
             data.forEach(function(row) {
                 var val = row[col] || row[0] || '';
-                if (val && names.indexOf(val) === -1) {
-                    names.push(val);
-                    sel.innerHTML += '<option value="' + esc(val) + '">' + esc(val) + '</option>';
-                }
+                if (val && names.indexOf(val) === -1) { names.push(val); sel.innerHTML += '<option value="' + esc(val) + '">' + esc(val) + '</option>'; }
             });
         }
 
@@ -199,8 +199,7 @@
                 removeBtn.className = 'btn-remove';
                 removeBtn.textContent = '🗑️';
                 removeBtn.style.position = 'absolute';
-                removeBtn.style.top = '8px';
-                removeBtn.style.right = '8px';
+                removeBtn.style.top = '8px'; removeBtn.style.right = '8px';
                 removeBtn.onclick = function() { removeDevice(block.id); };
                 block.appendChild(removeBtn);
             }
@@ -212,8 +211,7 @@
         function renumberDevices() {
             document.querySelectorAll('.device-block').forEach(function(b, i) {
                 b.id = 'device' + (i + 1);
-                var s = b.querySelector('.device-number');
-                if (s) s.textContent = i + 1;
+                var s = b.querySelector('.device-number'); if (s) s.textContent = i + 1;
             });
             deviceCounter = document.querySelectorAll('.device-block').length;
         }
@@ -221,16 +219,14 @@
         function initFrameDrag() {
             var frame = document.getElementById('cameraFrame');
             frame.addEventListener('touchstart', function(e) {
-                frameDragging = true;
-                frameStartY = e.touches[0].clientY;
-                frameStartTop = frame.getBoundingClientRect().top;
-                e.preventDefault();
+                frameDragging = true; frameStartY = e.touches[0].clientY;
+                frameStartTop = frame.getBoundingClientRect().top; e.preventDefault();
             });
             window.addEventListener('touchmove', function(e) {
                 if (!frameDragging) return;
                 var newTop = frameStartTop + (e.touches[0].clientY - frameStartY);
-                if (newTop < 60) newTop = 60;
-                if (newTop > window.innerHeight - frame.offsetHeight - 200) newTop = window.innerHeight - frame.offsetHeight - 200;
+                if (newTop < 40) newTop = 40;
+                if (newTop > window.innerHeight - frame.offsetHeight - 180) newTop = window.innerHeight - frame.offsetHeight - 180;
                 frame.style.top = newTop + 'px';
                 e.preventDefault();
             });
@@ -241,9 +237,9 @@
             var frame = document.getElementById('cameraFrame');
             var w = frame.offsetWidth + dw * window.innerWidth / 100;
             var h = frame.offsetHeight + dh;
-            if (w < 120) w = 120;
+            if (w < 50) w = 50;
             if (w > window.innerWidth * 0.95) w = window.innerWidth * 0.95;
-            if (h < 40) h = 40;
+            if (h < 15) h = 15;
             if (h > 350) h = 350;
             frame.style.width = w + 'px';
             frame.style.height = h + 'px';
@@ -251,14 +247,10 @@
         }
 
         function openCamera(target, deviceNum) {
-            currentCameraTarget = target;
-            currentCameraDevice = deviceNum;
+            currentCameraTarget = target; currentCameraDevice = deviceNum;
             document.getElementById('cameraOverlay').style.display = 'block';
             var frame = document.getElementById('cameraFrame');
-            frame.style.top = '35%';
-            frame.style.width = '80%';
-            frame.style.height = '100px';
-            frame.style.left = '10%';
+            frame.style.top = '35%'; frame.style.width = '80%'; frame.style.height = '80px'; frame.style.left = '10%';
             var video = document.getElementById('cameraVideo');
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } })
@@ -272,22 +264,15 @@
             var video = document.getElementById('cameraVideo');
             var frame = document.getElementById('cameraFrame');
             var canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            var ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            var vr = video.getBoundingClientRect();
-            var fr = frame.getBoundingClientRect();
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            var ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            var vr = video.getBoundingClientRect(), fr = frame.getBoundingClientRect();
             var sx = Math.max(0, (fr.left - vr.left) * canvas.width / vr.width);
             var sy = Math.max(0, (fr.top - vr.top) * canvas.height / vr.height);
             var sw = Math.min(canvas.width - sx, fr.width * canvas.width / vr.width);
             var sh = Math.min(canvas.height - sy, fr.height * canvas.height / vr.height);
-            
-            var crop = document.createElement('canvas');
-            crop.width = sw; crop.height = sh;
+            var crop = document.createElement('canvas'); crop.width = sw; crop.height = sh;
             crop.getContext('2d').drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
-            
             var dataUrl = crop.toDataURL('image/jpeg', 0.9);
             document.getElementById('preview' + (currentCameraTarget === 'name' ? 'Name' : 'Serial') + currentCameraDevice).src = dataUrl;
             document.getElementById('preview' + (currentCameraTarget === 'name' ? 'Name' : 'Serial') + currentCameraDevice).style.display = 'block';
