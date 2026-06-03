@@ -30,7 +30,13 @@
         .section-title { font-size: 14px; color: #888; margin: 15px 0 8px; border-top: 1px solid #ddd; padding-top: 12px; }
         input[type="file"] { display: none; }
 
-        /* Настройки */
+        /* Выпадающий список с поиском */
+        .autocomplete-wrap { position: relative; flex: 1; }
+        .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: #fff; border: 1px solid #ddd; border-radius: 0 0 8px 8px; z-index: 100; display: none; list-style: none; }
+        .autocomplete-list li { padding: 10px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #eee; }
+        .autocomplete-list li:hover, .autocomplete-list li.active { background: #E3F2FD; }
+        .autocomplete-list li:last-child { border-bottom: none; }
+
         #settingsPanel { display: none; background: #fff; border: 1px solid #ddd; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
         #settingsPanel h3 { margin-bottom: 12px; }
         #settingsPanel input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; margin-bottom: 8px; }
@@ -53,7 +59,6 @@
         <button class="btn-settings" onclick="toggleSettings()" title="Настройки">⚙️</button>
     </div>
 
-    <!-- Панель настроек -->
     <div id="settingsPanel">
         <h3>⚙️ Настройки</h3>
         <label>Email для отправки актов:</label>
@@ -86,7 +91,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
-        var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw3PHbAcHAaLmC3cab1HOc7qEiz2erKGfwwQ5GeN2qZbfeid1UbZ3IeYRNA_McNLPuN/exec';
+        var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzfiwWvMDYCcvXfbwg0xtiN1yVdYrX7ZlHvLvk7hmqzxvxLMWDhoDdzHghpwm3YSDOW/exec';
         var CSV_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJLJVjVpDuLsNRjFg9j7X2NHcDtOgmo4lhiC_CTx2S0ox97Hne91SXQ7XtJJxb9OberlzYUrSXijw6/pub?output=csv&gid=';
         var GID_TYPES = '441822937';
         var GID_COMPANIES = '883764981';
@@ -96,8 +101,6 @@
         var currentCameraTarget = null, currentCameraDevice = null;
         var frameDragging = false, frameStartY = 0, frameStartTop = 0;
         var frameSettings = JSON.parse(localStorage.getItem('cameraFrame') || '{"top":"35%","width":"80%","height":"80px"}');
-        
-        // Настройки
         var settings = JSON.parse(localStorage.getItem('appSettings') || '{"email":"ms-tcentr@mail.ru"}');
 
         window.addEventListener('load', function() {
@@ -108,8 +111,8 @@
         });
 
         function toggleSettings() {
-            var panel = document.getElementById('settingsPanel');
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            var p = document.getElementById('settingsPanel');
+            p.style.display = p.style.display === 'none' ? 'block' : 'none';
         }
 
         function saveSettings() {
@@ -159,11 +162,25 @@
             });
         }
 
+        function getTypeNames() {
+            var names = [];
+            typesData.forEach(function(row) {
+                var n = row[1] || row[0] || '';
+                if (n && names.indexOf(n) === -1) names.push(n);
+            });
+            return names;
+        }
+
         function addDevice() {
             deviceCounter++;
             var b = document.createElement('div'); b.className = 'device-block'; b.id = 'device' + deviceCounter;
             b.innerHTML = `<div class="device-title"><span class="device-number">${deviceCounter}</span> Прибор</div>
-                <div class="field-group"><label>📷 Название:</label><div class="field-row"><input type="text" id="nameField${deviceCounter}" placeholder="С рамкой или вручную"><button class="btn-camera" onclick="openCamera('name',${deviceCounter})">📷</button></div><img id="previewName${deviceCounter}" class="preview"></div>
+                <div class="field-group"><label>📷 Название:</label><div class="field-row">
+                    <div class="autocomplete-wrap">
+                        <input type="text" id="nameField${deviceCounter}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${deviceCounter})" onfocus="filterAutocomplete(${deviceCounter})" onblur="hideAutocomplete(${deviceCounter})">
+                        <ul class="autocomplete-list" id="autocompleteList${deviceCounter}"></ul>
+                    </div>
+                    <button class="btn-camera" onclick="openCamera('name',${deviceCounter})">📷</button></div><img id="previewName${deviceCounter}" class="preview"></div>
                 <div class="field-group"><label>Тип:</label><input type="text" id="typeField${deviceCounter}" placeholder="Авто или вручную" list="typeList" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;"></div>
                 <div class="field-group"><label>📷 Заводской номер:</label><div class="field-row"><input type="text" id="serialField${deviceCounter}" placeholder="С рамкой или вручную"><button class="btn-camera" onclick="openCamera('serial',${deviceCounter})">📷</button></div><img id="previewSerial${deviceCounter}" class="preview"></div>
                 <div class="field-group"><label>Примечание:</label><input type="text" id="noteField${deviceCounter}" placeholder="Состояние..." style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;"></div>`;
@@ -182,6 +199,44 @@
                 b.id = 'device' + (i+1); var s = b.querySelector('.device-number'); if (s) s.textContent = i+1;
             });
             deviceCounter = document.querySelectorAll('.device-block').length;
+        }
+
+        // Автодополнение
+        function filterAutocomplete(deviceNum) {
+            var input = document.getElementById('nameField' + deviceNum);
+            var list = document.getElementById('autocompleteList' + deviceNum);
+            var filter = input.value.toLowerCase();
+            var names = getTypeNames();
+            
+            list.innerHTML = '';
+            if (!filter && names.length > 0) {
+                names.slice(0, 20).forEach(function(n) {
+                    list.innerHTML += '<li data-name="' + esc(n) + '" onmousedown="selectAutocomplete(' + deviceNum + ',\'' + esc(n) + '\')">' + esc(n) + '</li>';
+                });
+                list.style.display = 'block';
+                return;
+            }
+            
+            var matches = names.filter(function(n) { return n.toLowerCase().includes(filter); });
+            if (matches.length === 0) { list.style.display = 'none'; return; }
+            
+            matches.slice(0, 20).forEach(function(n) {
+                list.innerHTML += '<li data-name="' + esc(n) + '" onmousedown="selectAutocomplete(' + deviceNum + ',\'' + esc(n) + '\')">' + esc(n) + '</li>';
+            });
+            list.style.display = 'block';
+        }
+
+        function selectAutocomplete(deviceNum, name) {
+            document.getElementById('nameField' + deviceNum).value = name;
+            document.getElementById('autocompleteList' + deviceNum).style.display = 'none';
+            var ft = findTypeByName(name);
+            if (ft) document.getElementById('typeField' + deviceNum).value = ft;
+        }
+
+        function hideAutocomplete(deviceNum) {
+            setTimeout(function() {
+                document.getElementById('autocompleteList' + deviceNum).style.display = 'none';
+            }, 200);
         }
 
         function initFrameDrag() {
@@ -354,11 +409,7 @@
             setStatus('Формирование и отправка...', 'loading');
             var now = new Date(), ds = ('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear();
             var form = document.createElement('form'); form.method = 'POST'; form.action = SCRIPT_URL; form.target = 'hiddenFrame'; form.style.display = 'none';
-            var fields = [
-                {n:'date',v:ds},{n:'company',v:company},{n:'employee',v:employee},
-                {n:'devices',v:JSON.stringify(devices)},{n:'email',v:settings.email}
-            ];
-            fields.forEach(function(f) {
+            [{n:'date',v:ds},{n:'company',v:company},{n:'employee',v:employee},{n:'devices',v:JSON.stringify(devices)},{n:'email',v:settings.email}].forEach(function(f) {
                 var i = document.createElement('input'); i.type = 'hidden'; i.name = f.n; i.value = f.v; form.appendChild(i);
             });
             document.body.appendChild(form); form.submit(); document.body.removeChild(form);
@@ -366,7 +417,7 @@
         }
 
         function setStatus(msg, cls) { var el = document.getElementById('status'); el.textContent = msg; el.className = 'status'; if (cls) el.classList.add(cls); }
-        function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+        function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
     </script>
 </body>
 </html>
