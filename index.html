@@ -99,10 +99,6 @@
         var photoTypeBase64 = '';
         var photoSerialBase64 = '';
 
-        var OCR_FIXES = {
-            'пз':'ПЗ','прз':'ПРЗ','прэ':'ПРЭ','прзм':'ПРЭМ','пзр':'ПЗР','дy':'ДУ','ду':'ДУ'
-        };
-
         window.addEventListener('load', function() {
             setStatus('Загрузка справочников...', 'loading');
             loadDictionaries();
@@ -189,13 +185,49 @@
             if (!input.files || !input.files[0]) return;
             var reader = new FileReader();
             reader.onload = function(e) {
-                var dataUrl = e.target.result;
-                var preview = document.getElementById('preview' + (target === 'name' ? 'Name' : 'Serial'));
-                preview.src = dataUrl;
-                preview.style.display = 'block';
-                if (target === 'name') photoTypeBase64 = dataUrl.split(',')[1];
-                else photoSerialBase64 = dataUrl.split(',')[1];
-                recognizeText(dataUrl, target);
+                var img = new Image();
+                img.onload = function() {
+                    // Предобработка: увеличиваем контраст, делаем ч/б
+                    var canvas = document.createElement('canvas');
+                    var maxW = 1200;
+                    var scale = maxW / img.width;
+                    canvas.width = maxW;
+                    canvas.height = img.height * scale;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // Получаем данные пикселей
+                    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    var data = imageData.data;
+                    
+                    // Контраст + бинаризация
+                    for (var i = 0; i < data.length; i += 4) {
+                        var gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                        // Усиливаем контраст
+                        gray = (gray - 128) * 2.5 + 128;
+                        if (gray > 255) gray = 255;
+                        if (gray < 0) gray = 0;
+                        // Бинаризация с порогом
+                        gray = gray > 140 ? 255 : 0;
+                        data[i] = data[i + 1] = data[i + 2] = gray;
+                    }
+                    ctx.putImageData(imageData, 0, 0);
+                    
+                    var processedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    // Показываем обработанное фото
+                    var preview = document.getElementById('preview' + (target === 'name' ? 'Name' : 'Serial'));
+                    preview.src = processedDataUrl;
+                    preview.style.display = 'block';
+                    
+                    // Сохраняем для отправки (сжатое)
+                    if (target === 'name') photoTypeBase64 = processedDataUrl.split(',')[1];
+                    else photoSerialBase64 = processedDataUrl.split(',')[1];
+                    
+                    // Распознаём ОБРАБОТАННОЕ изображение
+                    recognizeText(processedDataUrl, target);
+                };
+                img.src = e.target.result;
             };
             reader.readAsDataURL(input.files[0]);
         }
@@ -203,20 +235,25 @@
         function recognizeText(dataUrl, target) {
             setStatus('Распознавание...', 'loading');
             Tesseract.recognize(dataUrl, 'rus+eng', {
+                tessedit_char_whitelist: 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюяABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789№/-. ',
                 logger: function(m) {
                     if (m.status === 'recognizing text') setStatus('Распознавание: ' + Math.round(m.progress * 100) + '%', 'loading');
                 }
             }).then(function(result) {
-                var text = applyOcrFixes(result.data.text);
+                var rawText = result.data.text;
+                console.log('RAW:', rawText);
+                var text = cleanText(rawText);
+                console.log('CLEAN:', text);
+                
                 if (target === 'name') {
                     document.getElementById('nameField').value = text;
                     var ft = findTypeByName(text);
                     if (ft) { document.getElementById('typeField').value = ft; setStatus('✅ Определены название и тип', 'success'); }
-                    else setStatus('✅ Название заполнено. Введите тип.', 'success');
+                    else setStatus('✅ Название: ' + text + '. Введите тип.', 'success');
                 } else {
                     var serial = extractSerial(text);
                     document.getElementById('serialField').value = serial;
-                    setStatus(serial ? '✅ Номер: ' + serial : '⚠️ Проверьте номер', serial ? 'success' : 'error');
+                    setStatus(serial ? '✅ Номер: ' + serial : '⚠️ Введите номер вручную', serial ? 'success' : 'error');
                 }
             }).catch(function(e) {
                 console.error(e);
@@ -224,18 +261,15 @@
             });
         }
 
-        function applyOcrFixes(text) {
-            var cleaned = text.replace(/[^\w\s\-\.\/№а-яА-ЯёЁa-zA-Z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
-            var words = cleaned.split(' ');
-            for (var i = 0; i < words.length; i++) {
-                var lower = words[i].toLowerCase();
-                if (OCR_FIXES[lower]) words[i] = OCR_FIXES[lower];
-            }
-            return words.join(' ');
+        function cleanText(text) {
+            return text
+                .replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
         }
 
         function extractSerial(text) {
-            var m = text.match(/(?:зав\.?\s*)?(?:№|SN|No)\s*[:=\-\s]*\s*(\d{3,})/i);
+            var m = text.match(/(?:зав\.?\s*)?(?:№|SN|No|N)\s*[:=\-\s]*\s*(\d{3,})/i);
             if (m) return m[1];
             m = text.match(/\b(\d{4,})\b/);
             return m ? m[1] : text;
