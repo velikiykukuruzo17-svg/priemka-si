@@ -296,9 +296,7 @@
             var result = [];
             for (var i = 0; i < words.length && result.length < 5; i++) {
                 var w = words[i];
-                // Пропускаем одиночные буквы в начале
                 if (result.length === 0 && w.length === 1 && w.match(/[А-ЯЁA-Z]/i)) continue;
-                // Склеиваем буквы с цифрами: ДУ + 50 = ДУ50
                 if (result.length > 0 && w.match(/^\d+$/) && result[result.length-1].match(/^[А-ЯЁA-Z]+$/i)) {
                     result[result.length-1] += w;
                 } else {
@@ -308,6 +306,14 @@
             
             var nameText = result.join(' ');
             nameText = nameText.replace(/ДУ\s+(\d)/g, 'ДУ$1');
+            
+            var parts = nameText.split(' ');
+            if (parts.length > 3) {
+                nameText = parts.slice(0, 3).join(' ');
+            }
+            
+            nameText = nameText.replace(/\s+[A-Za-z]{2,3}$/, '');
+            
             return nameText;
         }
 
