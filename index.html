@@ -32,6 +32,14 @@
         .hint { font-size: 11px; color: #999; margin-top: 3px; text-align: center; }
         .section-title { font-size: 14px; color: #888; margin: 15px 0 8px; border-top: 1px solid #ddd; padding-top: 12px; }
         input[type="file"] { display: none; }
+
+        /* Рамка на камере */
+        #cameraOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; }
+        #cameraOverlay video { width: 100%; height: 100%; object-fit: cover; }
+        #cameraFrame { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85%; height: 120px; border: 3px solid #4CAF50; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); }
+        #cameraFrameLabel { position: absolute; top: -30px; left: 0; width: 100%; text-align: center; color: #fff; font-size: 14px; font-weight: bold; }
+        #cameraCaptureBtn { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; background: #fff; border: 4px solid #4CAF50; border-radius: 50%; cursor: pointer; }
+        #cameraCloseBtn { position: absolute; top: 20px; right: 20px; background: none; border: none; color: #fff; font-size: 30px; cursor: pointer; z-index: 10001; }
     </style>
 </head>
 <body>
@@ -62,6 +70,16 @@
     <div class="hint">Письмо уйдёт на ms-tcentr@mail.ru</div>
     <div class="status" id="status"></div>
 
+    <!-- Камера с рамкой -->
+    <div id="cameraOverlay">
+        <video id="cameraVideo" autoplay playsinline></video>
+        <div id="cameraFrame">
+            <div id="cameraFrameLabel">Поместите текст в рамку</div>
+        </div>
+        <button id="cameraCloseBtn" onclick="closeCamera()">✕</button>
+        <button id="cameraCaptureBtn" onclick="captureFromCamera()"></button>
+    </div>
+
     <iframe name="hiddenFrame" style="display:none;"></iframe>
 
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -74,6 +92,9 @@
 
         var typesData = [];
         var deviceCounter = 0;
+        var cameraStream = null;
+        var currentCameraTarget = null;
+        var currentCameraDevice = null;
 
         window.addEventListener('load', function() {
             setStatus('Загрузка справочников...', 'loading');
@@ -137,11 +158,10 @@
                 <div class="field-group">
                     <label>📷 Название:</label>
                     <div class="field-row">
-                        <input type="text" id="nameField${deviceCounter}" placeholder="Отсканируйте или введите">
-                        <button class="btn-camera" onclick="capturePhoto('name', ${deviceCounter})">📷</button>
+                        <input type="text" id="nameField${deviceCounter}" placeholder="Наведите камеру или введите">
+                        <button class="btn-camera" onclick="openCamera('name', ${deviceCounter})">📷</button>
                     </div>
                     <img id="previewName${deviceCounter}" class="preview" alt="Фото названия">
-                    <input type="file" id="fileName${deviceCounter}" accept="image/*" capture="environment" onchange="processPhoto('name', ${deviceCounter})">
                 </div>
                 <div class="field-group">
                     <label>Тип:</label>
@@ -152,11 +172,10 @@
                 <div class="field-group">
                     <label>📷 Заводской номер:</label>
                     <div class="field-row">
-                        <input type="text" id="serialField${deviceCounter}" placeholder="Отсканируйте или введите">
-                        <button class="btn-camera" onclick="capturePhoto('serial', ${deviceCounter})">📷</button>
+                        <input type="text" id="serialField${deviceCounter}" placeholder="Наведите камеру или введите">
+                        <button class="btn-camera" onclick="openCamera('serial', ${deviceCounter})">📷</button>
                     </div>
                     <img id="previewSerial${deviceCounter}" class="preview" alt="Фото номера">
-                    <input type="file" id="fileSerial${deviceCounter}" accept="image/*" capture="environment" onchange="processPhoto('serial', ${deviceCounter})">
                 </div>
                 <div class="field-group">
                     <label>Примечание:</label>
@@ -197,6 +216,139 @@
             });
         }
 
+        // ========== КАМЕРА С РАМКОЙ ==========
+        function openCamera(target, deviceNum) {
+            currentCameraTarget = target;
+            currentCameraDevice = deviceNum;
+            
+            var overlay = document.getElementById('cameraOverlay');
+            overlay.style.display = 'block';
+            
+            var video = document.getElementById('cameraVideo');
+            
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } })
+                    .then(function(stream) {
+                        cameraStream = stream;
+                        video.srcObject = stream;
+                        video.play();
+                    })
+                    .catch(function(err) {
+                        console.error('Camera error:', err);
+                        closeCamera();
+                        // Фоллбэк на обычный input file
+                        fallbackToFileInput(target, deviceNum);
+                    });
+            } else {
+                fallbackToFileInput(target, deviceNum);
+            }
+        }
+
+        function captureFromCamera() {
+            if (!currentCameraTarget || !currentCameraDevice) return;
+            
+            var video = document.getElementById('cameraVideo');
+            var frame = document.getElementById('cameraFrame');
+            
+            // Создаём canvas
+            var canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Вычисляем координаты рамки относительно видео
+            var videoRect = video.getBoundingClientRect();
+            var frameRect = frame.getBoundingClientRect();
+            
+            var scaleX = canvas.width / videoRect.width;
+            var scaleY = canvas.height / videoRect.height;
+            
+            var sx = (frameRect.left - videoRect.left) * scaleX;
+            var sy = (frameRect.top - videoRect.top) * scaleY;
+            var sw = frameRect.width * scaleX;
+            var sh = frameRect.height * scaleY;
+            
+            // Обрезаем по рамке
+            var cropCanvas = document.createElement('canvas');
+            cropCanvas.width = sw;
+            cropCanvas.height = sh;
+            var cropCtx = cropCanvas.getContext('2d');
+            cropCtx.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+            
+            // Бинаризация
+            var imageData = cropCtx.getImageData(0, 0, sw, sh);
+            var data = imageData.data;
+            for (var i = 0; i < data.length; i += 4) {
+                var gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                gray = (gray - 128) * 3.0 + 128;
+                if (gray > 255) gray = 255;
+                if (gray < 0) gray = 0;
+                gray = gray > 120 ? 255 : 0;
+                data[i] = data[i + 1] = data[i + 2] = gray;
+            }
+            cropCtx.putImageData(imageData, 0, 0);
+            
+            var dataUrl = cropCanvas.toDataURL('image/jpeg', 0.85);
+            
+            // Показываем превью
+            var preview = document.getElementById('preview' + (currentCameraTarget === 'name' ? 'Name' : 'Serial') + currentCameraDevice);
+            preview.src = dataUrl;
+            preview.style.display = 'block';
+            
+            // Закрываем камеру
+            closeCamera();
+            
+            // Распознаём
+            recognizeText(dataUrl, currentCameraTarget, currentCameraDevice);
+        }
+
+        function closeCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(function(track) { track.stop(); });
+                cameraStream = null;
+            }
+            document.getElementById('cameraOverlay').style.display = 'none';
+            currentCameraTarget = null;
+            currentCameraDevice = null;
+        }
+
+        function fallbackToFileInput(target, deviceNum) {
+            closeCamera();
+            // Создаём временный input file
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.capture = 'environment';
+            input.onchange = function() {
+                if (!input.files || !input.files[0]) return;
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var img = new Image();
+                    img.onload = function() {
+                        // Обрезаем центр фото (имитация рамки)
+                        var canvas = document.createElement('canvas');
+                        var cropH = img.height * 0.3;
+                        var cropY = img.height * 0.35;
+                        canvas.width = img.width;
+                        canvas.height = cropH;
+                        var ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, cropY, img.width, cropH, 0, 0, img.width, cropH);
+                        
+                        var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                        var preview = document.getElementById('preview' + (target === 'name' ? 'Name' : 'Serial') + deviceNum);
+                        preview.src = dataUrl;
+                        preview.style.display = 'block';
+                        recognizeText(dataUrl, target, deviceNum);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            };
+            input.click();
+        }
+        // ========== /КАМЕРА ==========
+
         function findTypeByName(name) {
             if (!name) return '';
             var nc = name.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
@@ -211,50 +363,6 @@
             return best;
         }
 
-        function capturePhoto(target, deviceNum) {
-            document.getElementById('file' + (target === 'name' ? 'Name' : 'Serial') + deviceNum).click();
-        }
-
-        function processPhoto(target, deviceNum) {
-            var input = document.getElementById('file' + (target === 'name' ? 'Name' : 'Serial') + deviceNum);
-            if (!input.files || !input.files[0]) return;
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var img = new Image();
-                img.onload = function() {
-                    var canvas = document.createElement('canvas');
-                    var maxW = 1600;
-                    var scale = maxW / img.width;
-                    canvas.width = maxW;
-                    canvas.height = img.height * scale;
-                    var ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
-                    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    var data = imageData.data;
-                    for (var i = 0; i < data.length; i += 4) {
-                        var gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-                        gray = (gray - 128) * 3.0 + 128;
-                        if (gray > 255) gray = 255;
-                        if (gray < 0) gray = 0;
-                        gray = gray > 120 ? 255 : 0;
-                        data[i] = data[i + 1] = data[i + 2] = gray;
-                    }
-                    ctx.putImageData(imageData, 0, 0);
-                    
-                    var processedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-                    
-                    var preview = document.getElementById('preview' + (target === 'name' ? 'Name' : 'Serial') + deviceNum);
-                    preview.src = processedDataUrl;
-                    preview.style.display = 'block';
-                    
-                    recognizeText(processedDataUrl, target, deviceNum);
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-
         function recognizeText(dataUrl, target, deviceNum) {
             setStatus('Распознавание...', 'loading');
             Tesseract.recognize(dataUrl, 'rus+eng', {
@@ -264,17 +372,19 @@
                 }
             }).then(function(result) {
                 var text = cleanText(result.data.text);
+                console.log('CLEANED:', text);
                 
                 if (target === 'name') {
                     var nameText = extractName(text);
+                    console.log('EXTRACTED:', nameText);
                     document.getElementById('nameField' + deviceNum).value = nameText;
                     var ft = findTypeByName(nameText);
-                    if (ft) { document.getElementById('typeField' + deviceNum).value = ft; setStatus('✅ Прибор ' + deviceNum + ': ' + nameText, 'success'); }
-                    else setStatus('⚠️ Прибор ' + deviceNum + ': проверьте название', 'error');
+                    if (ft) { document.getElementById('typeField' + deviceNum).value = ft; setStatus('✅ ' + nameText, 'success'); }
+                    else setStatus('⚠️ Проверьте. Распознано: ' + text.substring(0, 40), 'error');
                 } else {
                     var serial = extractSerial(text);
                     document.getElementById('serialField' + deviceNum).value = serial;
-                    setStatus(serial ? '✅ Прибор ' + deviceNum + ', номер: ' + serial : '⚠️ Прибор ' + deviceNum + ': проверьте номер', serial ? 'success' : 'error');
+                    setStatus(serial ? '✅ Номер: ' + serial : '⚠️ Проверьте номер', serial ? 'success' : 'error');
                 }
             }).catch(function(e) {
                 setStatus('❌ Ошибка распознавания', 'error');
@@ -282,14 +392,15 @@
         }
 
         function cleanText(text) {
-            var cleaned = text.replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g, ' ').replace(/\s+/g, ' ').trim();
+            var preCleaned = text.replace(/(\d)\.(\d)/g, '$1-$2');
+            var cleaned = preCleaned.replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g, ' ').replace(/\s+/g, ' ').trim();
             var fixes = {
                 'Ду':'ДУ','ду':'ДУ','дy':'ДУ','ДY':'ДУ','Dy':'ДУ','dy':'ДУ',
                 'Ne':'№','Nе':'№','No':'№',
                 'зав':'зав','Зав':'зав','ЗАВ':'зав','3ав':'зав',
                 'KAPAT':'КАРАТ','Kapat':'КАРАТ','kapar':'КАРАТ','Карат':'КАРАТ','карат':'КАРАТ',
-                'КАРAT':'КАРАТ','KAPAT':'КАРАТ','КАРАT':'КАРАТ',
-                'КАРАТ-551М-25-0':'КАРАТ-551М-25-0','карат-551м-25-0':'КАРАТ-551М-25-0'
+                'КАРAT':'КАРАТ','КАРАT':'КАРАТ',
+                'KAPAT-551M-25-0':'КАРАТ-551М-25-0','KAPAT-551M-25.0':'КАРАТ-551М-25-0'
             };
             var words = cleaned.split(' ');
             for (var i = 0; i < words.length; i++) {
@@ -312,7 +423,6 @@
             var textClean = noSerial.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
             
             var bestMatch = '', bestScore = 0;
-            
             typesData.forEach(function(row) {
                 var refName = (row[1] || row[0] || '').trim();
                 if (!refName) return;
