@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Приёмка СИ</title>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 15px; max-width: 500px; margin: 0 auto; }
@@ -14,7 +15,9 @@
         .field-group label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 4px; }
         .field-row { display: flex; gap: 6px; }
         .field-row input, .field-row select { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; background: #fff; }
-        .btn-camera { background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 16px; cursor: pointer; min-width: 46px; flex: 0 0 auto; }
+        .btn-camera { background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 10px 12px; font-size: 16px; cursor: pointer; min-width: 42px; flex: 0 0 auto; }
+        .btn-barcode { background: #FF9800; color: #fff; border: none; border-radius: 8px; padding: 10px 12px; font-size: 16px; cursor: pointer; min-width: 42px; flex: 0 0 auto; }
+        .btn-barcode:active { background: #F57C00; }
         .btn-camera:active { background: #388E3C; }
         .btn-remove { background: #f44336; color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 16px; cursor: pointer; min-width: 46px; flex: 0 0 auto; }
         .btn-add-device { width: 100%; background: #2196F3; color: #fff; border: none; border-radius: 8px; padding: 14px; font-size: 16px; cursor: pointer; margin: 10px 0; }
@@ -32,6 +35,11 @@
         .hint { font-size: 11px; color: #999; margin-top: 3px; text-align: center; }
         .section-title { font-size: 14px; color: #888; margin: 15px 0 8px; border-top: 1px solid #ddd; padding-top: 12px; }
         input[type="file"] { display: none; }
+        #barcodeScanner { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; }
+        #barcodeScanner .scanner-inner { position: relative; width: 100%; height: 100%; }
+        #barcodeReader { width: 100%; height: 100%; }
+        #barcodeClose { position: absolute; top: 20px; right: 20px; background: #f44336; color: #fff; border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 22px; cursor: pointer; z-index: 10000; }
+        #barcodeHint { position: absolute; bottom: 80px; left: 0; width: 100%; text-align: center; color: #fff; font-size: 16px; z-index: 10000; }
     </style>
 </head>
 <body>
@@ -44,7 +52,7 @@
         <label>Компания-сдатчик:</label>
         <div class="field-row">
             <select id="companySelect"><option value="">-- Загрузка... --</option></select>
-            <button class="btn-add" onclick="addCompany()" title="Добавить">➕</button>
+            <button class="btn-camera" onclick="addCompany()" title="Добавить" style="font-size:20px;">➕</button>
         </div>
     </div>
 
@@ -62,6 +70,15 @@
     <div class="hint">Письмо уйдёт на ms-tcentr@mail.ru</div>
     <div class="status" id="status"></div>
 
+    <!-- Сканер штрихкода -->
+    <div id="barcodeScanner">
+        <div class="scanner-inner">
+            <div id="barcodeReader"></div>
+            <button id="barcodeClose" onclick="closeBarcodeScanner()">✕</button>
+            <div id="barcodeHint">Наведите камеру на штрихкод</div>
+        </div>
+    </div>
+
     <iframe name="hiddenFrame" style="display:none;"></iframe>
 
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -74,11 +91,14 @@
 
         var typesData = [];
         var deviceCounter = 0;
+        var barcodeScanner = null;
+        var currentBarcodeTarget = null;
+        var currentBarcodeDevice = null;
 
         window.addEventListener('load', function() {
             setStatus('Загрузка справочников...', 'loading');
             loadDictionaries();
-            addDevice(); // Первый прибор сразу
+            addDevice();
         });
 
         function loadDictionaries() {
@@ -139,6 +159,7 @@
                     <div class="field-row">
                         <input type="text" id="nameField${deviceCounter}" placeholder="Отсканируйте или введите">
                         <button class="btn-camera" onclick="capturePhoto('name', ${deviceCounter})">📷</button>
+                        <button class="btn-barcode" onclick="startBarcodeScanner('name', ${deviceCounter})">📱</button>
                     </div>
                     <img id="previewName${deviceCounter}" class="preview" alt="Фото названия">
                     <input type="file" id="fileName${deviceCounter}" accept="image/*" capture="environment" onchange="processPhoto('name', ${deviceCounter})">
@@ -154,6 +175,7 @@
                     <div class="field-row">
                         <input type="text" id="serialField${deviceCounter}" placeholder="Отсканируйте или введите">
                         <button class="btn-camera" onclick="capturePhoto('serial', ${deviceCounter})">📷</button>
+                        <button class="btn-barcode" onclick="startBarcodeScanner('serial', ${deviceCounter})">📱</button>
                     </div>
                     <img id="previewSerial${deviceCounter}" class="preview" alt="Фото номера">
                     <input type="file" id="fileSerial${deviceCounter}" accept="image/*" capture="environment" onchange="processPhoto('serial', ${deviceCounter})">
@@ -164,7 +186,6 @@
                 </div>
             `;
             
-            // Кнопка удалить (только если приборов больше одного)
             if (deviceCounter > 1) {
                 var removeBtn = document.createElement('button');
                 removeBtn.className = 'btn-remove';
@@ -197,6 +218,87 @@
                 if (titleSpan) titleSpan.textContent = num;
             });
         }
+
+        // ========== ШТРИХКОД ==========
+        function startBarcodeScanner(target, deviceNum) {
+            currentBarcodeTarget = target;
+            currentBarcodeDevice = deviceNum;
+            
+            var scannerDiv = document.getElementById('barcodeScanner');
+            scannerDiv.style.display = 'block';
+            
+            if (!barcodeScanner) {
+                barcodeScanner = new Html5Qrcode('barcodeReader');
+            }
+            
+            var config = {
+                fps: 10,
+                qrbox: { width: 250, height: 150 },
+                formatsToSupport: [
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.CODE_39,
+                    Html5QrcodeSupportedFormats.CODE_93,
+                    Html5QrcodeSupportedFormats.CODABAR,
+                    Html5QrcodeSupportedFormats.ITF,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.UPC_E,
+                    Html5QrcodeSupportedFormats.QR_CODE,
+                    Html5QrcodeSupportedFormats.DATA_MATRIX,
+                    Html5QrcodeSupportedFormats.AZTEC,
+                    Html5QrcodeSupportedFormats.PDF_417
+                ]
+            };
+            
+            barcodeScanner.start(
+                { facingMode: 'environment' },
+                config,
+                onBarcodeScanned,
+                function(err) { /* игнорируем ошибки сканирования */ }
+            ).catch(function(err) {
+                console.error('Scanner error:', err);
+                closeBarcodeScanner();
+                setStatus('❌ Ошибка камеры. Используйте фото.', 'error');
+            });
+        }
+
+        function onBarcodeScanned(decodedText, decodedResult) {
+            if (!currentBarcodeTarget || !currentBarcodeDevice) return;
+            
+            console.log('Barcode scanned: ' + decodedText);
+            
+            // Анализируем содержимое штрихкода
+            var text = decodedText.trim();
+            
+            // Если содержит буквы и цифры — возможно, это и название, и номер
+            var hasLetters = /[а-яА-ЯёЁa-zA-Z]/.test(text);
+            var hasManyDigits = /\d{4,}/.test(text);
+            
+            if (currentBarcodeTarget === 'name') {
+                document.getElementById('nameField' + currentBarcodeDevice).value = text;
+                var ft = findTypeByName(text);
+                if (ft) document.getElementById('typeField' + currentBarcodeDevice).value = ft;
+                setStatus('✅ Штрихкод: ' + text.substring(0, 30), 'success');
+            } else if (currentBarcodeTarget === 'serial') {
+                // Вытаскиваем только цифры для номера
+                var digits = text.replace(/[^\d]/g, '');
+                document.getElementById('serialField' + currentBarcodeDevice).value = digits || text;
+                setStatus('✅ Штрихкод: ' + (digits || text).substring(0, 30), 'success');
+            }
+            
+            closeBarcodeScanner();
+        }
+
+        function closeBarcodeScanner() {
+            if (barcodeScanner) {
+                barcodeScanner.stop().catch(function() {});
+            }
+            document.getElementById('barcodeScanner').style.display = 'none';
+            currentBarcodeTarget = null;
+            currentBarcodeDevice = null;
+        }
+        // ========== /ШТРИХКОД ==========
 
         function findTypeByName(name) {
             if (!name) return '';
@@ -367,7 +469,6 @@
                 var note = document.getElementById('noteField' + num)?.value.trim() || '';
                 
                 if (!name || !type || !serial) { allValid = false; return; }
-                
                 devices.push({ type: type, name: name, serial: serial, note: note });
             });
 
