@@ -285,6 +285,8 @@
             var result = [];
             for (var i = 0; i < words.length && result.length < 4; i++) {
                 var w = words[i];
+                // Пропускаем одиночные цифры в начале
+                if (result.length === 0 && w.match(/^\d$/)) continue;
                 if (result.length > 0 && w.match(/^\d+$/) && result[result.length-1].match(/^[А-ЯЁ]+$/)) {
                     result[result.length-1] += w;
                 } else {
