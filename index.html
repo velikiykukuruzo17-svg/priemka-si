@@ -35,11 +35,11 @@
         .hint { font-size: 11px; color: #999; margin-top: 3px; text-align: center; }
         .section-title { font-size: 14px; color: #888; margin: 15px 0 8px; border-top: 1px solid #ddd; padding-top: 12px; }
         input[type="file"] { display: none; }
-        #barcodeScanner { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; }
+        #barcodeScanner { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 9999; }
         #barcodeScanner .scanner-inner { position: relative; width: 100%; height: 100%; }
         #barcodeReader { width: 100%; height: 100%; }
-        #barcodeClose { position: absolute; top: 20px; right: 20px; background: #f44336; color: #fff; border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 22px; cursor: pointer; z-index: 10000; }
-        #barcodeHint { position: absolute; bottom: 80px; left: 0; width: 100%; text-align: center; color: #fff; font-size: 16px; z-index: 10000; }
+        #barcodeClose { position: absolute; top: 20px; right: 20px; background: #f44336; color: #fff; border: none; border-radius: 50%; width: 46px; height: 46px; font-size: 24px; cursor: pointer; z-index: 10000; }
+        #barcodeHint { position: absolute; bottom: 100px; left: 0; width: 100%; text-align: center; color: #fff; font-size: 16px; z-index: 10000; }
     </style>
 </head>
 <body>
@@ -70,7 +70,6 @@
     <div class="hint">Письмо уйдёт на ms-tcentr@mail.ru</div>
     <div class="status" id="status"></div>
 
-    <!-- Сканер штрихкода -->
     <div id="barcodeScanner">
         <div class="scanner-inner">
             <div id="barcodeReader"></div>
@@ -224,16 +223,23 @@
             currentBarcodeTarget = target;
             currentBarcodeDevice = deviceNum;
             
-            var scannerDiv = document.getElementById('barcodeScanner');
-            scannerDiv.style.display = 'block';
+            document.getElementById('barcodeScanner').style.display = 'block';
             
-            if (!barcodeScanner) {
-                barcodeScanner = new Html5Qrcode('barcodeReader');
+            if (barcodeScanner) {
+                barcodeScanner.stop().then(() => {}).catch(() => {});
+                barcodeScanner.clear();
             }
             
+            barcodeScanner = new Html5Qrcode('barcodeReader', { verbose: false });
+            
             var config = {
-                fps: 10,
-                qrbox: { width: 250, height: 150 },
+                fps: 15,
+                qrbox: function(viewfinderWidth, viewfinderHeight) {
+                    var minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                    return { width: minEdge * 0.9, height: minEdge * 0.35 };
+                },
+                aspectRatio: 1.5,
+                disableFlip: false,
                 formatsToSupport: [
                     Html5QrcodeSupportedFormats.CODE_128,
                     Html5QrcodeSupportedFormats.EAN_13,
@@ -243,48 +249,41 @@
                     Html5QrcodeSupportedFormats.CODABAR,
                     Html5QrcodeSupportedFormats.ITF,
                     Html5QrcodeSupportedFormats.UPC_A,
-                    Html5QrcodeSupportedFormats.UPC_E,
-                    Html5QrcodeSupportedFormats.QR_CODE,
-                    Html5QrcodeSupportedFormats.DATA_MATRIX,
-                    Html5QrcodeSupportedFormats.AZTEC,
-                    Html5QrcodeSupportedFormats.PDF_417
+                    Html5QrcodeSupportedFormats.UPC_E
                 ]
             };
             
             barcodeScanner.start(
                 { facingMode: 'environment' },
                 config,
-                onBarcodeScanned,
-                function(err) { /* игнорируем ошибки сканирования */ }
+                function(decodedText) {
+                    console.log('Barcode scanned: ' + decodedText);
+                    onBarcodeScanned(decodedText);
+                },
+                function() {
+                    // Тихо игнорируем ошибки
+                }
             ).catch(function(err) {
                 console.error('Scanner error:', err);
                 closeBarcodeScanner();
-                setStatus('❌ Ошибка камеры. Используйте фото.', 'error');
+                setStatus('❌ Не удалось запустить сканер. Используйте фото.', 'error');
             });
         }
 
-        function onBarcodeScanned(decodedText, decodedResult) {
+        function onBarcodeScanned(decodedText) {
             if (!currentBarcodeTarget || !currentBarcodeDevice) return;
             
-            console.log('Barcode scanned: ' + decodedText);
-            
-            // Анализируем содержимое штрихкода
             var text = decodedText.trim();
-            
-            // Если содержит буквы и цифры — возможно, это и название, и номер
-            var hasLetters = /[а-яА-ЯёЁa-zA-Z]/.test(text);
-            var hasManyDigits = /\d{4,}/.test(text);
             
             if (currentBarcodeTarget === 'name') {
                 document.getElementById('nameField' + currentBarcodeDevice).value = text;
                 var ft = findTypeByName(text);
                 if (ft) document.getElementById('typeField' + currentBarcodeDevice).value = ft;
-                setStatus('✅ Штрихкод: ' + text.substring(0, 30), 'success');
+                setStatus('✅ Штрихкод считан', 'success');
             } else if (currentBarcodeTarget === 'serial') {
-                // Вытаскиваем только цифры для номера
                 var digits = text.replace(/[^\d]/g, '');
                 document.getElementById('serialField' + currentBarcodeDevice).value = digits || text;
-                setStatus('✅ Штрихкод: ' + (digits || text).substring(0, 30), 'success');
+                setStatus('✅ Штрихкод считан', 'success');
             }
             
             closeBarcodeScanner();
@@ -366,8 +365,7 @@
                     if (m.status === 'recognizing text') setStatus('Распознавание: ' + Math.round(m.progress * 100) + '%', 'loading');
                 }
             }).then(function(result) {
-                var rawText = result.data.text;
-                var text = cleanText(rawText);
+                var text = cleanText(result.data.text);
                 
                 if (target === 'name') {
                     var nameText = extractName(text);
@@ -403,9 +401,7 @@
             var noSerial = text.replace(/зав\.?\s*[№Nn]\s*\d+/gi, '').replace(/[№Nn]\s*\d+/gi, '');
             var textClean = noSerial.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
             
-            var bestMatch = '';
-            var bestScore = 0;
-            
+            var bestMatch = '', bestScore = 0;
             typesData.forEach(function(row) {
                 var refName = (row[1] || row[0] || '').trim();
                 if (!refName) return;
@@ -415,10 +411,7 @@
                     var rwClean = rw.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
                     if (rwClean.length >= 2 && textClean.indexOf(rwClean) === -1) allFound = false;
                 });
-                if (allFound && refName.length > bestScore) {
-                    bestScore = refName.length;
-                    bestMatch = refName;
-                }
+                if (allFound && refName.length > bestScore) { bestScore = refName.length; bestMatch = refName; }
             });
             
             if (bestMatch) {
@@ -426,7 +419,6 @@
                 if (duMatch && bestMatch.toUpperCase().indexOf('ДУ') === -1) bestMatch += ' ДУ' + duMatch[1];
                 return bestMatch;
             }
-            
             return noSerial.replace(/\s+/g, ' ').trim();
         }
 
@@ -458,8 +450,7 @@
             if (!company || !employee) { alert('Выберите компанию и принявшего'); return; }
 
             var blocks = document.querySelectorAll('.device-block');
-            var devices = [];
-            var allValid = true;
+            var devices = [], allValid = true;
             
             blocks.forEach(function(block) {
                 var num = block.id.replace('device', '');
@@ -467,7 +458,6 @@
                 var name = document.getElementById('nameField' + num)?.value.trim() || '';
                 var serial = document.getElementById('serialField' + num)?.value.trim() || '';
                 var note = document.getElementById('noteField' + num)?.value.trim() || '';
-                
                 if (!name || !type || !serial) { allValid = false; return; }
                 devices.push({ type: type, name: name, serial: serial, note: note });
             });
@@ -488,16 +478,10 @@
             form.target = 'hiddenFrame';
             form.style.display = 'none';
 
-            var fields = {
-                date: dateStr, company: company, employee: employee,
-                devices: JSON.stringify(devices)
-            };
-
+            var fields = { date: dateStr, company: company, employee: employee, devices: JSON.stringify(devices) };
             Object.keys(fields).forEach(function(key) {
                 var input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = fields[key];
+                input.type = 'hidden'; input.name = key; input.value = fields[key];
                 form.appendChild(input);
             });
 
@@ -514,8 +498,7 @@
 
         function setStatus(msg, cls) {
             var el = document.getElementById('status');
-            el.textContent = msg;
-            el.className = 'status';
+            el.textContent = msg; el.className = 'status';
             if (cls) el.classList.add(cls);
         }
 
