@@ -188,7 +188,7 @@
                 var img = new Image();
                 img.onload = function() {
                     var canvas = document.createElement('canvas');
-                    var maxW = 1200;
+                    var maxW = 1600; // Увеличил разрешение
                     var scale = maxW / img.width;
                     canvas.width = maxW;
                     canvas.height = img.height * scale;
@@ -197,16 +197,30 @@
                     
                     var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     var data = imageData.data;
+                    
+                    // Агрессивная бинаризация
                     for (var i = 0; i < data.length; i += 4) {
                         var gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-                        gray = (gray - 128) * 2.5 + 128;
+                        gray = (gray - 128) * 3.0 + 128; // Сильный контраст
                         if (gray > 255) gray = 255;
                         if (gray < 0) gray = 0;
-                        gray = gray > 140 ? 255 : 0;
+                        gray = gray > 120 ? 255 : 0; // Порог пониже
                         data[i] = data[i + 1] = data[i + 2] = gray;
                     }
                     ctx.putImageData(imageData, 0, 0);
-                    var processedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    // Обрезаем 5% по краям (там обычно мусор)
+                    var cropW = canvas.width * 0.95;
+                    var cropH = canvas.height * 0.9;
+                    var cropX = canvas.width * 0.025;
+                    var cropY = canvas.height * 0.05;
+                    
+                    var cropCanvas = document.createElement('canvas');
+                    cropCanvas.width = cropW;
+                    cropCanvas.height = cropH;
+                    cropCanvas.getContext('2d').drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+                    
+                    var processedDataUrl = cropCanvas.toDataURL('image/jpeg', 0.85);
                     
                     var preview = document.getElementById('preview' + (target === 'name' ? 'Name' : 'Serial'));
                     preview.src = processedDataUrl;
@@ -236,20 +250,12 @@
                 console.log('CLEAN:', text);
                 
                 if (target === 'name') {
-                    var lines = text.split(' ');
-                    var namePart = [];
-                    for (var i = 0; i < lines.length; i++) {
-                        if (lines[i].match(/[А-ЯЁA-Z0-9]/i) && lines[i].length >= 1) {
-                            namePart.push(lines[i]);
-                        }
-                        if (namePart.length >= 4) break;
-                    }
-                    var nameText = namePart.join(' ');
-                    nameText = nameText.replace(/зав\.?\s*[№Nn]\s*\d+/gi, '').replace(/[№Nn]\s*\d+/gi, '').trim();
+                    // Ищем строку, похожую на название прибора
+                    var nameText = extractName(text);
                     document.getElementById('nameField').value = nameText;
                     
                     var ft = findTypeByName(nameText);
-                    if (ft) { document.getElementById('typeField').value = ft; setStatus('✅ Определены: ' + nameText, 'success'); }
+                    if (ft) { document.getElementById('typeField').value = ft; setStatus('✅ ' + nameText + ' → ' + ft, 'success'); }
                     else setStatus('✅ Название: ' + nameText, 'success');
                 } else {
                     var serial = extractSerial(text);
@@ -268,18 +274,43 @@
                 .replace(/\s+/g, ' ')
                 .trim();
             
+            // Удаляем одиночные буквы и цифры
+            var words = cleaned.split(' ').filter(function(w) { return w.length >= 2; });
+            
             var fixes = {
-                'Ду': 'ДУ', 'ду': 'ДУ', 'дy': 'ДУ', 'ДY': 'ДУ',
-                'Ne': '№', 'Ne': '№', 'Nе': '№', 'No': '№',
+                'Ду': 'ДУ', 'ду': 'ДУ', 'дy': 'ДУ', 'ДY': 'ДУ', 'Dy': 'ДУ', 'dy': 'ДУ',
+                'Ne': '№', 'Nе': '№', 'No': '№', 'N': '№',
                 'зав': 'зав', 'Зав': 'зав', 'ЗАВ': 'зав', '3ав': 'зав',
-                'ПРЗМ': 'ПРЭМ', 'ПРЗ': 'ПРЭ', 'прзм': 'ПРЭМ', 'прэм': 'ПРЭМ'
+                'ПРЗМ': 'ПРЭМ', 'ПРЗ': 'ПРЭ', 'прзм': 'ПРЭМ', 'прэм': 'ПРЭМ',
+                'Прем': 'ПРЭМ', 'ПРЕМ': 'ПРЭМ', 'прем': 'ПРЭМ'
             };
             
-            var words = cleaned.split(' ');
             for (var i = 0; i < words.length; i++) {
                 if (fixes[words[i]]) words[i] = fixes[words[i]];
             }
+            
             return words.join(' ');
+        }
+
+        function extractName(text) {
+            // Убираем "зав №..." из текста
+            var noSerial = text.replace(/зав\.?\s*[№Nn]\s*\d+/gi, '').replace(/[№Nn]\s*\d+/gi, '');
+            
+            // Ищем слова с заглавными буквами и цифрами — это название прибора
+            var words = noSerial.split(' ').filter(function(w) {
+                return w.match(/[А-ЯЁA-Z0-9]/) && w.length >= 2;
+            });
+            
+            if (words.length === 0) return noSerial;
+            
+            // Склеиваем первые 3-4 значимых слова
+            var result = [];
+            for (var i = 0; i < words.length && result.length < 4; i++) {
+                if (!words[i].match(/^(зав|№|SN)$/i)) {
+                    result.push(words[i]);
+                }
+            }
+            return result.join(' ');
         }
 
         function extractSerial(text) {
