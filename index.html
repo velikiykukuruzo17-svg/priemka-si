@@ -7,9 +7,10 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 15px; max-width: 500px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .header h1 { font-size: 20px; color: #333; }
         .header p { font-size: 12px; color: #888; margin-top: 5px; }
+        .btn-settings { background: none; border: none; font-size: 24px; cursor: pointer; }
         .field-group { margin-bottom: 12px; }
         .field-group label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 4px; }
         .field-row { display: flex; gap: 6px; }
@@ -29,6 +30,12 @@
         .section-title { font-size: 14px; color: #888; margin: 15px 0 8px; border-top: 1px solid #ddd; padding-top: 12px; }
         input[type="file"] { display: none; }
 
+        /* Настройки */
+        #settingsPanel { display: none; background: #fff; border: 1px solid #ddd; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        #settingsPanel h3 { margin-bottom: 12px; }
+        #settingsPanel input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; margin-bottom: 8px; }
+        #settingsPanel .btn-save { width: 100%; background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 10px; font-size: 15px; cursor: pointer; }
+
         #cameraOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; touch-action: none; }
         #cameraVideo { width: 100%; height: 100%; object-fit: cover; }
         #cameraFrame { position: absolute; border: 3px solid #4CAF50; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.55); }
@@ -41,7 +48,18 @@
     </style>
 </head>
 <body>
-    <div class="header"><h1>📋 Приёмка средств измерений</h1><p>ООО МС «ЦЕНТР ИЗМЕРЕНИЙ»</p></div>
+    <div class="header">
+        <div><h1>📋 Приёмка СИ</h1><p>ООО МС «ЦЕНТР ИЗМЕРЕНИЙ»</p></div>
+        <button class="btn-settings" onclick="toggleSettings()" title="Настройки">⚙️</button>
+    </div>
+
+    <!-- Панель настроек -->
+    <div id="settingsPanel">
+        <h3>⚙️ Настройки</h3>
+        <label>Email для отправки актов:</label>
+        <input type="email" id="settingsEmail" placeholder="ms-tcentr@mail.ru">
+        <button class="btn-save" onclick="saveSettings()">💾 Сохранить</button>
+    </div>
 
     <div class="field-group"><label>Компания-сдатчик:</label><div class="field-row"><select id="companySelect"><option value="">-- Загрузка... --</option></select><button class="btn-camera" onclick="addCompany()" style="font-size:20px;">➕</button></div></div>
     <div class="field-group"><label>Кто принял:</label><select id="employeeSelect"><option value="">-- Загрузка... --</option></select></div>
@@ -49,7 +67,7 @@
     <div id="devicesContainer"></div>
     <button class="btn-add-device" onclick="addDevice()">➕ Добавить прибор</button>
     <button class="btn-submit" id="submitBtn" onclick="submitAct()">📧 Сформировать акт и отправить</button>
-    <div class="hint">Письмо уйдёт на ms-tcentr@mail.ru</div>
+    <div class="hint" id="emailHint">Письмо уйдёт на ms-tcentr@mail.ru</div>
     <div class="status" id="status"></div>
 
     <div id="cameraOverlay">
@@ -77,14 +95,30 @@
         var typesData = [], deviceCounter = 0, cameraStream = null;
         var currentCameraTarget = null, currentCameraDevice = null;
         var frameDragging = false, frameStartY = 0, frameStartTop = 0;
-
-        // Загружаем сохранённые настройки рамки
         var frameSettings = JSON.parse(localStorage.getItem('cameraFrame') || '{"top":"35%","width":"80%","height":"80px"}');
+        
+        // Настройки
+        var settings = JSON.parse(localStorage.getItem('appSettings') || '{"email":"ms-tcentr@mail.ru"}');
 
         window.addEventListener('load', function() {
             setStatus('Загрузка справочников...', 'loading');
+            document.getElementById('settingsEmail').value = settings.email;
+            document.getElementById('emailHint').textContent = 'Письмо уйдёт на ' + settings.email;
             loadDictionaries(); addDevice(); initFrameDrag();
         });
+
+        function toggleSettings() {
+            var panel = document.getElementById('settingsPanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function saveSettings() {
+            settings.email = document.getElementById('settingsEmail').value.trim() || 'ms-tcentr@mail.ru';
+            localStorage.setItem('appSettings', JSON.stringify(settings));
+            document.getElementById('emailHint').textContent = 'Письмо уйдёт на ' + settings.email;
+            document.getElementById('settingsPanel').style.display = 'none';
+            setStatus('✅ Настройки сохранены', 'success');
+        }
 
         function loadDictionaries() {
             Promise.all([
@@ -320,11 +354,15 @@
             setStatus('Формирование и отправка...', 'loading');
             var now = new Date(), ds = ('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear();
             var form = document.createElement('form'); form.method = 'POST'; form.action = SCRIPT_URL; form.target = 'hiddenFrame'; form.style.display = 'none';
-            [{n:'date',v:ds},{n:'company',v:company},{n:'employee',v:employee},{n:'devices',v:JSON.stringify(devices)}].forEach(function(f) {
+            var fields = [
+                {n:'date',v:ds},{n:'company',v:company},{n:'employee',v:employee},
+                {n:'devices',v:JSON.stringify(devices)},{n:'email',v:settings.email}
+            ];
+            fields.forEach(function(f) {
                 var i = document.createElement('input'); i.type = 'hidden'; i.name = f.n; i.value = f.v; form.appendChild(i);
             });
             document.body.appendChild(form); form.submit(); document.body.removeChild(form);
-            setTimeout(function() { setStatus('✅ Акт отправлен', 'success'); btn.textContent = '✓ Отправлено'; btn.style.background = '#4CAF50'; }, 2000);
+            setTimeout(function() { setStatus('✅ Акт отправлен на ' + settings.email, 'success'); btn.textContent = '✓ Отправлено'; btn.style.background = '#4CAF50'; }, 2000);
         }
 
         function setStatus(msg, cls) { var el = document.getElementById('status'); el.textContent = msg; el.className = 'status'; if (cls) el.classList.add(cls); }
