@@ -207,17 +207,7 @@
                     }
                     ctx.putImageData(imageData, 0, 0);
                     
-                    var cropW = canvas.width * 0.95;
-                    var cropH = canvas.height * 0.9;
-                    var cropX = canvas.width * 0.025;
-                    var cropY = canvas.height * 0.05;
-                    
-                    var cropCanvas = document.createElement('canvas');
-                    cropCanvas.width = cropW;
-                    cropCanvas.height = cropH;
-                    cropCanvas.getContext('2d').drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-                    
-                    var processedDataUrl = cropCanvas.toDataURL('image/jpeg', 0.85);
+                    var processedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
                     
                     var preview = document.getElementById('preview' + (target === 'name' ? 'Name' : 'Serial'));
                     preview.src = processedDataUrl;
@@ -270,8 +260,6 @@
                 .replace(/\s+/g, ' ')
                 .trim();
             
-            var words = cleaned.split(' ').filter(function(w) { return w.length >= 2 || w.match(/^\d$/); });
-            
             var fixes = {
                 'Ду': 'ДУ', 'ду': 'ДУ', 'дy': 'ДУ', 'ДY': 'ДУ', 'Dy': 'ДУ', 'dy': 'ДУ',
                 'Ne': '№', 'Nе': '№', 'No': '№',
@@ -280,6 +268,7 @@
                 'Прем': 'ПРЭМ', 'ПРЕМ': 'ПРЭМ', 'прем': 'ПРЭМ'
             };
             
+            var words = cleaned.split(' ');
             for (var i = 0; i < words.length; i++) {
                 if (fixes[words[i]]) words[i] = fixes[words[i]];
             }
@@ -290,14 +279,13 @@
             var noSerial = text.replace(/зав\.?\s*[№Nn]\s*\d+/gi, '').replace(/[№Nn]\s*\d+/gi, '');
             
             var words = noSerial.split(' ').filter(function(w) {
-                return w.match(/[А-ЯЁA-Z0-9]/) && w.length >= 1;
+                return w.match(/[А-ЯЁ0-9]/) && w.length >= 2 && !w.match(/^[a-z]+$/);
             });
             
             var result = [];
-            for (var i = 0; i < words.length && result.length < 5; i++) {
+            for (var i = 0; i < words.length && result.length < 4; i++) {
                 var w = words[i];
-                if (result.length === 0 && w.length === 1 && w.match(/[А-ЯЁA-Z]/i)) continue;
-                if (result.length > 0 && w.match(/^\d+$/) && result[result.length-1].match(/^[А-ЯЁA-Z]+$/i)) {
+                if (result.length > 0 && w.match(/^\d+$/) && result[result.length-1].match(/^[А-ЯЁ]+$/)) {
                     result[result.length-1] += w;
                 } else {
                     result.push(w);
@@ -306,13 +294,6 @@
             
             var nameText = result.join(' ');
             nameText = nameText.replace(/ДУ\s+(\d)/g, 'ДУ$1');
-            
-            var parts = nameText.split(' ');
-            if (parts.length > 3) {
-                nameText = parts.slice(0, 3).join(' ');
-            }
-            
-            nameText = nameText.replace(/\s+[A-Za-z]{2,3}$/, '');
             
             return nameText;
         }
