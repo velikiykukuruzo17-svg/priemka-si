@@ -1,392 +1,112 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Приёмка СИ</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 15px; max-width: 500px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 20px; }
-        .header h1 { font-size: 20px; color: #333; }
-        .header p { font-size: 12px; color: #888; margin-top: 5px; }
-        .field-group { margin-bottom: 15px; }
-        .field-group label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 5px; }
-        .field-row { display: flex; gap: 8px; }
-        .field-row input, .field-row select { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; background: #fff; }
-        .btn-camera { background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 12px 16px; font-size: 18px; cursor: pointer; min-width: 50px; flex: 0 0 auto; }
-        .btn-camera:active { background: #388E3C; }
-        .btn-add { background: #2196F3; color: #fff; border: none; border-radius: 8px; padding: 12px 16px; font-size: 18px; cursor: pointer; min-width: 50px; flex: 0 0 auto; }
-        .btn-submit { width: 100%; background: #FF5722; color: #fff; border: none; border-radius: 8px; padding: 16px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-submit:active { background: #E64A19; }
-        .btn-submit:disabled { background: #ccc; }
-        .preview { width: 100%; max-height: 200px; object-fit: contain; margin-top: 5px; border-radius: 8px; display: none; }
-        .status { text-align: center; margin-top: 15px; font-size: 13px; color: #666; min-height: 20px; }
-        .status.success { color: #4CAF50; }
-        .status.error { color: #f44336; }
-        .status.loading { color: #FF9800; }
-        .hint { font-size: 11px; color: #999; margin-top: 3px; text-align: center; }
-        input[type="file"] { display: none; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>📋 Приёмка средств измерений</h1>
-        <p>ООО МС «ЦЕНТР ИЗМЕРЕНИЙ»</p>
-    </div>
+var EMAIL_TO = 'ms-tcentr@mail.ru';
+var SHEET_JOURNAL = 'Журнал';
 
-    <div class="field-group">
-        <label>Компания-сдатчик:</label>
-        <div class="field-row">
-            <select id="companySelect"><option value="">-- Загрузка... --</option></select>
-            <button class="btn-add" onclick="addCompany()" title="Добавить">➕</button>
-        </div>
-    </div>
+var OUR_COMPANY = {
+  name: 'ООО МС «ЦЕНТР ИЗМЕРЕНИЙ»',
+  ra: 'RA.RU.314900',
+  address: '625019, г. Тюмень ул. Новаторов, д.5, стр. 9, помещение 1',
+  inn_kpp: 'ИНН/КПП 7203569973/720301001',
+  ogrn: 'ОГРН 1247200002565',
+  bank: 'р/с 40702810820000082294 в ТОЧКА ПАО БАНКА «ФК ОТКРЫТИЕ»',
+  correspondent: 'к/с 30101810745374525104',
+  bik: 'БИК 044525104',
+  phone: '+7(996)6418436',
+  email: 'ms.tcentr@mail.ru',
+  site: 'ms-tcentr.ru'
+};
 
-    <div class="field-group">
-        <label>📷 Название прибора:</label>
-        <div class="field-row">
-            <input type="text" id="nameField" placeholder="Отсканируйте или введите">
-            <button class="btn-camera" onclick="capturePhoto('name')" title="Сканировать">📷</button>
-        </div>
-        <img id="previewName" class="preview" alt="Фото названия">
-        <input type="file" id="fileName" accept="image/*" capture="environment" onchange="processPhoto('name')">
-    </div>
+function doPost(e) {
+  try {
+    var data;
+    if (e.postData && e.postData.type === 'application/json') {
+      data = JSON.parse(e.postData.contents);
+    } else if (e.parameter) {
+      data = e.parameter;
+    } else {
+      return ContentService.createTextOutput('ERROR: No data received').setMimeType(ContentService.MimeType.TEXT);
+    }
+    
+    var actNumber = getNextActNumber(data.date);
+    
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_JOURNAL);
+    sheet.appendRow([data.date, data.company, data.type, data.name, data.serial, data.note, data.employee, actNumber]);
+    
+    // Если пришло новое название — добавляем в лист Типы
+    if (data.newName && data.newName.length > 0) {
+      var typesSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Типы');
+      typesSheet.appendRow(['', data.newName, data.type || '']);
+    }
+    
+    try {
+      GmailApp.sendEmail(EMAIL_TO, 
+        'Акт приёмки СИ ' + actNumber + ': ' + data.name + ' №' + data.serial,
+        'Сформирован акт приёмки.\n\n' +
+        'Номер акта: ' + actNumber + '\n' +
+        'Дата: ' + data.date + '\n' +
+        'Компания: ' + data.company + '\n' +
+        'Тип: ' + data.type + '\n' +
+        'Наименование: ' + data.name + '\n' +
+        'Заводской номер: ' + data.serial + '\n' +
+        'Примечание: ' + data.note + '\n' +
+        'Принял: ' + data.employee
+      );
+    } catch (mailError) {
+      console.error('Mail error: ' + mailError.toString());
+    }
+    
+    return ContentService.createTextOutput('OK').setMimeType(ContentService.MimeType.TEXT);
+  } catch (error) {
+    return ContentService.createTextOutput('ERROR: ' + error.toString()).setMimeType(ContentService.MimeType.TEXT);
+  }
+}
 
-    <div class="field-group">
-        <label>Тип прибора:</label>
-        <div class="field-row">
-            <input type="text" id="typeField" placeholder="Определится автоматически или введите" list="typeList">
-            <datalist id="typeList"></datalist>
-        </div>
-    </div>
+function doGet(e) {
+  return ContentService.createTextOutput('Сервер приёмки СИ работает. Используйте POST-запросы.');
+}
 
-    <div class="field-group">
-        <label>📷 Заводской номер:</label>
-        <div class="field-row">
-            <input type="text" id="serialField" placeholder="Отсканируйте или введите">
-            <button class="btn-camera" onclick="capturePhoto('serial')" title="Сканировать">📷</button>
-        </div>
-        <img id="previewSerial" class="preview" alt="Фото номера">
-        <input type="file" id="fileSerial" accept="image/*" capture="environment" onchange="processPhoto('serial')">
-    </div>
+function getNextActNumber(dateStr) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_JOURNAL);
+  var lastRow = sheet.getLastRow();
+  var count = 0;
+  for (var i = lastRow; i >= 2; i--) {
+    if (sheet.getRange(i, 1).getValue() == dateStr) {
+      var lastAct = sheet.getRange(i, 8).getValue();
+      if (lastAct && lastAct.indexOf('/') > -1) count = parseInt(lastAct.split('/')[1]);
+      break;
+    }
+  }
+  count++;
+  return dateStr + '/' + ('00' + count).slice(-3);
+}
 
-    <div class="field-group">
-        <label>Примечание:</label>
-        <input type="text" id="noteField" placeholder="Состояние, комплектность..." style="width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; font-size:16px;">
-    </div>
-
-    <div class="field-group">
-        <label>Кто принял:</label>
-        <select id="employeeSelect"><option value="">-- Загрузка... --</option></select>
-    </div>
-
-    <button class="btn-submit" id="submitBtn" onclick="submitAct()">📧 Сформировать акт и отправить</button>
-    <div class="hint">Письмо уйдёт на ms-tcentr@mail.ru</div>
-    <div class="status" id="status"></div>
-
-    <iframe name="hiddenFrame" style="display:none;"></iframe>
-
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <script>
-        var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw3PHbAcHAaLmC3cab1HOc7qEiz2erKGfwwQ5GeN2qZbfeid1UbZ3IeYRNA_McNLPuN/exec';
-        var CSV_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJLJVjVpDuLsNRjFg9j7X2NHcDtOgmo4lhiC_CTx2S0ox97Hne91SXQ7XtJJxb9OberlzYUrSXijw6/pub?output=csv&gid=';
-        var GID_TYPES = '441822937';
-        var GID_COMPANIES = '883764981';
-        var GID_EMPLOYEES = '1294860374';
-
-        var typesData = [];
-        var photoTypeBase64 = '';
-        var photoSerialBase64 = '';
-
-        window.addEventListener('load', function() {
-            setStatus('Загрузка справочников...', 'loading');
-            loadDictionaries();
-        });
-
-        function loadDictionaries() {
-            Promise.all([
-                fetch(CSV_BASE + GID_TYPES).then(r => r.text()),
-                fetch(CSV_BASE + GID_COMPANIES).then(r => r.text()),
-                fetch(CSV_BASE + GID_EMPLOYEES).then(r => r.text())
-            ]).then(function(results) {
-                typesData = parseCSV(results[0]);
-                updateTypeSuggestions();
-                updateSelect('companySelect', parseCSV(results[1]), 0);
-                updateSelect('employeeSelect', parseCSV(results[2]), 1);
-                setStatus('✅ Готов к работе', 'success');
-            }).catch(function(e) {
-                console.error(e);
-                setStatus('⚠️ Справочники не загружены', 'error');
-            });
-        }
-
-        function parseCSV(csv) {
-            var lines = csv.trim().split('\n');
-            var result = [];
-            for (var i = 1; i < lines.length; i++) {
-                var cells = [], current = '', inQuotes = false;
-                for (var j = 0; j < lines[i].length; j++) {
-                    var ch = lines[i][j];
-                    if (ch === '"') inQuotes = !inQuotes;
-                    else if (ch === ',' && !inQuotes) { cells.push(current.trim()); current = ''; }
-                    else current += ch;
-                }
-                cells.push(current.trim());
-                if (cells.some(function(c) { return c.length > 0; })) result.push(cells);
-            }
-            return result;
-        }
-
-        function updateSelect(id, data, col) {
-            var sel = document.getElementById(id);
-            sel.innerHTML = '<option value="">-- Выберите --</option>';
-            var names = [];
-            data.forEach(function(row) {
-                var val = row[col] || row[0] || '';
-                if (val && names.indexOf(val) === -1) {
-                    names.push(val);
-                    sel.innerHTML += '<option value="' + esc(val) + '">' + esc(val) + '</option>';
-                }
-            });
-        }
-
-        function updateTypeSuggestions() {
-            var list = document.getElementById('typeList');
-            var types = [];
-            typesData.forEach(function(row) {
-                var t = row[2] || row[1] || '';
-                if (t && types.indexOf(t) === -1) types.push(t);
-            });
-            list.innerHTML = '';
-            types.forEach(function(t) { list.innerHTML += '<option value="' + esc(t) + '">'; });
-        }
-
-        function findTypeByName(name) {
-            if (!name) return '';
-            var nc = name.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
-            var best = '', bestScore = 0;
-            typesData.forEach(function(row) {
-                var ref = (row[1] || row[0] || '').toLowerCase().replace(/[^a-zа-я0-9]/g, '');
-                if (ref && nc.includes(ref) && ref.length > bestScore) {
-                    bestScore = ref.length;
-                    best = row[2] || row[1] || '';
-                }
-            });
-            return best;
-        }
-
-        function capturePhoto(target) {
-            document.getElementById('file' + (target === 'name' ? 'Name' : 'Serial')).click();
-        }
-
-        function processPhoto(target) {
-            var input = document.getElementById('file' + (target === 'name' ? 'Name' : 'Serial'));
-            if (!input.files || !input.files[0]) return;
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var img = new Image();
-                img.onload = function() {
-                    var canvas = document.createElement('canvas');
-                    var maxW = 1600;
-                    var scale = maxW / img.width;
-                    canvas.width = maxW;
-                    canvas.height = img.height * scale;
-                    var ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
-                    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    var data = imageData.data;
-                    for (var i = 0; i < data.length; i += 4) {
-                        var gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-                        gray = (gray - 128) * 3.0 + 128;
-                        if (gray > 255) gray = 255;
-                        if (gray < 0) gray = 0;
-                        gray = gray > 120 ? 255 : 0;
-                        data[i] = data[i + 1] = data[i + 2] = gray;
-                    }
-                    ctx.putImageData(imageData, 0, 0);
-                    
-                    var processedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-                    
-                    var preview = document.getElementById('preview' + (target === 'name' ? 'Name' : 'Serial'));
-                    preview.src = processedDataUrl;
-                    preview.style.display = 'block';
-                    
-                    if (target === 'name') photoTypeBase64 = processedDataUrl.split(',')[1];
-                    else photoSerialBase64 = processedDataUrl.split(',')[1];
-                    
-                    recognizeText(processedDataUrl, target);
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-
-        function recognizeText(dataUrl, target) {
-            setStatus('Распознавание...', 'loading');
-            Tesseract.recognize(dataUrl, 'rus+eng', {
-                tessedit_char_whitelist: 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюяABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789№/-. ',
-                logger: function(m) {
-                    if (m.status === 'recognizing text') setStatus('Распознавание: ' + Math.round(m.progress * 100) + '%', 'loading');
-                }
-            }).then(function(result) {
-                var rawText = result.data.text;
-                console.log('RAW:', rawText);
-                var text = cleanText(rawText);
-                console.log('CLEAN:', text);
-                
-                if (target === 'name') {
-                    var nameText = extractName(text);
-                    document.getElementById('nameField').value = nameText;
-                    
-                    var ft = findTypeByName(nameText);
-                    if (ft) { document.getElementById('typeField').value = ft; setStatus('✅ ' + nameText + ' → ' + ft, 'success'); }
-                    else setStatus('✅ Название: ' + nameText, 'success');
-                } else {
-                    var serial = extractSerial(text);
-                    document.getElementById('serialField').value = serial;
-                    setStatus(serial ? '✅ Номер: ' + serial : '⚠️ Введите номер вручную', serial ? 'success' : 'error');
-                }
-            }).catch(function(e) {
-                console.error(e);
-                setStatus('❌ Ошибка распознавания', 'error');
-            });
-        }
-
-        function cleanText(text) {
-            var cleaned = text
-                .replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
-            
-            var fixes = {
-                'Ду': 'ДУ', 'ду': 'ДУ', 'дy': 'ДУ', 'ДY': 'ДУ', 'Dy': 'ДУ', 'dy': 'ДУ',
-                'Ne': '№', 'Nе': '№', 'No': '№',
-                'зав': 'зав', 'Зав': 'зав', 'ЗАВ': 'зав', '3ав': 'зав',
-                'ПРЗМ': 'ПРЭМ', 'ПРЗ': 'ПРЭ', 'прзм': 'ПРЭМ', 'прэм': 'ПРЭМ',
-                'Прем': 'ПРЭМ', 'ПРЕМ': 'ПРЭМ', 'прем': 'ПРЭМ'
-            };
-            
-            var words = cleaned.split(' ');
-            for (var i = 0; i < words.length; i++) {
-                if (fixes[words[i]]) words[i] = fixes[words[i]];
-            }
-            return words.join(' ');
-        }
-
-        function extractName(text) {
-            var noSerial = text.replace(/зав\.?\s*[№Nn]\s*\d+/gi, '').replace(/[№Nn]\s*\d+/gi, '');
-            
-            var words = noSerial.split(' ').filter(function(w) {
-                return w.match(/[А-ЯЁ0-9]/) && w.length >= 2 && !w.match(/^[a-z]+$/);
-            });
-            
-            var result = [];
-            for (var i = 0; i < words.length && result.length < 4; i++) {
-                var w = words[i];
-                // Пропускаем одиночные цифры в начале
-                if (result.length === 0 && w.match(/^\d$/)) continue;
-                if (result.length > 0 && w.match(/^\d+$/) && result[result.length-1].match(/^[А-ЯЁ]+$/)) {
-                    result[result.length-1] += w;
-                } else {
-                    result.push(w);
-                }
-            }
-            
-            var nameText = result.join(' ');
-            nameText = nameText.replace(/ДУ\s+(\d)/g, 'ДУ$1');
-            
-            return nameText;
-        }
-
-        function extractSerial(text) {
-            var patterns = [
-                /зав\.?\s*[№Nn]\s*[:=\-\s]*\s*(\d[\d\s\-\.\/]*\d)/i,
-                /[№Nn]\s*[:=\-\s]*\s*(\d[\d\s\-\.\/]*\d)/i,
-                /\b(\d{4,})\b/
-            ];
-            for (var i = 0; i < patterns.length; i++) {
-                var m = text.match(patterns[i]);
-                if (m) return m[1].replace(/[^\d]/g, '');
-            }
-            return '';
-        }
-
-        function addCompany() {
-            var name = prompt('Введите название компании:');
-            if (name && name.trim()) {
-                var sel = document.getElementById('companySelect');
-                sel.innerHTML += '<option value="' + esc(name.trim()) + '" selected>' + esc(name.trim()) + '</option>';
-                setStatus('Компания добавлена', 'success');
-            }
-        }
-
-        function submitAct() {
-            var company = document.getElementById('companySelect').value;
-            var type = document.getElementById('typeField').value.trim();
-            var name = document.getElementById('nameField').value.trim();
-            var serial = document.getElementById('serialField').value.trim();
-            var note = document.getElementById('noteField').value.trim();
-            var employee = document.getElementById('employeeSelect').value;
-
-            if (!company || !name || !type || !serial || !employee) {
-                alert('Заполните все поля'); return;
-            }
-
-            var btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.textContent = 'Отправка...';
-            setStatus('Формирование и отправка...', 'loading');
-
-            var now = new Date();
-            var dateStr = ('0' + now.getDate()).slice(-2) + '.' +
-                          ('0' + (now.getMonth() + 1)).slice(-2) + '.' +
-                          now.getFullYear();
-
-            var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = SCRIPT_URL;
-            form.target = 'hiddenFrame';
-            form.style.display = 'none';
-
-            var fields = {
-                date: dateStr, company: company, type: type, name: name,
-                serial: serial, note: note, employee: employee,
-                photoType: photoTypeBase64, photoSerial: photoSerialBase64
-            };
-
-            Object.keys(fields).forEach(function(key) {
-                var input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = fields[key];
-                form.appendChild(input);
-            });
-
-            document.body.appendChild(form);
-            form.submit();
-            document.body.removeChild(form);
-
-            setTimeout(function() {
-                setStatus('✅ Акт отправлен на ms-tcentr@mail.ru', 'success');
-                btn.textContent = '✓ Отправлено';
-                btn.style.background = '#4CAF50';
-                photoTypeBase64 = '';
-                photoSerialBase64 = '';
-                document.getElementById('previewName').style.display = 'none';
-                document.getElementById('previewSerial').style.display = 'none';
-            }, 2000);
-        }
-
-        function setStatus(msg, cls) {
-            var el = document.getElementById('status');
-            el.textContent = msg;
-            el.className = 'status';
-            if (cls) el.classList.add(cls);
-        }
-
-        function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-    </script>
-</body>
-</html>
+function generateActPdf(data, actNumber) {
+  var html = '<div style="text-align:center;font-size:10pt;margin-bottom:10px;">';
+  html += '<p style="margin:2px 0;">Общество с ограниченной ответственностью</p>';
+  html += '<p style="margin:2px 0;font-weight:bold;">МС «ЦЕНТР ИЗМЕРЕНИЙ» ' + OUR_COMPANY.ra + '</p>';
+  html += '<p style="margin:2px 0;font-size:9pt;">' + OUR_COMPANY.address + '</p>';
+  html += '<p style="margin:2px 0;font-size:9pt;">Место осуществления деятельности: ' + OUR_COMPANY.address + '</p>';
+  html += '<p style="margin:2px 0;font-size:9pt;">' + OUR_COMPANY.inn_kpp + ', ' + OUR_COMPANY.ogrn + '</p>';
+  html += '<p style="margin:2px 0;font-size:9pt;">' + OUR_COMPANY.bank + '</p>';
+  html += '<p style="margin:2px 0;font-size:9pt;">' + OUR_COMPANY.correspondent + ', ' + OUR_COMPANY.bik + '</p>';
+  html += '<p style="margin:2px 0;font-size:9pt;">тел. ' + OUR_COMPANY.phone + '</p>';
+  html += '<p style="margin:2px 0;font-size:9pt;">email: ' + OUR_COMPANY.email + '; сайт: ' + OUR_COMPANY.site + '</p>';
+  html += '</div>';
+  html += '<div style="text-align:center;margin:20px 0;"><p style="font-size:12pt;font-weight:bold;">Акт приема-передачи средств измерений</p></div>';
+  html += '<div style="margin:15px 0;"><p>г. Тюмень ' + data.date + '</p></div>';
+  html += '<div style="margin:15px 0;line-height:1.6;"><p>ООО МС «Центр Измерений», в лице техника-метролога ' + data.employee + ', и ' + data.company + ' составили настоящий акт в том, что ООО МС «Центр Измерений» принимает следующие СИ на проведение поверки:</p></div>';
+  html += '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;margin:15px 0;">';
+  html += '<tr><td style="width:40%;"><b>Тип прибора</b></td><td>' + data.type + '</td></tr>';
+  html += '<tr><td><b>Наименование</b></td><td>' + data.name + '</td></tr>';
+  html += '<tr><td><b>Заводской номер</b></td><td>' + data.serial + '</td></tr>';
+  if (data.note) html += '<tr><td><b>Примечание</b></td><td>' + data.note + '</td></tr>';
+  html += '</table>';
+  html += '<div style="margin-top:30px;"><table border="0" cellpadding="5" style="width:100%;">';
+  html += '<tr><td style="width:50%;"><b>Сдал:</b> ________________________</td><td style="width:50%;"><b>Принял:</b> ________________________</td></tr>';
+  html += '<tr><td>' + data.company + '</td><td>Техник-метролог ' + data.employee + '</td></tr>';
+  html += '</table></div>';
+  
+  var blob = Utilities.newBlob(html, 'text/html', 'act.html');
+  var pdf = blob.getAs('application/pdf');
+  pdf.setName('Акт_приёмки_' + actNumber.replace(/\//g, '_') + '.pdf');
+  return pdf;
+}
