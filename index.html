@@ -24,9 +24,9 @@
         .status { text-align: center; margin-top: 15px; font-size: 13px; color: #666; min-height: 20px; }
         .status.success { color: #4CAF50; }
         .status.error { color: #f44336; }
+        .status.loading { color: #FF9800; }
         .hint { font-size: 11px; color: #999; margin-top: 3px; text-align: center; }
         input[type="file"] { display: none; }
-        .loading { color: #FF9800; }
     </style>
 </head>
 <body>
@@ -89,8 +89,6 @@
     <script>
         var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4W9aoohEnsWK3cXhqTm2mMl4WfSbmVK-JbGXBBjbXyRYw44p8TEVZNu-DpoyVGHUW/exec';
         var CSV_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJLJVjVpDuLsNRjFg9j7X2NHcDtOgmo4lhiC_CTx2S0ox97Hne91SXQ7XtJJxb9OberlzYUrSXijw6/pub?output=csv&gid=';
-
-        // Правильные GID
         var GID_TYPES = '441822937';
         var GID_COMPANIES = '883764981';
         var GID_EMPLOYEES = '1294860374';
@@ -101,13 +99,23 @@
         var photoTypeBase64 = '';
         var photoSerialBase64 = '';
 
+        // Словарь исправлений OCR
+        var OCR_FIXES = {
+            'пз': 'ПЗ',
+            'прз': 'ПРЗ',
+            'прэ': 'ПРЭ',
+            'прзм': 'ПРЭМ',
+            'пзр': 'ПЗР',
+            'дy': 'ДУ',
+            'ду': 'ДУ'
+        };
+
         window.addEventListener('load', function() {
             setStatus('Загрузка справочников...', 'loading');
             loadDictionaries();
         });
 
         function loadDictionaries() {
-            // Загружаем все три справочника
             Promise.all([
                 fetch(CSV_BASE + GID_TYPES).then(r => r.text()),
                 fetch(CSV_BASE + GID_COMPANIES).then(r => r.text()),
@@ -116,19 +124,13 @@
                 typesData = parseCSV(results[0]);
                 companiesData = parseCSV(results[1]);
                 employeesData = parseCSV(results[2]);
-
-                console.log('Типы загружены:', typesData.length, 'строк');
-                console.log('Компании загружены:', companiesData.length, 'строк');
-                console.log('Приёмщики загружены:', employeesData.length, 'строк');
-
                 updateTypeSuggestions();
                 updateCompanyList();
                 updateEmployeeList();
-                setStatus('✅ Готов к работе');
+                setStatus('✅ Готов к работе', 'success');
             }).catch(function(error) {
-                console.error('Ошибка загрузки справочников:', error);
-                setStatus('⚠️ Справочники не загружены. Проверьте интернет.', 'error');
-                // Всё равно показываем пустые списки
+                console.error('Ошибка загрузки:', error);
+                setStatus('⚠️ Справочники не загружены', 'error');
                 updateCompanyList();
                 updateEmployeeList();
             });
@@ -137,25 +139,18 @@
         function parseCSV(csv) {
             var lines = csv.trim().split('\n');
             var result = [];
-            for (var i = 1; i < lines.length; i++) { // Пропускаем заголовок
+            for (var i = 1; i < lines.length; i++) {
                 var cells = [];
                 var current = '';
                 var inQuotes = false;
                 for (var j = 0; j < lines[i].length; j++) {
                     var ch = lines[i][j];
-                    if (ch === '"') {
-                        inQuotes = !inQuotes;
-                    } else if (ch === ',' && !inQuotes) {
-                        cells.push(current.trim());
-                        current = '';
-                    } else {
-                        current += ch;
-                    }
+                    if (ch === '"') { inQuotes = !inQuotes; }
+                    else if (ch === ',' && !inQuotes) { cells.push(current.trim()); current = ''; }
+                    else { current += ch; }
                 }
                 cells.push(current.trim());
-                if (cells.some(function(c) { return c.length > 0; })) {
-                    result.push(cells);
-                }
+                if (cells.some(function(c) { return c.length > 0; })) result.push(cells);
             }
             return result;
         }
@@ -177,10 +172,8 @@
             var sel = document.getElementById('employeeSelect');
             sel.innerHTML = '<option value="">-- Выберите --</option>';
             employeesData.forEach(function(row) {
-                var name = row[1] || row[0] || ''; // ФИО во втором столбце
-                if (name) {
-                    sel.innerHTML += '<option value="' + escapeHtml(name) + '">' + escapeHtml(name) + '</option>';
-                }
+                var name = row[1] || row[0] || '';
+                if (name) sel.innerHTML += '<option value="' + escapeHtml(name) + '">' + escapeHtml(name) + '</option>';
             });
         }
 
@@ -188,59 +181,42 @@
             var list = document.getElementById('typeList');
             var types = [];
             typesData.forEach(function(row) {
-                var type = row[2] || row[1] || ''; // Тип в третьем столбце
-                if (type && types.indexOf(type) === -1) {
-                    types.push(type);
-                }
+                var type = row[2] || row[1] || '';
+                if (type && types.indexOf(type) === -1) types.push(type);
             });
             list.innerHTML = '';
-            types.forEach(function(t) {
-                list.innerHTML += '<option value="' + escapeHtml(t) + '">';
-            });
+            types.forEach(function(t) { list.innerHTML += '<option value="' + escapeHtml(t) + '">'; });
         }
 
         function findTypeByName(name) {
             if (!name) return '';
-            var nameLower = name.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
+            var nameClean = name.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
             var bestMatch = '';
             var bestScore = 0;
-
             typesData.forEach(function(row) {
-                var refName = (row[1] || row[0] || '').toLowerCase().replace(/[^a-zа-я0-9]/g, '');
-                if (refName && nameLower.includes(refName)) {
-                    var score = refName.length;
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestMatch = row[2] || row[1] || '';
-                    }
+                var ref = (row[1] || row[0] || '').toLowerCase().replace(/[^a-zа-я0-9]/g, '');
+                if (ref && nameClean.includes(ref)) {
+                    if (ref.length > bestScore) { bestScore = ref.length; bestMatch = row[2] || row[1] || ''; }
                 }
             });
-
             return bestMatch;
         }
 
         function capturePhoto(target) {
-            var inputId = 'file' + (target === 'name' ? 'Name' : 'Serial');
-            document.getElementById(inputId).click();
+            document.getElementById('file' + (target === 'name' ? 'Name' : 'Serial')).click();
         }
 
         function processPhoto(target) {
-            var inputId = 'file' + (target === 'name' ? 'Name' : 'Serial');
-            var input = document.getElementById(inputId);
+            var input = document.getElementById('file' + (target === 'name' ? 'Name' : 'Serial'));
             if (!input.files || !input.files[0]) return;
-
             var file = input.files[0];
             var reader = new FileReader();
-
             reader.onload = function(e) {
                 var dataUrl = e.target.result;
-                var previewId = 'preview' + (target === 'name' ? 'Name' : 'Serial');
-                document.getElementById(previewId).src = dataUrl;
-                document.getElementById(previewId).style.display = 'block';
-
+                document.getElementById('preview' + (target === 'name' ? 'Name' : 'Serial')).src = dataUrl;
+                document.getElementById('preview' + (target === 'name' ? 'Name' : 'Serial')).style.display = 'block';
                 if (target === 'name') photoTypeBase64 = dataUrl.split(',')[1];
                 else photoSerialBase64 = dataUrl.split(',')[1];
-
                 recognizeText(dataUrl, target);
             };
             reader.readAsDataURL(file);
@@ -248,58 +224,54 @@
 
         function recognizeText(imageDataUrl, target) {
             setStatus('Распознавание...', 'loading');
-
             Tesseract.recognize(imageDataUrl, 'rus+eng', {
                 logger: function(m) {
-                    if (m.status === 'recognizing text') {
-                        setStatus('Распознавание: ' + Math.round(m.progress * 100) + '%', 'loading');
-                    }
+                    if (m.status === 'recognizing text') setStatus('Распознавание: ' + Math.round(m.progress * 100) + '%', 'loading');
                 }
             }).then(function(result) {
                 var rawText = result.data.text;
                 console.log('RAW (' + target + '):', rawText);
-
-                var text = cleanRecognizedText(rawText);
-                console.log('CLEAN (' + target + '):', text);
-
+                var text = applyOcrFixes(rawText);
+                console.log('FIXED (' + target + '):', text);
                 if (target === 'name') {
                     document.getElementById('nameField').value = text;
                     var foundType = findTypeByName(text);
-                    if (foundType) {
-                        document.getElementById('typeField').value = foundType;
-                        setStatus('✅ Название и тип определены', 'success');
-                    } else {
-                        setStatus('✅ Название заполнено. Укажите тип вручную.', 'success');
-                    }
+                    if (foundType) { document.getElementById('typeField').value = foundType; setStatus('✅ Название и тип определены', 'success'); }
+                    else { setStatus('✅ Название заполнено. Укажите тип вручную.', 'success'); }
                 } else {
                     var serial = extractSerialNumber(text);
                     document.getElementById('serialField').value = serial;
-                    if (serial) setStatus('✅ Номер распознан: ' + serial, 'success');
+                    if (serial) setStatus('✅ Номер: ' + serial, 'success');
                     else setStatus('⚠️ Проверьте номер', 'error');
                 }
             }).catch(function(error) {
-                console.error('OCR error:', error);
+                console.error('OCR:', error);
                 setStatus('❌ Ошибка распознавания', 'error');
             });
         }
 
-        function cleanRecognizedText(text) {
-            return text
+        function applyOcrFixes(text) {
+            var cleaned = text
                 .replace(/[^\w\s\-\.\/№а-яА-ЯёЁa-zA-Z0-9]/g, ' ')
                 .replace(/\s+/g, ' ')
                 .trim();
+            
+            // Применяем словарь исправлений
+            var words = cleaned.split(' ');
+            for (var i = 0; i < words.length; i++) {
+                var lower = words[i].toLowerCase();
+                if (OCR_FIXES[lower]) words[i] = OCR_FIXES[lower];
+            }
+            return words.join(' ');
         }
 
         function extractSerialNumber(text) {
-            var patterns = [
-                /(?:№|SN|зав\.?\s*№?|заводской\s*№?)\s*[:=\-\s]*\s*([A-Za-z0-9\-\.\/]{3,})/i,
-                /(?:номер|number)\s*[:=\-\s]*\s*([A-Za-z0-9\-\.\/]{3,})/i,
-                /\b(\d{5,})\b/
-            ];
-            for (var i = 0; i < patterns.length; i++) {
-                var match = text.match(patterns[i]);
-                if (match && match[1]) return match[1].trim();
-            }
+            // Прямой поиск "зав №" или "зав.№"
+            var match = text.match(/(?:зав\.?\s*)?(?:№|SN|No)\s*[:=\-\s]*\s*(\d{3,})/i);
+            if (match) return match[1];
+            // Ищем просто длинное число
+            match = text.match(/\b(\d{4,})\b/);
+            if (match) return match[1];
             return text;
         }
 
@@ -336,40 +308,39 @@
                           ('0' + (now.getMonth() + 1)).slice(-2) + '.' +
                           now.getFullYear();
 
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    date: dateStr,
-                    company: company,
-                    type: type,
-                    name: name,
-                    serial: serial,
-                    note: note,
-                    employee: employee,
-                    photoType: photoTypeBase64,
-                    photoSerial: photoSerialBase64
-                }),
-                headers: { 'Content-Type': 'application/json' }
-            })
-            .then(function(r) { return r.text(); })
-            .then(function(resp) {
-                console.log('Server response:', resp);
-                if (resp.trim() === 'OK') {
-                    setStatus('✅ Акт отправлен!', 'success');
-                    btn.textContent = '✓ Отправлено';
-                    btn.style.background = '#4CAF50';
-                    photoTypeBase64 = '';
-                    photoSerialBase64 = '';
-                } else {
-                    throw new Error(resp);
+            var payload = {
+                date: dateStr,
+                company: company,
+                type: type,
+                name: name,
+                serial: serial,
+                note: note,
+                employee: employee,
+                photoType: photoTypeBase64,
+                photoSerial: photoSerialBase64
+            };
+
+            // Отправляем через XMLHttpRequest (надёжнее для Google Apps Script)
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', SCRIPT_URL, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    console.log('Response:', xhr.status, xhr.responseText);
+                    if (xhr.status === 200 && xhr.responseText.trim() === 'OK') {
+                        setStatus('✅ Акт отправлен!', 'success');
+                        btn.textContent = '✓ Отправлено';
+                        btn.style.background = '#4CAF50';
+                        photoTypeBase64 = '';
+                        photoSerialBase64 = '';
+                    } else {
+                        setStatus('❌ Ошибка: ' + xhr.responseText, 'error');
+                        btn.disabled = false;
+                        btn.textContent = '📧 Сформировать акт и отправить';
+                    }
                 }
-            })
-            .catch(function(err) {
-                console.error(err);
-                setStatus('❌ Ошибка: ' + err.message, 'error');
-                btn.disabled = false;
-                btn.textContent = '📧 Сформировать акт и отправить';
-            });
+            };
+            xhr.send(JSON.stringify(payload));
         }
 
         function setStatus(msg, cls) {
