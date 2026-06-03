@@ -1,29 +1,320 @@
-function doPost(e) {
-  try {
-    var data;
-    if (e.postData.type === 'application/json') {
-      data = JSON.parse(e.postData.contents);
-    } else {
-      // Form data
-      data = e.parameter;
-    }
-    
-    var actNumber = getNextActNumber(data.date);
-    
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_JOURNAL);
-    sheet.appendRow([data.date, data.company, data.type, data.name, data.serial, data.note, data.employee, actNumber]);
-    
-    var pdf = generateActPdf(data, actNumber);
-    var attachments = [pdf];
-    if (data.photoType && data.photoType.length > 10) attachments.push(Utilities.newBlob(Utilities.base64Decode(data.photoType), 'image/jpeg', 'Фото_тип_' + data.serial + '.jpg'));
-    if (data.photoSerial && data.photoSerial.length > 10) attachments.push(Utilities.newBlob(Utilities.base64Decode(data.photoSerial), 'image/jpeg', 'Фото_номер_' + data.serial + '.jpg'));
-    
-    GmailApp.sendEmail(EMAIL_TO, 'Акт приёмки СИ ' + actNumber + ': ' + data.name + ' №' + data.serial,
-      'Сформирован акт приёмки.\n\nНомер акта: ' + actNumber + '\nДата: ' + data.date + '\nКомпания: ' + data.company + '\nТип: ' + data.type + '\nНаименование: ' + data.name + '\nЗаводской номер: ' + data.serial + '\nПримечание: ' + data.note + '\nПринял: ' + data.employee,
-      { attachments: attachments });
-    
-    return ContentService.createTextOutput('OK').setMimeType(ContentService.MimeType.TEXT);
-  } catch (error) {
-    return ContentService.createTextOutput('ERROR: ' + error.toString()).setMimeType(ContentService.MimeType.TEXT);
-  }
-}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Приёмка СИ</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 15px; max-width: 500px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { font-size: 20px; color: #333; }
+        .header p { font-size: 12px; color: #888; margin-top: 5px; }
+        .field-group { margin-bottom: 15px; }
+        .field-group label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 5px; }
+        .field-row { display: flex; gap: 8px; }
+        .field-row input, .field-row select { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; background: #fff; }
+        .btn-camera { background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 12px 16px; font-size: 18px; cursor: pointer; min-width: 50px; flex: 0 0 auto; }
+        .btn-camera:active { background: #388E3C; }
+        .btn-add { background: #2196F3; color: #fff; border: none; border-radius: 8px; padding: 12px 16px; font-size: 18px; cursor: pointer; min-width: 50px; flex: 0 0 auto; }
+        .btn-submit { width: 100%; background: #FF5722; color: #fff; border: none; border-radius: 8px; padding: 16px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-submit:active { background: #E64A19; }
+        .btn-submit:disabled { background: #ccc; }
+        .preview { width: 100%; max-height: 200px; object-fit: contain; margin-top: 5px; border-radius: 8px; display: none; }
+        .status { text-align: center; margin-top: 15px; font-size: 13px; color: #666; min-height: 20px; }
+        .status.success { color: #4CAF50; }
+        .status.error { color: #f44336; }
+        .status.loading { color: #FF9800; }
+        .hint { font-size: 11px; color: #999; margin-top: 3px; text-align: center; }
+        input[type="file"] { display: none; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 Приёмка средств измерений</h1>
+        <p>ООО МС «ЦЕНТР ИЗМЕРЕНИЙ»</p>
+    </div>
+
+    <div class="field-group">
+        <label>Компания-сдатчик:</label>
+        <div class="field-row">
+            <select id="companySelect"><option value="">-- Загрузка... --</option></select>
+            <button class="btn-add" onclick="addCompany()" title="Добавить">➕</button>
+        </div>
+    </div>
+
+    <div class="field-group">
+        <label>📷 Название прибора:</label>
+        <div class="field-row">
+            <input type="text" id="nameField" placeholder="Отсканируйте или введите">
+            <button class="btn-camera" onclick="capturePhoto('name')" title="Сканировать">📷</button>
+        </div>
+        <img id="previewName" class="preview" alt="Фото названия">
+        <input type="file" id="fileName" accept="image/*" capture="environment" onchange="processPhoto('name')">
+    </div>
+
+    <div class="field-group">
+        <label>Тип прибора:</label>
+        <div class="field-row">
+            <input type="text" id="typeField" placeholder="Определится автоматически или введите" list="typeList">
+            <datalist id="typeList"></datalist>
+        </div>
+    </div>
+
+    <div class="field-group">
+        <label>📷 Заводской номер:</label>
+        <div class="field-row">
+            <input type="text" id="serialField" placeholder="Отсканируйте или введите">
+            <button class="btn-camera" onclick="capturePhoto('serial')" title="Сканировать">📷</button>
+        </div>
+        <img id="previewSerial" class="preview" alt="Фото номера">
+        <input type="file" id="fileSerial" accept="image/*" capture="environment" onchange="processPhoto('serial')">
+    </div>
+
+    <div class="field-group">
+        <label>Примечание:</label>
+        <input type="text" id="noteField" placeholder="Состояние, комплектность..." style="width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; font-size:16px;">
+    </div>
+
+    <div class="field-group">
+        <label>Кто принял:</label>
+        <select id="employeeSelect"><option value="">-- Загрузка... --</option></select>
+    </div>
+
+    <button class="btn-submit" id="submitBtn" onclick="submitAct()">📧 Сформировать акт и отправить</button>
+    <div class="hint">Письмо уйдёт на ms-tcentr@mail.ru</div>
+    <div class="status" id="status"></div>
+
+    <iframe name="hiddenFrame" style="display:none;"></iframe>
+
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script>
+        var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw3PHbAcHAaLmC3cab1HOc7qEiz2erKGfwwQ5GeN2qZbfeid1UbZ3IeYRNA_McNLPuN/exec';
+        var CSV_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJLJVjVpDuLsNRjFg9j7X2NHcDtOgmo4lhiC_CTx2S0ox97Hne91SXQ7XtJJxb9OberlzYUrSXijw6/pub?output=csv&gid=';
+        var GID_TYPES = '441822937';
+        var GID_COMPANIES = '883764981';
+        var GID_EMPLOYEES = '1294860374';
+
+        var typesData = [];
+        var photoTypeBase64 = '';
+        var photoSerialBase64 = '';
+
+        var OCR_FIXES = {
+            'пз':'ПЗ','прз':'ПРЗ','прэ':'ПРЭ','прзм':'ПРЭМ','пзр':'ПЗР','дy':'ДУ','ду':'ДУ'
+        };
+
+        window.addEventListener('load', function() {
+            setStatus('Загрузка справочников...', 'loading');
+            loadDictionaries();
+        });
+
+        function loadDictionaries() {
+            Promise.all([
+                fetch(CSV_BASE + GID_TYPES).then(r => r.text()),
+                fetch(CSV_BASE + GID_COMPANIES).then(r => r.text()),
+                fetch(CSV_BASE + GID_EMPLOYEES).then(r => r.text())
+            ]).then(function(results) {
+                typesData = parseCSV(results[0]);
+                updateTypeSuggestions();
+                updateSelect('companySelect', parseCSV(results[1]), 0);
+                updateSelect('employeeSelect', parseCSV(results[2]), 1);
+                setStatus('✅ Готов к работе', 'success');
+            }).catch(function(e) {
+                console.error(e);
+                setStatus('⚠️ Справочники не загружены', 'error');
+            });
+        }
+
+        function parseCSV(csv) {
+            var lines = csv.trim().split('\n');
+            var result = [];
+            for (var i = 1; i < lines.length; i++) {
+                var cells = [], current = '', inQuotes = false;
+                for (var j = 0; j < lines[i].length; j++) {
+                    var ch = lines[i][j];
+                    if (ch === '"') inQuotes = !inQuotes;
+                    else if (ch === ',' && !inQuotes) { cells.push(current.trim()); current = ''; }
+                    else current += ch;
+                }
+                cells.push(current.trim());
+                if (cells.some(function(c) { return c.length > 0; })) result.push(cells);
+            }
+            return result;
+        }
+
+        function updateSelect(id, data, col) {
+            var sel = document.getElementById(id);
+            sel.innerHTML = '<option value="">-- Выберите --</option>';
+            var names = [];
+            data.forEach(function(row) {
+                var val = row[col] || row[0] || '';
+                if (val && names.indexOf(val) === -1) {
+                    names.push(val);
+                    sel.innerHTML += '<option value="' + esc(val) + '">' + esc(val) + '</option>';
+                }
+            });
+        }
+
+        function updateTypeSuggestions() {
+            var list = document.getElementById('typeList');
+            var types = [];
+            typesData.forEach(function(row) {
+                var t = row[2] || row[1] || '';
+                if (t && types.indexOf(t) === -1) types.push(t);
+            });
+            list.innerHTML = '';
+            types.forEach(function(t) { list.innerHTML += '<option value="' + esc(t) + '">'; });
+        }
+
+        function findTypeByName(name) {
+            if (!name) return '';
+            var nc = name.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
+            var best = '', bestScore = 0;
+            typesData.forEach(function(row) {
+                var ref = (row[1] || row[0] || '').toLowerCase().replace(/[^a-zа-я0-9]/g, '');
+                if (ref && nc.includes(ref) && ref.length > bestScore) {
+                    bestScore = ref.length;
+                    best = row[2] || row[1] || '';
+                }
+            });
+            return best;
+        }
+
+        function capturePhoto(target) {
+            document.getElementById('file' + (target === 'name' ? 'Name' : 'Serial')).click();
+        }
+
+        function processPhoto(target) {
+            var input = document.getElementById('file' + (target === 'name' ? 'Name' : 'Serial'));
+            if (!input.files || !input.files[0]) return;
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var dataUrl = e.target.result;
+                var preview = document.getElementById('preview' + (target === 'name' ? 'Name' : 'Serial'));
+                preview.src = dataUrl;
+                preview.style.display = 'block';
+                if (target === 'name') photoTypeBase64 = dataUrl.split(',')[1];
+                else photoSerialBase64 = dataUrl.split(',')[1];
+                recognizeText(dataUrl, target);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+
+        function recognizeText(dataUrl, target) {
+            setStatus('Распознавание...', 'loading');
+            Tesseract.recognize(dataUrl, 'rus+eng', {
+                logger: function(m) {
+                    if (m.status === 'recognizing text') setStatus('Распознавание: ' + Math.round(m.progress * 100) + '%', 'loading');
+                }
+            }).then(function(result) {
+                var text = applyOcrFixes(result.data.text);
+                if (target === 'name') {
+                    document.getElementById('nameField').value = text;
+                    var ft = findTypeByName(text);
+                    if (ft) { document.getElementById('typeField').value = ft; setStatus('✅ Определены название и тип', 'success'); }
+                    else setStatus('✅ Название заполнено. Введите тип.', 'success');
+                } else {
+                    var serial = extractSerial(text);
+                    document.getElementById('serialField').value = serial;
+                    setStatus(serial ? '✅ Номер: ' + serial : '⚠️ Проверьте номер', serial ? 'success' : 'error');
+                }
+            }).catch(function(e) {
+                console.error(e);
+                setStatus('❌ Ошибка распознавания', 'error');
+            });
+        }
+
+        function applyOcrFixes(text) {
+            var cleaned = text.replace(/[^\w\s\-\.\/№а-яА-ЯёЁa-zA-Z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+            var words = cleaned.split(' ');
+            for (var i = 0; i < words.length; i++) {
+                var lower = words[i].toLowerCase();
+                if (OCR_FIXES[lower]) words[i] = OCR_FIXES[lower];
+            }
+            return words.join(' ');
+        }
+
+        function extractSerial(text) {
+            var m = text.match(/(?:зав\.?\s*)?(?:№|SN|No)\s*[:=\-\s]*\s*(\d{3,})/i);
+            if (m) return m[1];
+            m = text.match(/\b(\d{4,})\b/);
+            return m ? m[1] : text;
+        }
+
+        function addCompany() {
+            var name = prompt('Введите название компании:');
+            if (name && name.trim()) {
+                var sel = document.getElementById('companySelect');
+                sel.innerHTML += '<option value="' + esc(name.trim()) + '" selected>' + esc(name.trim()) + '</option>';
+                setStatus('Компания добавлена', 'success');
+            }
+        }
+
+        function submitAct() {
+            var company = document.getElementById('companySelect').value;
+            var type = document.getElementById('typeField').value.trim();
+            var name = document.getElementById('nameField').value.trim();
+            var serial = document.getElementById('serialField').value.trim();
+            var note = document.getElementById('noteField').value.trim();
+            var employee = document.getElementById('employeeSelect').value;
+
+            if (!company || !name || !type || !serial || !employee) {
+                alert('Заполните все поля'); return;
+            }
+
+            var btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Отправка...';
+            setStatus('Формирование и отправка...', 'loading');
+
+            var now = new Date();
+            var dateStr = ('0' + now.getDate()).slice(-2) + '.' +
+                          ('0' + (now.getMonth() + 1)).slice(-2) + '.' +
+                          now.getFullYear();
+
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = SCRIPT_URL;
+            form.target = 'hiddenFrame';
+            form.style.display = 'none';
+
+            var fields = {
+                date: dateStr, company: company, type: type, name: name,
+                serial: serial, note: note, employee: employee,
+                photoType: photoTypeBase64, photoSerial: photoSerialBase64
+            };
+
+            Object.keys(fields).forEach(function(key) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = fields[key];
+                form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+
+            setTimeout(function() {
+                setStatus('✅ Акт отправлен на ms-tcentr@mail.ru', 'success');
+                btn.textContent = '✓ Отправлено';
+                btn.style.background = '#4CAF50';
+                photoTypeBase64 = '';
+                photoSerialBase64 = '';
+                document.getElementById('previewName').style.display = 'none';
+                document.getElementById('previewSerial').style.display = 'none';
+            }, 2000);
+        }
+
+        function setStatus(msg, cls) {
+            var el = document.getElementById('status');
+            el.textContent = msg;
+            el.className = 'status';
+            if (cls) el.classList.add(cls);
+        }
+
+        function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    </script>
+</body>
+</html>
