@@ -15,9 +15,9 @@
         .field-row { display: flex; gap: 8px; }
         .field-row input, .field-row select { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; background: #fff; }
         .field-row select { appearance: auto; }
-        .btn-camera { background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 12px 16px; font-size: 18px; cursor: pointer; min-width: 50px; }
+        .btn-camera { background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 12px 16px; font-size: 18px; cursor: pointer; min-width: 50px; flex: 0 0 auto; }
         .btn-camera:active { background: #388E3C; }
-        .btn-add { background: #2196F3; color: #fff; border: none; border-radius: 8px; padding: 12px 16px; font-size: 18px; cursor: pointer; min-width: 50px; }
+        .btn-add { background: #2196F3; color: #fff; border: none; border-radius: 8px; padding: 12px 16px; font-size: 18px; cursor: pointer; min-width: 50px; flex: 0 0 auto; }
         .btn-submit { width: 100%; background: #FF5722; color: #fff; border: none; border-radius: 8px; padding: 16px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn-submit:active { background: #E64A19; }
         .btn-submit:disabled { background: #ccc; }
@@ -39,7 +39,7 @@
     <div class="field-group">
         <label>Компания-сдатчик:</label>
         <div class="field-row">
-            <select id="companySelect"></select>
+            <select id="companySelect"><option value="">-- Загрузка... --</option></select>
             <button class="btn-add" onclick="addCompany()" title="Добавить компанию">➕</button>
         </div>
     </div>
@@ -78,13 +78,13 @@
     <!-- Примечание -->
     <div class="field-group">
         <label>Примечание:</label>
-        <input type="text" id="noteField" placeholder="Состояние, комплектность..." style="width:100%;">
+        <input type="text" id="noteField" placeholder="Состояние, комплектность..." style="width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; font-size:16px;">
     </div>
 
     <!-- Кто принял -->
     <div class="field-group">
         <label>Кто принял:</label>
-        <select id="employeeSelect"></select>
+        <select id="employeeSelect"><option value="">-- Загрузка... --</option></select>
     </div>
 
     <!-- Кнопка отправки -->
@@ -94,40 +94,30 @@
 
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
-        // URL скрипта Google Apps
         var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4W9aoohEnsWK3cXhqTm2mMl4WfSbmVK-JbGXBBjbXyRYw44p8TEVZNu-DpoyVGHUW/exec';
-        var SPREADSHEET_ID = '1nj6cd6fGp6WVNDcHpRPxT4OLL6iUYli5IO8l6TVzMLI';
         
-        // Хранилище справочников
+        // CSV URL для листов
+        var CSV_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJLJVjVpDuLsNRjFg9j7X2NHcDtOgmo4lhiC_CTx2S0ox97Hne91SXQ7XtJJxb9OberlzYUrSXijw6/pub?output=csv&gid=';
+        // GID листов (нужно определить)
+        var GID_TYPES = '883764981';
+        var GID_COMPANIES = '0';
+        var GID_EMPLOYEES = '0';
+        
         var typesData = [];
         var companiesData = [];
         var employeesData = [];
-        
-        // Фото в base64
         var photoTypeBase64 = '';
         var photoSerialBase64 = '';
 
-        // Инициализация
         window.addEventListener('load', function() {
             loadDictionaries();
         });
 
-        // Загрузка справочников из Google Таблицы
         function loadDictionaries() {
             setStatus('Загрузка справочников...');
             
-            // Загружаем через Google Sheets API (публичный доступ)
-            var sheets = ['Типы', 'Компании', 'Приёмщики'];
-            var ranges = [
-                'Типы!B2:C',      // Название, Тип
-                'Компании!A2:A',  // Название компании
-                'Приёмщики!B2:B'  // ФИО
-            ];
-            
-            var url = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/gviz/tq?tqx=out:csv&sheet=';
-            
-            // Загружаем типы
-            fetch(url + 'Типы' + '&range=B2:C')
+            // Пытаемся загрузить через опубликованный CSV
+            fetch(CSV_BASE + GID_TYPES)
                 .then(r => r.text())
                 .then(csv => {
                     typesData = parseCSV(csv);
@@ -135,8 +125,7 @@
                 })
                 .catch(e => console.log('Типы не загружены:', e));
             
-            // Загружаем компании
-            fetch(url + 'Компании' + '&range=A2:A')
+            fetch(CSV_BASE + GID_COMPANIES)
                 .then(r => r.text())
                 .then(csv => {
                     companiesData = parseCSV(csv);
@@ -144,8 +133,7 @@
                 })
                 .catch(e => console.log('Компании не загружены:', e));
             
-            // Загружаем приёмщиков
-            fetch(url + 'Приёмщики' + '&range=B2:B')
+            fetch(CSV_BASE + GID_EMPLOYEES)
                 .then(r => r.text())
                 .then(csv => {
                     employeesData = parseCSV(csv);
@@ -154,7 +142,7 @@
                 })
                 .catch(e => {
                     console.log('Приёмщики не загружены:', e);
-                    setStatus('Готов к работе');
+                    setStatus('Готов к работе (справочники не загружены)');
                 });
         }
 
@@ -162,9 +150,21 @@
             var lines = csv.trim().split('\n');
             var result = [];
             for (var i = 0; i < lines.length; i++) {
-                var cells = lines[i].split(',');
-                // Убираем кавычки
-                cells = cells.map(function(c) { return c.replace(/^"|"$/g, '').trim(); });
+                var cells = [];
+                var current = '';
+                var inQuotes = false;
+                for (var j = 0; j < lines[i].length; j++) {
+                    var ch = lines[i][j];
+                    if (ch === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (ch === ',' && !inQuotes) {
+                        cells.push(current.trim());
+                        current = '';
+                    } else {
+                        current += ch;
+                    }
+                }
+                cells.push(current.trim());
                 result.push(cells);
             }
             return result;
@@ -175,28 +175,34 @@
             sel.innerHTML = '<option value="">-- Выберите компанию --</option>';
             var names = [];
             companiesData.forEach(function(row) {
-                if (row[0] && names.indexOf(row[0]) === -1) {
+                if (row[0] && names.indexOf(row[0]) === -1 && row[0].length > 1) {
                     names.push(row[0]);
                     sel.innerHTML += '<option value="' + escapeHtml(row[0]) + '">' + escapeHtml(row[0]) + '</option>';
                 }
             });
+            if (names.length === 0) {
+                sel.innerHTML = '<option value="">-- Нет данных. Добавьте вручную --</option>';
+            }
         }
 
         function updateEmployeeList() {
             var sel = document.getElementById('employeeSelect');
             sel.innerHTML = '<option value="">-- Выберите --</option>';
             employeesData.forEach(function(row) {
-                if (row[0]) {
+                if (row[0] && row[0].length > 1) {
                     sel.innerHTML += '<option value="' + escapeHtml(row[0]) + '">' + escapeHtml(row[0]) + '</option>';
                 }
             });
+            if (employeesData.length === 0 || (employeesData.length === 1 && !employeesData[0][0])) {
+                sel.innerHTML = '<option value="">-- Нет данных --</option>';
+            }
         }
 
         function updateTypeSuggestions() {
             var list = document.getElementById('typeList');
             var types = [];
             typesData.forEach(function(row) {
-                if (row[1] && types.indexOf(row[1]) === -1) {
+                if (row[1] && types.indexOf(row[1]) === -1 && row[1].length > 1) {
                     types.push(row[1]);
                 }
             });
@@ -206,26 +212,31 @@
             });
         }
 
-        // Поиск типа по названию
         function findTypeByName(name) {
             if (!name) return '';
-            var nameLower = name.toLowerCase().trim();
-            for (var i = 0; i < typesData.length; i++) {
-                var refName = (typesData[i][0] || '').toLowerCase().trim();
-                if (refName && nameLower.includes(refName) || refName.includes(nameLower)) {
-                    return typesData[i][1] || '';
+            var nameLower = name.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
+            var bestMatch = '';
+            var bestScore = 0;
+            
+            typesData.forEach(function(row) {
+                var refName = (row[0] || '').toLowerCase().replace(/[^a-zа-я0-9]/g, '');
+                if (refName && nameLower.includes(refName)) {
+                    var score = refName.length;
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMatch = row[1] || '';
+                    }
                 }
-            }
-            return '';
+            });
+            
+            return bestMatch;
         }
 
-        // Захват фото
         function capturePhoto(target) {
             var input = document.getElementById('file' + (target === 'name' ? 'Name' : 'Serial'));
             input.click();
         }
 
-        // Обработка фото
         function processPhoto(target) {
             var input = document.getElementById('file' + (target === 'name' ? 'Name' : 'Serial'));
             if (!input.files || !input.files[0]) return;
@@ -233,26 +244,52 @@
             var file = input.files[0];
             var reader = new FileReader();
             
-            // Показываем превью
             reader.onload = function(e) {
+                var fullDataUrl = e.target.result;
+                var base64 = fullDataUrl.split(',')[1];
                 var preview = document.getElementById('preview' + (target === 'name' ? 'Name' : 'Serial'));
-                preview.src = e.target.result;
-                preview.style.display = 'block';
                 
-                // Сохраняем base64
-                if (target === 'name') {
-                    photoTypeBase64 = e.target.result.split(',')[1];
-                } else {
-                    photoSerialBase64 = e.target.result.split(',')[1];
-                }
-                
-                // Запускаем распознавание
-                recognizeText(e.target.result, target);
+                // Сжимаем изображение для превью и распознавания
+                compressImage(fullDataUrl, 800, 0.7, function(compressedDataUrl) {
+                    preview.src = compressedDataUrl;
+                    preview.style.display = 'block';
+                    
+                    // Сохраняем сжатое фото для отправки
+                    var compressedBase64 = compressedDataUrl.split(',')[1];
+                    if (target === 'name') {
+                        photoTypeBase64 = compressedBase64;
+                    } else {
+                        photoSerialBase64 = compressedBase64;
+                    }
+                    
+                    // Распознаём
+                    recognizeText(compressedDataUrl, target);
+                });
             };
             reader.readAsDataURL(file);
         }
 
-        // Распознавание текста
+        function compressImage(dataUrl, maxWidth, quality, callback) {
+            var img = new Image();
+            img.onload = function() {
+                var canvas = document.createElement('canvas');
+                var width = img.width;
+                var height = img.height;
+                
+                if (width > maxWidth) {
+                    height = height * (maxWidth / width);
+                    width = maxWidth;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                callback(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.src = dataUrl;
+        }
+
         function recognizeText(imageDataUrl, target) {
             setStatus('Распознавание...');
             
@@ -263,16 +300,15 @@
                     }
                 }
             }).then(function(result) {
-                var text = result.data.text.trim();
-                console.log('Распознано (' + target + '):', text);
+                var rawText = result.data.text;
+                console.log('Распознано сырое (' + target + '):', rawText);
+                
+                var text = cleanRecognizedText(rawText);
+                console.log('Распознано чистое (' + target + '):', text);
                 
                 if (target === 'name') {
-                    // Заполняем название
-                    var cleanText = cleanRecognizedText(text);
-                    document.getElementById('nameField').value = cleanText;
-                    
-                    // Ищем тип по названию
-                    var foundType = findTypeByName(cleanText);
+                    document.getElementById('nameField').value = text;
+                    var foundType = findTypeByName(text);
                     if (foundType) {
                         document.getElementById('typeField').value = foundType;
                         setStatus('✅ Название и тип определены');
@@ -280,53 +316,59 @@
                         setStatus('✅ Название заполнено. Укажите тип вручную.');
                     }
                 } else if (target === 'serial') {
-                    // Ищем заводской номер
                     var serial = extractSerialNumber(text);
-                    document.getElementById('serialField').value = serial || text;
-                    setStatus(serial ? '✅ Номер распознан' : '⚠️ Проверьте номер');
+                    document.getElementById('serialField').value = serial;
+                    setStatus(serial ? '✅ Номер распознан: ' + serial : '⚠️ Проверьте номер. Распознано: ' + text.substring(0, 30));
                 }
             }).catch(function(error) {
                 console.error('Ошибка распознавания:', error);
-                setStatus('❌ Ошибка распознавания. Попробуйте ещё раз или введите вручную.');
+                setStatus('❌ Ошибка распознавания. Попробуйте ещё раз.');
             });
         }
 
         function cleanRecognizedText(text) {
-            // Убираем лишние пробелы и переносы
-            return text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+            // Удаляем одиночные буквы, мусорные символы, лишние пробелы
+            var cleaned = text
+                .replace(/[^\w\s\-\.\/№а-яА-ЯёЁa-zA-Z0-9]/g, ' ')  // только буквы, цифры, пробел, дефис, точка, слэш, №
+                .replace(/\s+/g, ' ')
+                .trim();
+            
+            // Удаляем строки короче 2 символов (мусор)
+            var parts = cleaned.split(' ').filter(function(p) { return p.length >= 2; });
+            return parts.join(' ');
         }
 
         function extractSerialNumber(text) {
-            // Ищем паттерны заводских номеров
+            // Паттерны заводского номера
             var patterns = [
-                /(?:№|SN|зав\.?\s*№?|заводской\s*№?)\s*[:=\s]*([A-Za-zА-Яа-я0-9\-\.\/]+)/i,
-                /\b(\d{4,})\b/,
-                /([A-Z]{2}\d{4,})/i
+                /(?:№|SN|зав\.?\s*№?|заводской\s*№?|сер\.?\s*№?)\s*[:=\-\s]*\s*([A-Za-zА-Яа-я0-9\-\.\/]{3,})/i,
+                /(?:номер|number)\s*[:=\-\s]*\s*([A-Za-zА-Яа-я0-9\-\.\/]{3,})/i,
+                /\b(\d{5,})\b/,
+                /\b([A-Z]{1,3}\s*\d{4,})\b/
             ];
             
             for (var i = 0; i < patterns.length; i++) {
                 var match = text.match(patterns[i]);
                 if (match && match[1]) {
-                    return match[1];
+                    return match[1].trim();
                 }
             }
             
+            // Если ничего не подошло — возвращаем весь текст (вдруг номер — это и есть всё)
             return text;
         }
 
-        // Добавление компании
         function addCompany() {
             var name = prompt('Введите название новой компании:');
             if (name && name.trim()) {
                 var sel = document.getElementById('companySelect');
-                sel.innerHTML += '<option value="' + escapeHtml(name.trim()) + '" selected>' + escapeHtml(name.trim()) + '</option>';
-                // Добавляем в массив для будущих отправок
-                companiesData.push([name.trim()]);
-                setStatus('Компания добавлена локально');
+                var trimmed = name.trim();
+                sel.innerHTML += '<option value="' + escapeHtml(trimmed) + '" selected>' + escapeHtml(trimmed) + '</option>';
+                companiesData.push([trimmed]);
+                setStatus('Компания "' + trimmed + '" добавлена');
             }
         }
 
-        // Отправка акта
         function submitAct() {
             var company = document.getElementById('companySelect').value;
             var type = document.getElementById('typeField').value.trim();
@@ -335,7 +377,6 @@
             var note = document.getElementById('noteField').value.trim();
             var employee = document.getElementById('employeeSelect').value;
             
-            // Проверка
             if (!company) { alert('Выберите компанию-сдатчика'); return; }
             if (!name) { alert('Введите или отсканируйте название прибора'); return; }
             if (!type) { alert('Введите или выберите тип прибора'); return; }
@@ -347,7 +388,6 @@
             btn.textContent = 'Отправка...';
             setStatus('Формирование акта и отправка...');
             
-            // Формируем дату
             var now = new Date();
             var dateStr = ('0' + now.getDate()).slice(-2) + '.' + 
                           ('0' + (now.getMonth() + 1)).slice(-2) + '.' + 
@@ -376,8 +416,6 @@
                     setStatus('✅ Акт отправлен на ms-tcentr@mail.ru');
                     btn.textContent = '✓ Отправлено';
                     btn.style.background = '#4CAF50';
-                    
-                    // Сбрасываем фото
                     photoTypeBase64 = '';
                     photoSerialBase64 = '';
                     document.getElementById('previewName').style.display = 'none';
