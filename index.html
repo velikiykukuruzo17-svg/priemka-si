@@ -35,11 +35,17 @@
         /* Видоискатель */
         #viewfinder { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; }
         #viewfinder video { width: 100%; height: 100%; object-fit: cover; }
-        #viewfinder .frame { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; height: 60%; border: 3px solid #4CAF50; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); }
-        #viewfinder .btn-capture { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 50%; background: #fff; border: 4px solid #4CAF50; cursor: pointer; z-index: 10001; }
+        #viewfinder .frame { position: absolute; border: 3px solid #4CAF50; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); pointer-events: none; }
+        #viewfinder .btn-capture { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 50%; background: #fff; border: 4px solid #4CAF50; cursor: pointer; z-index: 10001; }
         #viewfinder .btn-capture:active { background: #4CAF50; }
         #viewfinder .btn-close-view { position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.3); border: none; color: #fff; font-size: 24px; cursor: pointer; z-index: 10001; }
-        #viewfinder .hint-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); margin-top: -100px; color: #fff; font-size: 14px; text-align: center; z-index: 10000; pointer-events: none; }
+        
+        /* Кнопки управления рамкой */
+        #viewfinder .controls { position: absolute; bottom: 200px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 5px; z-index: 10001; }
+        #viewfinder .controls .row { display: flex; gap: 5px; align-items: center; }
+        #viewfinder .controls button { width: 40px; height: 40px; border-radius: 8px; border: 2px solid #fff; background: rgba(0,0,0,0.5); color: #fff; font-size: 20px; cursor: pointer; }
+        #viewfinder .controls button:active { background: rgba(255,255,255,0.3); }
+        #viewfinder .controls .btn-plus { width: 60px; }
         
         input[type="file"] { display: none; }
     </style>
@@ -75,9 +81,24 @@
     <!-- Видоискатель -->
     <div id="viewfinder">
         <video id="vfVideo" autoplay playsinline></video>
-        <div class="frame"></div>
-        <div class="hint-text">Наведите рамку на шильду</div>
+        <div class="frame" id="vfFrame"></div>
         <button class="btn-close-view" onclick="closeViewfinder()">✕</button>
+        <div class="controls" id="vfControls">
+            <div class="row">
+                <button onclick="moveFrame(0, -20)">▲</button>
+            </div>
+            <div class="row">
+                <button onclick="moveFrame(-20, 0)">◄</button>
+                <button onclick="resizeFrame(20)" class="btn-plus">+</button>
+                <button onclick="moveFrame(20, 0)">►</button>
+            </div>
+            <div class="row">
+                <button onclick="moveFrame(0, 20)">▼</button>
+            </div>
+            <div class="row">
+                <button onclick="resizeFrame(-20)" class="btn-plus">−</button>
+            </div>
+        </div>
         <button class="btn-capture" onclick="captureFromViewfinder()"></button>
     </div>
 
@@ -98,6 +119,10 @@
         var vfStream = null;
         var vfTarget = null;
         var vfDeviceNum = null;
+        var vfFrameW = 80; // % ширины
+        var vfFrameH = 50; // % высоты
+        var vfFrameX = 50; // % от левого края
+        var vfFrameY = 45; // % от верхнего края
 
         window.addEventListener('load', function() {
             setStatus('Загрузка справочников...', 'loading');
@@ -226,6 +251,14 @@
             vfTarget = target;
             vfDeviceNum = deviceNum;
             
+            // Сброс рамки в центр
+            vfFrameW = 80;
+            vfFrameH = 50;
+            vfFrameX = 50;
+            vfFrameY = 45;
+            
+            updateFramePosition();
+            
             var vf = document.getElementById('viewfinder');
             vf.style.display = 'block';
             
@@ -241,29 +274,49 @@
                 }).catch(function(err) {
                     console.error('Camera error:', err);
                     closeViewfinder();
-                    // Fallback: открываем обычную камеру
-                    capturePhoto(target, deviceNum);
+                    fallbackPhoto(target, deviceNum);
                 });
             } else {
                 closeViewfinder();
-                capturePhoto(target, deviceNum);
+                fallbackPhoto(target, deviceNum);
             }
+        }
+
+        function updateFramePosition() {
+            var frame = document.getElementById('vfFrame');
+            frame.style.width = vfFrameW + '%';
+            frame.style.height = vfFrameH + '%';
+            frame.style.left = (vfFrameX - vfFrameW/2) + '%';
+            frame.style.top = (vfFrameY - vfFrameH/2) + '%';
+        }
+
+        function moveFrame(dx, dy) {
+            vfFrameX = Math.max(vfFrameW/2, Math.min(100 - vfFrameW/2, vfFrameX + dx/10));
+            vfFrameY = Math.max(vfFrameH/2, Math.min(100 - vfFrameH/2, vfFrameY + dy/10));
+            updateFramePosition();
+        }
+
+        function resizeFrame(delta) {
+            var newW = vfFrameW + delta/10;
+            var newH = vfFrameH + delta/10;
+            if (newW >= 20 && newW <= 95) vfFrameW = newW;
+            if (newH >= 15 && newH <= 80) vfFrameH = newH;
+            vfFrameX = Math.max(vfFrameW/2, Math.min(100 - vfFrameW/2, vfFrameX));
+            vfFrameY = Math.max(vfFrameH/2, Math.min(100 - vfFrameH/2, vfFrameY));
+            updateFramePosition();
         }
 
         function captureFromViewfinder() {
             var video = document.getElementById('vfVideo');
             var canvas = document.createElement('canvas');
             
-            // Получаем размеры рамки
-            var frame = document.querySelector('#viewfinder .frame');
+            var frame = document.getElementById('vfFrame');
             var frameRect = frame.getBoundingClientRect();
             var videoRect = video.getBoundingClientRect();
             
-            // Вычисляем масштаб
             var scaleX = video.videoWidth / videoRect.width;
             var scaleY = video.videoHeight / videoRect.height;
             
-            // Область кадра по рамке
             var sx = (frameRect.left - videoRect.left) * scaleX;
             var sy = (frameRect.top - videoRect.top) * scaleY;
             var sw = frameRect.width * scaleX;
@@ -278,7 +331,6 @@
             
             closeViewfinder();
             
-            // Показываем превью и распознаём
             var preview = document.getElementById('preview' + (vfTarget === 'name' ? 'Name' : 'Serial') + vfDeviceNum);
             preview.src = dataUrl;
             preview.style.display = 'block';
@@ -287,24 +339,17 @@
         }
 
         function closeViewfinder() {
-            var vf = document.getElementById('viewfinder');
-            vf.style.display = 'none';
-            
+            document.getElementById('viewfinder').style.display = 'none';
             if (vfStream) {
                 vfStream.getTracks().forEach(function(track) { track.stop(); });
                 vfStream = null;
             }
-            
-            var video = document.getElementById('vfVideo');
-            video.srcObject = null;
-            
+            document.getElementById('vfVideo').srcObject = null;
             vfTarget = null;
             vfDeviceNum = null;
         }
-        // ========== /ВИДОИСКАТЕЛЬ ==========
 
-        function capturePhoto(target, deviceNum) {
-            // Резервный метод через стандартную камеру
+        function fallbackPhoto(target, deviceNum) {
             var input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
@@ -322,6 +367,7 @@
             };
             input.click();
         }
+        // ========== /ВИДОИСКАТЕЛЬ ==========
 
         function recognizeText(dataUrl, target, deviceNum) {
             setStatus('Распознавание...', 'loading');
@@ -332,7 +378,6 @@
                 }
             }).then(function(result) {
                 var text = cleanText(result.data.text);
-                
                 if (target === 'name') {
                     var nameText = extractName(text);
                     document.getElementById('nameField' + deviceNum).value = nameText;
