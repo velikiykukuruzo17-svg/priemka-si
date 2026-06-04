@@ -103,11 +103,13 @@
         var typesData = [], deviceCounter = 0, cameraStream = null, currentCameraTarget = null, currentCameraDevice = null;
         var frameSettings = JSON.parse(localStorage.getItem('cameraFrame') || '{"top":"35%","width":"80%","height":"80px"}');
         var settings = JSON.parse(localStorage.getItem('appSettings') || '{"email":"ms-tcentr@mail.ru"}');
+        var CACHE_KEY = 'dictionariesCache';
+        var CACHE_TTL = 30 * 60 * 1000; // 30 минут
 
         window.addEventListener('load', function() {
             document.getElementById('settingsEmail').value = settings.email;
             document.getElementById('statusEmail').textContent = settings.email;
-            setStatus('Загрузка справочников...', 'loading');
+            setStatus('Загрузка...', 'loading');
             loadDictionaries();
             addDevice();
         });
@@ -125,17 +127,55 @@
         }
 
         function loadDictionaries() {
+            // Пробуем загрузить из кеша
+            var cached = localStorage.getItem(CACHE_KEY);
+            if (cached) {
+                try {
+                    var data = JSON.parse(cached);
+                    if (data.timestamp && (Date.now() - data.timestamp) < CACHE_TTL) {
+                        typesData = data.types;
+                        updateSelect('companySelect', data.companies, 0);
+                        updateSelect('employeeSelect', data.employees, 1);
+                        setStatus('✅ Готово (из кеша)', 'success');
+                        // Фоновое обновление
+                        fetchDictionaries(false);
+                        return;
+                    }
+                } catch(e) {}
+            }
+            // Загружаем с сервера
+            fetchDictionaries(true);
+        }
+
+        function fetchDictionaries(showStatus) {
+            if (showStatus) setStatus('Загрузка справочников...', 'loading');
+            
             Promise.all([
                 fetch(CSV_BASE + GID_TYPES).then(r => r.text()),
                 fetch(CSV_BASE + GID_COMPANIES).then(r => r.text()),
                 fetch(CSV_BASE + GID_EMPLOYEES).then(r => r.text())
             ]).then(function(results) {
                 typesData = parseCSV(results[0]);
-                updateSelect('companySelect', parseCSV(results[1]), 0);
-                updateSelect('employeeSelect', parseCSV(results[2]), 1);
-                setStatus('✅ Готов к работе', 'success');
-            }).catch(function() { setStatus('⚠️ Ошибка справочников', 'error'); });
+                var companies = parseCSV(results[1]);
+                var employees = parseCSV(results[2]);
+                
+                updateSelect('companySelect', companies, 0);
+                updateSelect('employeeSelect', employees, 1);
+                
+                // Сохраняем в кеш
+                localStorage.setItem(CACHE_KEY, JSON.stringify({
+                    timestamp: Date.now(),
+                    types: typesData,
+                    companies: companies,
+                    employees: employees
+                }));
+                
+                if (showStatus) setStatus('✅ Готов к работе', 'success');
+            }).catch(function() {
+                if (showStatus) setStatus('⚠️ Ошибка справочников', 'error');
+            });
         }
+
         function parseCSV(csv) {
             var lines = csv.trim().split('\n'), result = [];
             for (var i = 1; i < lines.length; i++) {
@@ -151,16 +191,19 @@
             }
             return result;
         }
+
         function updateSelect(id, data, col) {
             var sel = document.getElementById(id); sel.innerHTML = '<option value="">-- Выберите --</option>';
             var names = [];
             data.forEach(function(r) { var v = r[col] || r[0] || ''; if (v && names.indexOf(v) === -1) { names.push(v); sel.innerHTML += '<option value="' + esc(v) + '">' + esc(v) + '</option>'; } });
         }
+
         function getTypeNames() {
             var names = [];
             typesData.forEach(function(r) { var n = r[1] || r[0] || ''; if (n && names.indexOf(n) === -1) names.push(n); });
             return names;
         }
+
         function addDevice() {
             deviceCounter++;
             var b = document.createElement('div'); b.className = 'device-block'; b.id = 'device' + deviceCounter;
@@ -175,11 +218,13 @@
             }
             document.getElementById('devicesContainer').appendChild(b); renumberDevices();
         }
+
         function removeDevice(id) { var b = document.getElementById(id); if (b) b.remove(); renumberDevices(); }
         function renumberDevices() {
             var blocks = document.querySelectorAll('.device-block'); deviceCounter = blocks.length;
             blocks.forEach(function(b, i) { b.id = 'device' + (i+1); var s = b.querySelector('.device-number'); if (s) s.textContent = i+1; });
         }
+
         function filterAutocomplete(deviceNum) {
             var input = document.getElementById('nameField' + deviceNum), list = document.getElementById('autocompleteList' + deviceNum);
             var filter = input.value.toLowerCase(), names = getTypeNames();
@@ -190,11 +235,13 @@
             matches.slice(0,20).forEach(function(n) { list.innerHTML += '<li data-name="'+esc(n)+'" onmousedown="selectAutocomplete('+deviceNum+',\''+esc(n)+'\')">'+esc(n)+'</li>'; });
             list.style.display = 'block';
         }
+
         function selectAutocomplete(deviceNum, name) {
             document.getElementById('nameField' + deviceNum).value = name;
             document.getElementById('autocompleteList' + deviceNum).style.display = 'none';
             var ft = findTypeByName(name); if (ft) document.getElementById('typeField' + deviceNum).value = ft;
         }
+
         function hideAutocomplete(deviceNum) { setTimeout(function() { document.getElementById('autocompleteList' + deviceNum).style.display = 'none'; }, 200); }
 
         // КАМЕРА
@@ -210,10 +257,12 @@
                 document.getElementById('cameraVideo').srcObject = stream;
             }).catch(function() { closeCamera(); });
         }
+
         function closeCamera() {
             document.getElementById('cameraModal').style.display = 'none';
             if (cameraStream) { cameraStream.getTracks().forEach(function(t) { t.stop(); }); cameraStream = null; }
         }
+
         function moveFrame(dx, dy) {
             var frame = document.getElementById('cameraFrame');
             var top = parseInt(frame.style.top) || 35;
@@ -222,6 +271,7 @@
             frameSettings.top = frame.style.top;
             localStorage.setItem('cameraFrame', JSON.stringify(frameSettings));
         }
+
         function resizeFrame(dw, dh) {
             var frame = document.getElementById('cameraFrame');
             var w = parseInt(frame.style.width) || 80;
@@ -234,6 +284,7 @@
             frameSettings.height = frame.style.height;
             localStorage.setItem('cameraFrame', JSON.stringify(frameSettings));
         }
+
         function takePhoto() {
             var video = document.getElementById('cameraVideo'), canvas = document.createElement('canvas');
             var frame = document.getElementById('cameraFrame');
@@ -271,6 +322,7 @@
                 }
             }).catch(function() { setStatus('❌ Ошибка распознавания', 'error'); });
         }
+
         function findTypeByName(name) {
             if (!name) return '';
             var nc = name.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
@@ -278,6 +330,7 @@
             typesData.forEach(function(r) { var ref = (r[1]||r[0]||'').toLowerCase().replace(/[^a-zа-я0-9]/g,''); if (ref && nc.includes(ref) && ref.length > bestScore) { bestScore = ref.length; best = r[2]||r[1]||''; } });
             return best;
         }
+
         function cleanText(text) {
             var cleaned = text.replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g, ' ').replace(/\s+/g, ' ').trim();
             var fixes = {'Ду':'ДУ','ду':'ДУ','Ne':'№','Nе':'№','No':'№','зав':'зав','Зав':'зав','KAPAT':'КАРАТ','Kapat':'КАРАТ','карат':'КАРАТ','Карат':'КАРАТ'};
@@ -285,6 +338,7 @@
             for (var i = 0; i < words.length; i++) { if (fixes[words[i]]) words[i] = fixes[words[i]]; }
             return words.join(' ');
         }
+
         function extractName(text) {
             var noSerial = text.replace(/зав\.?\s*[№Nn]\s*\d+/gi, '').replace(/[№Nn]\s*\d+/gi, '');
             var textClean = noSerial.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
@@ -292,14 +346,17 @@
             typesData.forEach(function(r) { var refName = (r[1]||r[0]||'').trim(); if (!refName) return; var firstWord = refName.split(/[\s\-]+/)[0].toLowerCase().replace(/[^a-zа-я0-9]/g,''); if (firstWord.length >= 3 && textClean.indexOf(firstWord) !== -1) { if (refName.length > bestScore) { bestScore = refName.length; bestMatch = refName; } } });
             return bestMatch || noSerial.replace(/\s+/g, ' ').trim();
         }
+
         function extractSerial(text) {
             var m = text.match(/зав\.?\s*[№Nn]\s*(\d[\d\s\-\.\/]*\d)/i) || text.match(/[№Nn]\s*(\d[\d\s\-\.\/]*\d)/i) || text.match(/\b(\d{4,})\b/);
             return m ? m[1].replace(/[^\d]/g, '') : '';
         }
+
         function addCompany() {
             var name = prompt('Введите название компании:');
             if (name && name.trim()) { document.getElementById('companySelect').innerHTML += '<option value="'+esc(name.trim())+'" selected>'+esc(name.trim())+'</option>'; setStatus('Компания добавлена', 'success'); }
         }
+
         function submitAct() {
             var company = document.getElementById('companySelect').value, employee = document.getElementById('employeeSelect').value;
             if (!company || !employee) { alert('Выберите компанию и принявшего'); return; }
@@ -321,6 +378,7 @@
             document.body.appendChild(form); form.submit(); document.body.removeChild(form);
             setTimeout(function() { setStatus('✅ Акт отправлен на ' + settings.email, 'success'); btn.textContent = '✓ Отправлено'; btn.style.background = '#4CAF50'; }, 2000);
         }
+
         function setStatus(msg, cls) { var el = document.getElementById('status'); el.textContent = msg; el.className = 'status'; if (cls) el.classList.add(cls); }
         function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
     </script>
