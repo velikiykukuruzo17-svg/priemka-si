@@ -6,149 +6,408 @@
     <title>Приёмка СИ</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-@@ -30,7 +30,13 @@
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 15px; max-width: 500px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { font-size: 20px; color: #333; }
+        .header p { font-size: 12px; color: #888; margin-top: 5px; }
+        .field-group { margin-bottom: 12px; }
+        .field-group label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 4px; }
+        .field-row { display: flex; gap: 6px; }
+        .field-row input, .field-row select { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; background: #fff; }
+        .btn-camera { background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 18px; cursor: pointer; min-width: 46px; flex: 0 0 auto; }
+        .btn-camera:active { background: #388E3C; }
+        .btn-remove { background: #f44336; color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 16px; cursor: pointer; min-width: 46px; flex: 0 0 auto; }
+        .btn-add-device { width: 100%; background: #2196F3; color: #fff; border: none; border-radius: 8px; padding: 14px; font-size: 16px; cursor: pointer; margin: 10px 0; }
+        .btn-submit { width: 100%; background: #FF5722; color: #fff; border: none; border-radius: 8px; padding: 16px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-submit:active { background: #E64A19; }
+        .btn-submit:disabled { background: #ccc; }
+        .device-block { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 12px; margin-bottom: 12px; position: relative; }
+        .device-block .device-title { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 8px; }
+        .device-block .device-number { background: #eee; border-radius: 50%; width: 24px; height: 24px; display: inline-block; text-align: center; line-height: 24px; font-size: 13px; margin-right: 6px; }
+        .preview { width: 100%; max-height: 150px; object-fit: contain; margin-top: 4px; border-radius: 8px; display: none; }
+        .status { text-align: center; margin-top: 15px; font-size: 13px; color: #666; min-height: 20px; }
+        .status.success { color: #4CAF50; }
+        .status.error { color: #f44336; }
+        .status.loading { color: #FF9800; }
+        .hint { font-size: 11px; color: #999; margin-top: 3px; text-align: center; }
         .section-title { font-size: 14px; color: #888; margin: 15px 0 8px; border-top: 1px solid #ddd; padding-top: 12px; }
         input[type="file"] { display: none; }
-
-        /* Настройки */
-        /* Выпадающий список с поиском */
-        .autocomplete-wrap { position: relative; flex: 1; }
-        .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: #fff; border: 1px solid #ddd; border-radius: 0 0 8px 8px; z-index: 100; display: none; list-style: none; }
-        .autocomplete-list li { padding: 10px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #eee; }
-        .autocomplete-list li:hover, .autocomplete-list li.active { background: #E3F2FD; }
-        .autocomplete-list li:last-child { border-bottom: none; }
-
-        #settingsPanel { display: none; background: #fff; border: 1px solid #ddd; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        #settingsPanel h3 { margin-bottom: 12px; }
-        #settingsPanel input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; margin-bottom: 8px; }
-@@ -53,7 +59,6 @@
-        <button class="btn-settings" onclick="toggleSettings()" title="Настройки">⚙️</button>
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 Приёмка средств измерений</h1>
+        <p>ООО МС «ЦЕНТР ИЗМЕРЕНИЙ»</p>
     </div>
 
-    <!-- Панель настроек -->
-    <div id="settingsPanel">
-        <h3>⚙️ Настройки</h3>
-        <label>Email для отправки актов:</label>
-@@ -86,7 +91,7 @@
+    <div class="field-group">
+        <label>Компания-сдатчик:</label>
+        <div class="field-row">
+            <select id="companySelect"><option value="">-- Загрузка... --</option></select>
+            <button class="btn-camera" onclick="addCompany()" title="Добавить" style="font-size:20px;">➕</button>
+        </div>
+    </div>
+
+    <div class="field-group">
+        <label>Кто принял:</label>
+        <select id="employeeSelect"><option value="">-- Загрузка... --</option></select>
+    </div>
+
+    <div class="section-title">Приборы:</div>
+    <div id="devicesContainer"></div>
+
+    <button class="btn-add-device" onclick="addDevice()">➕ Добавить прибор</button>
+
+    <button class="btn-submit" id="submitBtn" onclick="submitAct()">📧 Сформировать акт и отправить</button>
+    <div class="hint">Письмо уйдёт на ms-tcentr@mail.ru</div>
+    <div class="status" id="status"></div>
+
+    <iframe name="hiddenFrame" style="display:none;"></iframe>
 
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
         var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw3PHbAcHAaLmC3cab1HOc7qEiz2erKGfwwQ5GeN2qZbfeid1UbZ3IeYRNA_McNLPuN/exec';
-        var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzfiwWvMDYCcvXfbwg0xtiN1yVdYrX7ZlHvLvk7hmqzxvxLMWDhoDdzHghpwm3YSDOW/exec';
         var CSV_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJLJVjVpDuLsNRjFg9j7X2NHcDtOgmo4lhiC_CTx2S0ox97Hne91SXQ7XtJJxb9OberlzYUrSXijw6/pub?output=csv&gid=';
         var GID_TYPES = '441822937';
         var GID_COMPANIES = '883764981';
-@@ -96,8 +101,6 @@
-        var currentCameraTarget = null, currentCameraDevice = null;
-        var frameDragging = false, frameStartY = 0, frameStartTop = 0;
-        var frameSettings = JSON.parse(localStorage.getItem('cameraFrame') || '{"top":"35%","width":"80%","height":"80px"}');
-        
-        // Настройки
-        var settings = JSON.parse(localStorage.getItem('appSettings') || '{"email":"ms-tcentr@mail.ru"}');
+        var GID_EMPLOYEES = '1294860374';
+
+        var typesData = [];
+        var deviceCounter = 0;
 
         window.addEventListener('load', function() {
-@@ -108,8 +111,8 @@
+            setStatus('Загрузка справочников...', 'loading');
+            loadDictionaries();
+            addDevice();
         });
 
-        function toggleSettings() {
-            var panel = document.getElementById('settingsPanel');
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-            var p = document.getElementById('settingsPanel');
-            p.style.display = p.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function saveSettings() {
-@@ -159,11 +162,25 @@
+        function loadDictionaries() {
+            Promise.all([
+                fetch(CSV_BASE + GID_TYPES).then(r => r.text()),
+                fetch(CSV_BASE + GID_COMPANIES).then(r => r.text()),
+                fetch(CSV_BASE + GID_EMPLOYEES).then(r => r.text())
+            ]).then(function(results) {
+                typesData = parseCSV(results[0]);
+                updateSelect('companySelect', parseCSV(results[1]), 0);
+                updateSelect('employeeSelect', parseCSV(results[2]), 1);
+                setStatus('✅ Готов к работе', 'success');
+            }).catch(function(e) {
+                setStatus('⚠️ Справочники не загружены', 'error');
             });
         }
 
-        function getTypeNames() {
+        function parseCSV(csv) {
+            var lines = csv.trim().split('\n');
+            var result = [];
+            for (var i = 1; i < lines.length; i++) {
+                var cells = [], current = '', inQuotes = false;
+                for (var j = 0; j < lines[i].length; j++) {
+                    var ch = lines[i][j];
+                    if (ch === '"') inQuotes = !inQuotes;
+                    else if (ch === ',' && !inQuotes) { cells.push(current.trim()); current = ''; }
+                    else current += ch;
+                }
+                cells.push(current.trim());
+                if (cells.some(function(c) { return c.length > 0; })) result.push(cells);
+            }
+            return result;
+        }
+
+        function updateSelect(id, data, col) {
+            var sel = document.getElementById(id);
+            sel.innerHTML = '<option value="">-- Выберите --</option>';
             var names = [];
-            typesData.forEach(function(row) {
-                var n = row[1] || row[0] || '';
-                if (n && names.indexOf(n) === -1) names.push(n);
+            data.forEach(function(row) {
+                var val = row[col] || row[0] || '';
+                if (val && names.indexOf(val) === -1) {
+                    names.push(val);
+                    sel.innerHTML += '<option value="' + esc(val) + '">' + esc(val) + '</option>';
+                }
             });
-            return names;
         }
 
         function addDevice() {
             deviceCounter++;
-            var b = document.createElement('div'); b.className = 'device-block'; b.id = 'device' + deviceCounter;
-            b.innerHTML = `<div class="device-title"><span class="device-number">${deviceCounter}</span> Прибор</div>
-                <div class="field-group"><label>📷 Название:</label><div class="field-row"><input type="text" id="nameField${deviceCounter}" placeholder="С рамкой или вручную"><button class="btn-camera" onclick="openCamera('name',${deviceCounter})">📷</button></div><img id="previewName${deviceCounter}" class="preview"></div>
-                <div class="field-group"><label>📷 Название:</label><div class="field-row">
-                    <div class="autocomplete-wrap">
-                        <input type="text" id="nameField${deviceCounter}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${deviceCounter})" onfocus="filterAutocomplete(${deviceCounter})" onblur="hideAutocomplete(${deviceCounter})">
-                        <ul class="autocomplete-list" id="autocompleteList${deviceCounter}"></ul>
+            var container = document.getElementById('devicesContainer');
+            var block = document.createElement('div');
+            block.className = 'device-block';
+            block.id = 'device' + deviceCounter;
+            block.innerHTML = `
+                <div class="device-title"><span class="device-number">${deviceCounter}</span> Прибор</div>
+                <div class="field-group">
+                    <label>📷 Название:</label>
+                    <div class="field-row">
+                        <input type="text" id="nameField${deviceCounter}" placeholder="Отсканируйте или введите">
+                        <button class="btn-camera" onclick="capturePhoto('name', ${deviceCounter})">📷</button>
                     </div>
-                    <button class="btn-camera" onclick="openCamera('name',${deviceCounter})">📷</button></div><img id="previewName${deviceCounter}" class="preview"></div>
-                <div class="field-group"><label>Тип:</label><input type="text" id="typeField${deviceCounter}" placeholder="Авто или вручную" list="typeList" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;"></div>
-                <div class="field-group"><label>📷 Заводской номер:</label><div class="field-row"><input type="text" id="serialField${deviceCounter}" placeholder="С рамкой или вручную"><button class="btn-camera" onclick="openCamera('serial',${deviceCounter})">📷</button></div><img id="previewSerial${deviceCounter}" class="preview"></div>
-                <div class="field-group"><label>Примечание:</label><input type="text" id="noteField${deviceCounter}" placeholder="Состояние..." style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;"></div>`;
-@@ -184,6 +201,44 @@
-            deviceCounter = document.querySelectorAll('.device-block').length;
-        }
-
-        // Автодополнение
-        function filterAutocomplete(deviceNum) {
-            var input = document.getElementById('nameField' + deviceNum);
-            var list = document.getElementById('autocompleteList' + deviceNum);
-            var filter = input.value.toLowerCase();
-            var names = getTypeNames();
+                    <img id="previewName${deviceCounter}" class="preview" alt="Фото названия">
+                    <input type="file" id="fileName${deviceCounter}" accept="image/*" capture="environment" onchange="processPhoto('name', ${deviceCounter})">
+                </div>
+                <div class="field-group">
+                    <label>Тип:</label>
+                    <div class="field-row">
+                        <input type="text" id="typeField${deviceCounter}" placeholder="Авто или вручную" list="typeList">
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>📷 Заводской номер:</label>
+                    <div class="field-row">
+                        <input type="text" id="serialField${deviceCounter}" placeholder="Отсканируйте или введите">
+                        <button class="btn-camera" onclick="capturePhoto('serial', ${deviceCounter})">📷</button>
+                    </div>
+                    <img id="previewSerial${deviceCounter}" class="preview" alt="Фото номера">
+                    <input type="file" id="fileSerial${deviceCounter}" accept="image/*" capture="environment" onchange="processPhoto('serial', ${deviceCounter})">
+                </div>
+                <div class="field-group">
+                    <label>Примечание:</label>
+                    <input type="text" id="noteField${deviceCounter}" placeholder="Состояние, комплектность..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-size:15px;">
+                </div>
+            `;
             
-            list.innerHTML = '';
-            if (!filter && names.length > 0) {
-                names.slice(0, 20).forEach(function(n) {
-                    list.innerHTML += '<li data-name="' + esc(n) + '" onmousedown="selectAutocomplete(' + deviceNum + ',\'' + esc(n) + '\')">' + esc(n) + '</li>';
-                });
-                list.style.display = 'block';
-                return;
+            if (deviceCounter > 1) {
+                var removeBtn = document.createElement('button');
+                removeBtn.className = 'btn-remove';
+                removeBtn.textContent = '🗑️';
+                removeBtn.title = 'Удалить прибор';
+                removeBtn.style.position = 'absolute';
+                removeBtn.style.top = '8px';
+                removeBtn.style.right = '8px';
+                removeBtn.onclick = function() { removeDevice(block.id); };
+                block.appendChild(removeBtn);
             }
             
-            var matches = names.filter(function(n) { return n.toLowerCase().includes(filter); });
-            if (matches.length === 0) { list.style.display = 'none'; return; }
+            container.appendChild(block);
+            renumberDevices();
+        }
+
+        function removeDevice(id) {
+            var block = document.getElementById(id);
+            if (block) block.remove();
+            renumberDevices();
+        }
+
+        function renumberDevices() {
+            var blocks = document.querySelectorAll('.device-block');
+            deviceCounter = blocks.length;
+            blocks.forEach(function(block, index) {
+                var num = index + 1;
+                block.id = 'device' + num;
+                var titleSpan = block.querySelector('.device-number');
+                if (titleSpan) titleSpan.textContent = num;
+            });
+        }
+
+        function findTypeByName(name) {
+            if (!name) return '';
+            var nc = name.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
+            var best = '', bestScore = 0;
+            typesData.forEach(function(row) {
+                var ref = (row[1] || row[0] || '').toLowerCase().replace(/[^a-zа-я0-9]/g, '');
+                if (ref && nc.includes(ref) && ref.length > bestScore) {
+                    bestScore = ref.length;
+                    best = row[2] || row[1] || '';
+                }
+            });
+            return best;
+        }
+
+        function capturePhoto(target, deviceNum) {
+            document.getElementById('file' + (target === 'name' ? 'Name' : 'Serial') + deviceNum).click();
+        }
+
+        function processPhoto(target, deviceNum) {
+            var input = document.getElementById('file' + (target === 'name' ? 'Name' : 'Serial') + deviceNum);
+            if (!input.files || !input.files[0]) return;
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var img = new Image();
+                img.onload = function() {
+                    var canvas = document.createElement('canvas');
+                    var maxW = 1600;
+                    var scale = maxW / img.width;
+                    canvas.width = maxW;
+                    canvas.height = img.height * scale;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    var data = imageData.data;
+                    for (var i = 0; i < data.length; i += 4) {
+                        var gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                        gray = (gray - 128) * 3.0 + 128;
+                        if (gray > 255) gray = 255;
+                        if (gray < 0) gray = 0;
+                        gray = gray > 120 ? 255 : 0;
+                        data[i] = data[i + 1] = data[i + 2] = gray;
+                    }
+                    ctx.putImageData(imageData, 0, 0);
+                    
+                    var processedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    
+                    var preview = document.getElementById('preview' + (target === 'name' ? 'Name' : 'Serial') + deviceNum);
+                    preview.src = processedDataUrl;
+                    preview.style.display = 'block';
+                    
+                    recognizeText(processedDataUrl, target, deviceNum);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+
+        function recognizeText(dataUrl, target, deviceNum) {
+            setStatus('Распознавание...', 'loading');
+            Tesseract.recognize(dataUrl, 'rus+eng', {
+                tessedit_char_whitelist: 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюяABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789№/-. ',
+                logger: function(m) {
+                    if (m.status === 'recognizing text') setStatus('Распознавание: ' + Math.round(m.progress * 100) + '%', 'loading');
+                }
+            }).then(function(result) {
+                var text = cleanText(result.data.text);
+                
+                if (target === 'name') {
+                    var nameText = extractName(text);
+                    document.getElementById('nameField' + deviceNum).value = nameText;
+                    var ft = findTypeByName(nameText);
+                    if (ft) { document.getElementById('typeField' + deviceNum).value = ft; setStatus('✅ Прибор ' + deviceNum + ': ' + nameText, 'success'); }
+                    else setStatus('⚠️ Прибор ' + deviceNum + ': проверьте название', 'error');
+                } else {
+                    var serial = extractSerial(text);
+                    document.getElementById('serialField' + deviceNum).value = serial;
+                    setStatus(serial ? '✅ Прибор ' + deviceNum + ', номер: ' + serial : '⚠️ Прибор ' + deviceNum + ': проверьте номер', serial ? 'success' : 'error');
+                }
+            }).catch(function(e) {
+                setStatus('❌ Ошибка распознавания', 'error');
+            });
+        }
+
+        function cleanText(text) {
+            var cleaned = text.replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g, ' ').replace(/\s+/g, ' ').trim();
+            var fixes = {
+                'Ду':'ДУ','ду':'ДУ','дy':'ДУ','ДY':'ДУ','Dy':'ДУ','dy':'ДУ',
+                'Ne':'№','Nе':'№','No':'№',
+                'зав':'зав','Зав':'зав','ЗАВ':'зав','3ав':'зав',
+                'KAPAT':'КАРАТ','Kapat':'КАРАТ','kapar':'КАРАТ','Карат':'КАРАТ','карат':'КАРАТ',
+                'КАРAT':'КАРАТ','KAPAT':'КАРАТ','КАРАT':'КАРАТ',
+                'КАРАТ-551М-25-0':'КАРАТ-551М-25-0','карат-551м-25-0':'КАРАТ-551М-25-0'
+            };
+            var words = cleaned.split(' ');
+            for (var i = 0; i < words.length; i++) {
+                if (fixes[words[i]]) words[i] = fixes[words[i]];
+            }
+            var result = [];
+            for (var i = 0; i < words.length; i++) {
+                if (words[i].match(/^[КK]$/i) && i+1 < words.length && words[i+1].match(/^[АA]/i)) {
+                    result.push('КАРАТ');
+                    i += 1;
+                } else {
+                    result.push(words[i]);
+                }
+            }
+            return result.join(' ');
+        }
+
+        function extractName(text) {
+            var noSerial = text.replace(/зав\.?\s*[№Nn]\s*\d+/gi, '').replace(/[№Nn]\s*\d+/gi, '');
+            var textClean = noSerial.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
             
-            matches.slice(0, 20).forEach(function(n) {
-                list.innerHTML += '<li data-name="' + esc(n) + '" onmousedown="selectAutocomplete(' + deviceNum + ',\'' + esc(n) + '\')">' + esc(n) + '</li>';
+            var bestMatch = '', bestScore = 0;
+            
+            typesData.forEach(function(row) {
+                var refName = (row[1] || row[0] || '').trim();
+                if (!refName) return;
+                var refWords = refName.split(/[\s\-]+/);
+                var firstWord = refWords[0].toLowerCase().replace(/[^a-zа-я0-9]/g, '');
+                if (firstWord.length >= 3 && textClean.indexOf(firstWord) !== -1) {
+                    if (refName.length > bestScore) { bestScore = refName.length; bestMatch = refName; }
+                }
             });
-            list.style.display = 'block';
+            
+            if (bestMatch) return bestMatch;
+            return noSerial.replace(/\s+/g, ' ').trim();
         }
 
-        function selectAutocomplete(deviceNum, name) {
-            document.getElementById('nameField' + deviceNum).value = name;
-            document.getElementById('autocompleteList' + deviceNum).style.display = 'none';
-            var ft = findTypeByName(name);
-            if (ft) document.getElementById('typeField' + deviceNum).value = ft;
-        }
-
-        function hideAutocomplete(deviceNum) {
-            setTimeout(function() {
-                document.getElementById('autocompleteList' + deviceNum).style.display = 'none';
-            }, 200);
-        }
-
-        function initFrameDrag() {
-            var frame = document.getElementById('cameraFrame');
-            frame.addEventListener('touchstart', function(e) {
-@@ -354,19 +409,15 @@
-            setStatus('Формирование и отправка...', 'loading');
-            var now = new Date(), ds = ('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear();
-            var form = document.createElement('form'); form.method = 'POST'; form.action = SCRIPT_URL; form.target = 'hiddenFrame'; form.style.display = 'none';
-            var fields = [
-                {n:'date',v:ds},{n:'company',v:company},{n:'employee',v:employee},
-                {n:'devices',v:JSON.stringify(devices)},{n:'email',v:settings.email}
+        function extractSerial(text) {
+            var patterns = [
+                /зав\.?\s*[№Nn]\s*[:=\-\s]*\s*(\d[\d\s\-\.\/]*\d)/i,
+                /[№Nn]\s*[:=\-\s]*\s*(\d[\d\s\-\.\/]*\d)/i,
+                /\b(\d{4,})\b/
             ];
-            fields.forEach(function(f) {
-            [{n:'date',v:ds},{n:'company',v:company},{n:'employee',v:employee},{n:'devices',v:JSON.stringify(devices)},{n:'email',v:settings.email}].forEach(function(f) {
-                var i = document.createElement('input'); i.type = 'hidden'; i.name = f.n; i.value = f.v; form.appendChild(i);
-            });
-            document.body.appendChild(form); form.submit(); document.body.removeChild(form);
-            setTimeout(function() { setStatus('✅ Акт отправлен на ' + settings.email, 'success'); btn.textContent = '✓ Отправлено'; btn.style.background = '#4CAF50'; }, 2000);
+            for (var i = 0; i < patterns.length; i++) {
+                var m = text.match(patterns[i]);
+                if (m) return m[1].replace(/[^\d]/g, '');
+            }
+            return '';
         }
 
-        function setStatus(msg, cls) { var el = document.getElementById('status'); el.textContent = msg; el.className = 'status'; if (cls) el.classList.add(cls); }
+        function addCompany() {
+            var name = prompt('Введите название компании:');
+            if (name && name.trim()) {
+                var sel = document.getElementById('companySelect');
+                sel.innerHTML += '<option value="' + esc(name.trim()) + '" selected>' + esc(name.trim()) + '</option>';
+                setStatus('Компания добавлена', 'success');
+            }
+        }
+
+        function submitAct() {
+            var company = document.getElementById('companySelect').value;
+            var employee = document.getElementById('employeeSelect').value;
+            if (!company || !employee) { alert('Выберите компанию и принявшего'); return; }
+
+            var blocks = document.querySelectorAll('.device-block');
+            var devices = [], allValid = true;
+            
+            blocks.forEach(function(block) {
+                var num = block.id.replace('device', '');
+                var type = document.getElementById('typeField' + num)?.value.trim() || '';
+                var name = document.getElementById('nameField' + num)?.value.trim() || '';
+                var serial = document.getElementById('serialField' + num)?.value.trim() || '';
+                var note = document.getElementById('noteField' + num)?.value.trim() || '';
+                if (!name || !type || !serial) { allValid = false; return; }
+                devices.push({ type: type, name: name, serial: serial, note: note });
+            });
+
+            if (!allValid || devices.length === 0) { alert('Заполните все поля для всех приборов'); return; }
+
+            var btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Отправка...';
+            setStatus('Формирование и отправка...', 'loading');
+
+            var now = new Date();
+            var dateStr = ('0' + now.getDate()).slice(-2) + '.' + ('0' + (now.getMonth() + 1)).slice(-2) + '.' + now.getFullYear();
+
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = SCRIPT_URL;
+            form.target = 'hiddenFrame';
+            form.style.display = 'none';
+
+            var fields = { date: dateStr, company: company, employee: employee, devices: JSON.stringify(devices) };
+            Object.keys(fields).forEach(function(key) {
+                var input = document.createElement('input');
+                input.type = 'hidden'; input.name = key; input.value = fields[key];
+                form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+
+            setTimeout(function() {
+                setStatus('✅ Акт отправлен на ms-tcentr@mail.ru', 'success');
+                btn.textContent = '✓ Отправлено';
+                btn.style.background = '#4CAF50';
+            }, 2000);
+        }
+
+        function setStatus(msg, cls) {
+            var el = document.getElementById('status');
+            el.textContent = msg; el.className = 'status';
+            if (cls) el.classList.add(cls);
+        }
+
         function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-        function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
     </script>
 </body>
 </html>
