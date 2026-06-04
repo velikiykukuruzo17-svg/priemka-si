@@ -36,16 +36,15 @@
         #viewfinder { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; }
         #viewfinder video { width: 100%; height: 100%; object-fit: cover; }
         #viewfinder .frame { position: absolute; border: 3px solid #4CAF50; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); pointer-events: none; }
-        #viewfinder .btn-capture { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 50%; background: #fff; border: 4px solid #4CAF50; cursor: pointer; z-index: 10001; }
+        #viewfinder .btn-capture { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 50%; background: #fff; border: 4px solid #4CAF50; cursor: pointer; z-index: 10001; }
         #viewfinder .btn-capture:active { background: #4CAF50; }
         #viewfinder .btn-close-view { position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.3); border: none; color: #fff; font-size: 24px; cursor: pointer; z-index: 10001; }
         
-        /* Кнопки управления рамкой */
-        #viewfinder .controls { position: absolute; bottom: 200px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 5px; z-index: 10001; }
-        #viewfinder .controls .row { display: flex; gap: 5px; align-items: center; }
-        #viewfinder .controls button { width: 40px; height: 40px; border-radius: 8px; border: 2px solid #fff; background: rgba(0,0,0,0.5); color: #fff; font-size: 20px; cursor: pointer; }
+        /* Кнопки управления */
+        #viewfinder .controls { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; z-index: 10001; }
+        #viewfinder .controls .row { display: flex; gap: 4px; align-items: center; }
+        #viewfinder .controls button { width: 40px; height: 40px; border-radius: 8px; border: 2px solid #fff; background: rgba(0,0,0,0.5); color: #fff; font-size: 16px; cursor: pointer; }
         #viewfinder .controls button:active { background: rgba(255,255,255,0.3); }
-        #viewfinder .controls .btn-plus { width: 60px; }
         
         input[type="file"] { display: none; }
     </style>
@@ -85,18 +84,20 @@
         <button class="btn-close-view" onclick="closeViewfinder()">✕</button>
         <div class="controls" id="vfControls">
             <div class="row">
-                <button onclick="moveFrame(0, -20)">▲</button>
+                <button onclick="resizeFrame(0, -3)">↕−</button>
+                <button onclick="moveFrame(0, -5)">▲</button>
+                <button onclick="resizeFrame(0, 3)">↕+</button>
             </div>
             <div class="row">
-                <button onclick="moveFrame(-20, 0)">◄</button>
-                <button onclick="resizeFrame(20)" class="btn-plus">+</button>
-                <button onclick="moveFrame(20, 0)">►</button>
+                <button onclick="resizeFrame(-3, 0)">↔−</button>
+                <button onclick="moveFrame(-5, 0)">◄</button>
+                <button onclick="moveFrame(5, 0)">►</button>
+                <button onclick="resizeFrame(3, 0)">↔+</button>
             </div>
             <div class="row">
-                <button onclick="moveFrame(0, 20)">▼</button>
-            </div>
-            <div class="row">
-                <button onclick="resizeFrame(-20)" class="btn-plus">−</button>
+                <button onclick="resizeFrame(0, -3)">↕−</button>
+                <button onclick="moveFrame(0, 5)">▼</button>
+                <button onclick="resizeFrame(0, 3)">↕+</button>
             </div>
         </div>
         <button class="btn-capture" onclick="captureFromViewfinder()"></button>
@@ -119,10 +120,10 @@
         var vfStream = null;
         var vfTarget = null;
         var vfDeviceNum = null;
-        var vfFrameW = 80; // % ширины
-        var vfFrameH = 50; // % высоты
-        var vfFrameX = 50; // % от левого края
-        var vfFrameY = 45; // % от верхнего края
+        var vfFrameW = 70;
+        var vfFrameH = 40;
+        var vfFrameX = 50;
+        var vfFrameY = 45;
 
         window.addEventListener('load', function() {
             setStatus('Загрузка справочников...', 'loading');
@@ -251,17 +252,14 @@
             vfTarget = target;
             vfDeviceNum = deviceNum;
             
-            // Сброс рамки в центр
-            vfFrameW = 80;
-            vfFrameH = 50;
+            vfFrameW = 70;
+            vfFrameH = 40;
             vfFrameX = 50;
             vfFrameY = 45;
             
             updateFramePosition();
             
-            var vf = document.getElementById('viewfinder');
-            vf.style.display = 'block';
-            
+            document.getElementById('viewfinder').style.display = 'block';
             var video = document.getElementById('vfVideo');
             
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -272,7 +270,6 @@
                     video.srcObject = stream;
                     video.play();
                 }).catch(function(err) {
-                    console.error('Camera error:', err);
                     closeViewfinder();
                     fallbackPhoto(target, deviceNum);
                 });
@@ -291,16 +288,17 @@
         }
 
         function moveFrame(dx, dy) {
-            vfFrameX = Math.max(vfFrameW/2, Math.min(100 - vfFrameW/2, vfFrameX + dx/10));
-            vfFrameY = Math.max(vfFrameH/2, Math.min(100 - vfFrameH/2, vfFrameY + dy/10));
+            var step = 2;
+            vfFrameX = Math.max(vfFrameW/2, Math.min(100 - vfFrameW/2, vfFrameX + dx * step));
+            vfFrameY = Math.max(vfFrameH/2, Math.min(100 - vfFrameH/2, vfFrameY + dy * step));
             updateFramePosition();
         }
 
-        function resizeFrame(delta) {
-            var newW = vfFrameW + delta/10;
-            var newH = vfFrameH + delta/10;
-            if (newW >= 20 && newW <= 95) vfFrameW = newW;
-            if (newH >= 15 && newH <= 80) vfFrameH = newH;
+        function resizeFrame(deltaW, deltaH) {
+            var newW = vfFrameW + deltaW * 2;
+            var newH = vfFrameH + deltaH * 2;
+            if (newW >= 8 && newW <= 95) vfFrameW = newW;
+            if (newH >= 5 && newH <= 85) vfFrameH = newH;
             vfFrameX = Math.max(vfFrameW/2, Math.min(100 - vfFrameW/2, vfFrameX));
             vfFrameY = Math.max(vfFrameH/2, Math.min(100 - vfFrameH/2, vfFrameY));
             updateFramePosition();
