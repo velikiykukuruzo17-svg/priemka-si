@@ -31,6 +31,16 @@
         .status.loading { color: #FF9800; }
         .hint { font-size: 11px; color: #999; margin-top: 3px; text-align: center; }
         .section-title { font-size: 14px; color: #888; margin: 15px 0 8px; border-top: 1px solid #ddd; padding-top: 12px; }
+        
+        /* Видоискатель */
+        #viewfinder { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; }
+        #viewfinder video { width: 100%; height: 100%; object-fit: cover; }
+        #viewfinder .frame { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; height: 60%; border: 3px solid #4CAF50; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); }
+        #viewfinder .btn-capture { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 50%; background: #fff; border: 4px solid #4CAF50; cursor: pointer; z-index: 10001; }
+        #viewfinder .btn-capture:active { background: #4CAF50; }
+        #viewfinder .btn-close-view { position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.3); border: none; color: #fff; font-size: 24px; cursor: pointer; z-index: 10001; }
+        #viewfinder .hint-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); margin-top: -100px; color: #fff; font-size: 14px; text-align: center; z-index: 10000; pointer-events: none; }
+        
         input[type="file"] { display: none; }
     </style>
 </head>
@@ -62,6 +72,15 @@
     <div class="hint">Письмо уйдёт на ms-tcentr@mail.ru</div>
     <div class="status" id="status"></div>
 
+    <!-- Видоискатель -->
+    <div id="viewfinder">
+        <video id="vfVideo" autoplay playsinline></video>
+        <div class="frame"></div>
+        <div class="hint-text">Наведите рамку на шильду</div>
+        <button class="btn-close-view" onclick="closeViewfinder()">✕</button>
+        <button class="btn-capture" onclick="captureFromViewfinder()"></button>
+    </div>
+
     <iframe name="hiddenFrame" style="display:none;"></iframe>
 
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -74,6 +93,11 @@
 
         var typesData = [];
         var deviceCounter = 0;
+        
+        // Видоискатель
+        var vfStream = null;
+        var vfTarget = null;
+        var vfDeviceNum = null;
 
         window.addEventListener('load', function() {
             setStatus('Загрузка справочников...', 'loading');
@@ -139,10 +163,9 @@
                     <label>📷 Название:</label>
                     <div class="field-row">
                         <input type="text" id="nameField${deviceCounter}" placeholder="Отсканируйте или введите">
-                        <button class="btn-camera" onclick="capturePhoto('name', ${deviceCounter})">📷</button>
+                        <button class="btn-camera" onclick="openViewfinder('name', ${deviceCounter})">📷</button>
                     </div>
                     <img id="previewName${deviceCounter}" class="preview" alt="Фото названия">
-                    <input type="file" id="fileName${deviceCounter}" accept="image/*" capture="environment" onchange="processPhoto('name', ${deviceCounter})">
                 </div>
                 <div class="field-group">
                     <label>Тип:</label>
@@ -155,10 +178,9 @@
                     <label>📷 Заводской номер:</label>
                     <div class="field-row">
                         <input type="text" id="serialField${deviceCounter}" placeholder="Отсканируйте или введите">
-                        <button class="btn-camera" onclick="capturePhoto('serial', ${deviceCounter})">📷</button>
+                        <button class="btn-camera" onclick="openViewfinder('serial', ${deviceCounter})">📷</button>
                     </div>
                     <img id="previewSerial${deviceCounter}" class="preview" alt="Фото номера">
-                    <input type="file" id="fileSerial${deviceCounter}" accept="image/*" capture="environment" onchange="processPhoto('serial', ${deviceCounter})">
                 </div>
                 <div class="field-group">
                     <label>Примечание:</label>
@@ -199,62 +221,106 @@
             });
         }
 
-        function findTypeByName(name) {
-            if (!name) return '';
-            var nc = name.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
-            var best = '', bestScore = 0;
-            typesData.forEach(function(row) {
-                var ref = (row[1] || row[0] || '').toLowerCase().replace(/[^a-zа-я0-9]/g, '');
-                if (ref && nc.includes(ref) && ref.length > bestScore) {
-                    bestScore = ref.length;
-                    best = row[2] || row[1] || '';
-                }
-            });
-            return best;
+        // ========== ВИДОИСКАТЕЛЬ ==========
+        function openViewfinder(target, deviceNum) {
+            vfTarget = target;
+            vfDeviceNum = deviceNum;
+            
+            var vf = document.getElementById('viewfinder');
+            vf.style.display = 'block';
+            
+            var video = document.getElementById('vfVideo');
+            
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } 
+                }).then(function(stream) {
+                    vfStream = stream;
+                    video.srcObject = stream;
+                    video.play();
+                }).catch(function(err) {
+                    console.error('Camera error:', err);
+                    closeViewfinder();
+                    // Fallback: открываем обычную камеру
+                    capturePhoto(target, deviceNum);
+                });
+            } else {
+                closeViewfinder();
+                capturePhoto(target, deviceNum);
+            }
         }
+
+        function captureFromViewfinder() {
+            var video = document.getElementById('vfVideo');
+            var canvas = document.createElement('canvas');
+            
+            // Получаем размеры рамки
+            var frame = document.querySelector('#viewfinder .frame');
+            var frameRect = frame.getBoundingClientRect();
+            var videoRect = video.getBoundingClientRect();
+            
+            // Вычисляем масштаб
+            var scaleX = video.videoWidth / videoRect.width;
+            var scaleY = video.videoHeight / videoRect.height;
+            
+            // Область кадра по рамке
+            var sx = (frameRect.left - videoRect.left) * scaleX;
+            var sy = (frameRect.top - videoRect.top) * scaleY;
+            var sw = frameRect.width * scaleX;
+            var sh = frameRect.height * scaleY;
+            
+            canvas.width = sw;
+            canvas.height = sh;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
+            
+            var dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            
+            closeViewfinder();
+            
+            // Показываем превью и распознаём
+            var preview = document.getElementById('preview' + (vfTarget === 'name' ? 'Name' : 'Serial') + vfDeviceNum);
+            preview.src = dataUrl;
+            preview.style.display = 'block';
+            
+            recognizeText(dataUrl, vfTarget, vfDeviceNum);
+        }
+
+        function closeViewfinder() {
+            var vf = document.getElementById('viewfinder');
+            vf.style.display = 'none';
+            
+            if (vfStream) {
+                vfStream.getTracks().forEach(function(track) { track.stop(); });
+                vfStream = null;
+            }
+            
+            var video = document.getElementById('vfVideo');
+            video.srcObject = null;
+            
+            vfTarget = null;
+            vfDeviceNum = null;
+        }
+        // ========== /ВИДОИСКАТЕЛЬ ==========
 
         function capturePhoto(target, deviceNum) {
-            document.getElementById('file' + (target === 'name' ? 'Name' : 'Serial') + deviceNum).click();
-        }
-
-        function processPhoto(target, deviceNum) {
-            var input = document.getElementById('file' + (target === 'name' ? 'Name' : 'Serial') + deviceNum);
-            if (!input.files || !input.files[0]) return;
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var img = new Image();
-                img.onload = function() {
-                    var canvas = document.createElement('canvas');
-                    var maxW = 1600;
-                    var scale = maxW / img.width;
-                    canvas.width = maxW;
-                    canvas.height = img.height * scale;
-                    var ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
-                    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    var data = imageData.data;
-                    for (var i = 0; i < data.length; i += 4) {
-                        var gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-                        gray = (gray - 128) * 3.0 + 128;
-                        if (gray > 255) gray = 255;
-                        if (gray < 0) gray = 0;
-                        gray = gray > 120 ? 255 : 0;
-                        data[i] = data[i + 1] = data[i + 2] = gray;
-                    }
-                    ctx.putImageData(imageData, 0, 0);
-                    
-                    var processedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-                    
+            // Резервный метод через стандартную камеру
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.capture = 'environment';
+            input.onchange = function() {
+                if (!input.files || !input.files[0]) return;
+                var reader = new FileReader();
+                reader.onload = function(e) {
                     var preview = document.getElementById('preview' + (target === 'name' ? 'Name' : 'Serial') + deviceNum);
-                    preview.src = processedDataUrl;
+                    preview.src = e.target.result;
                     preview.style.display = 'block';
-                    
-                    recognizeText(processedDataUrl, target, deviceNum);
+                    recognizeText(e.target.result, target, deviceNum);
                 };
-                img.src = e.target.result;
+                reader.readAsDataURL(input.files[0]);
             };
-            reader.readAsDataURL(input.files[0]);
+            input.click();
         }
 
         function recognizeText(dataUrl, target, deviceNum) {
@@ -272,7 +338,7 @@
                     document.getElementById('nameField' + deviceNum).value = nameText;
                     var ft = findTypeByName(nameText);
                     if (ft) { document.getElementById('typeField' + deviceNum).value = ft; setStatus('✅ Прибор ' + deviceNum + ': ' + nameText, 'success'); }
-                    else setStatus('⚠️ Прибор ' + deviceNum + ': проверьте название. Было: ' + text.substring(0, 50), 'error');
+                    else setStatus('⚠️ Прибор ' + deviceNum + ': проверьте название', 'error');
                 } else {
                     var serial = extractSerial(text);
                     document.getElementById('serialField' + deviceNum).value = serial;
@@ -283,67 +349,51 @@
             });
         }
 
+        function findTypeByName(name) {
+            if (!name) return '';
+            var nc = name.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
+            var best = '', bestScore = 0;
+            typesData.forEach(function(row) {
+                var ref = (row[1] || row[0] || '').toLowerCase().replace(/[^a-zа-я0-9]/g, '');
+                if (ref && nc.includes(ref) && ref.length > bestScore) {
+                    bestScore = ref.length;
+                    best = row[2] || row[1] || '';
+                }
+            });
+            return best;
+        }
+
         function cleanText(text) {
-            var preCleaned = text.replace(/(\d)\.(\d)/g, '$1-$2');
-            var cleaned = preCleaned.replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g, ' ').replace(/\s+/g, ' ').trim();
-            
+            var cleaned = text.replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g, ' ').replace(/\s+/g, ' ').trim();
             var fixes = {
-                'Ду':'ДУ','ду':'ДУ','дy':'ДУ','ДY':'ДУ','Dy':'ДУ','dy':'ДУ',
-                'Ne':'№','Nе':'№','No':'№',
-                'зав':'зав','Зав':'зав','ЗАВ':'зав','3ав':'зав',
-                'KAPAT':'КАРАТ','Kapat':'КАРАТ','kapar':'КАРАТ','Карат':'КАРАТ','карат':'КАРАТ',
-                'КАРAT':'КАРАТ','КАРАT':'КАРАТ'
+                'Ду':'ДУ','ду':'ДУ','Ne':'№','Nе':'№','No':'№',
+                'зав':'зав','Зав':'зав','KAPAT':'КАРАТ','Kapat':'КАРАТ','карат':'КАРАТ','Карат':'КАРАТ'
             };
-            
             var words = cleaned.split(' ');
             for (var i = 0; i < words.length; i++) {
                 if (fixes[words[i]]) words[i] = fixes[words[i]];
             }
-            
-            var result = [];
-            for (var i = 0; i < words.length; i++) {
-                if (words[i].match(/^[КK]$/i) && i+1 < words.length && words[i+1].match(/^[АA]/i)) {
-                    result.push('КАРАТ');
-                    i += 1;
-                } else {
-                    result.push(words[i]);
-                }
-            }
-            
-            return result.join(' ');
+            return words.join(' ');
         }
 
         function extractName(text) {
             var noSerial = text.replace(/зав\.?\s*[№Nn]\s*\d+/gi, '').replace(/[№Nn]\s*\d+/gi, '');
             var textClean = noSerial.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
-            
             var bestMatch = '', bestScore = 0;
-            
             typesData.forEach(function(row) {
                 var refName = (row[1] || row[0] || '').trim();
                 if (!refName) return;
-                var refWords = refName.split(/[\s\-]+/);
-                var firstWord = refWords[0].toLowerCase().replace(/[^a-zа-я0-9]/g, '');
+                var firstWord = refName.split(/[\s\-]+/)[0].toLowerCase().replace(/[^a-zа-я0-9]/g, '');
                 if (firstWord.length >= 3 && textClean.indexOf(firstWord) !== -1) {
                     if (refName.length > bestScore) { bestScore = refName.length; bestMatch = refName; }
                 }
             });
-            
-            if (bestMatch) return bestMatch;
-            return noSerial.replace(/\s+/g, ' ').trim();
+            return bestMatch || noSerial.replace(/\s+/g, ' ').trim();
         }
 
         function extractSerial(text) {
-            var patterns = [
-                /зав\.?\s*[№Nn]\s*[:=\-\s]*\s*(\d[\d\s\-\.\/]*\d)/i,
-                /[№Nn]\s*[:=\-\s]*\s*(\d[\d\s\-\.\/]*\d)/i,
-                /\b(\d{4,})\b/
-            ];
-            for (var i = 0; i < patterns.length; i++) {
-                var m = text.match(patterns[i]);
-                if (m) return m[1].replace(/[^\d]/g, '');
-            }
-            return '';
+            var m = text.match(/зав\.?\s*[№Nn]\s*(\d[\d\s\-\.\/]*\d)/i) || text.match(/[№Nn]\s*(\d[\d\s\-\.\/]*\d)/i) || text.match(/\b(\d{4,})\b/);
+            return m ? m[1].replace(/[^\d]/g, '') : '';
         }
 
         function addCompany() {
@@ -362,7 +412,6 @@
 
             var blocks = document.querySelectorAll('.device-block');
             var devices = [], allValid = true;
-            
             blocks.forEach(function(block) {
                 var num = block.id.replace('device', '');
                 var type = document.getElementById('typeField' + num)?.value.trim() || '';
@@ -372,38 +421,28 @@
                 if (!name || !type || !serial) { allValid = false; return; }
                 devices.push({ type: type, name: name, serial: serial, note: note });
             });
-
             if (!allValid || devices.length === 0) { alert('Заполните все поля для всех приборов'); return; }
 
             var btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.textContent = 'Отправка...';
+            btn.disabled = true; btn.textContent = 'Отправка...';
             setStatus('Формирование и отправка...', 'loading');
 
             var now = new Date();
             var dateStr = ('0' + now.getDate()).slice(-2) + '.' + ('0' + (now.getMonth() + 1)).slice(-2) + '.' + now.getFullYear();
 
             var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = SCRIPT_URL;
-            form.target = 'hiddenFrame';
-            form.style.display = 'none';
-
+            form.method = 'POST'; form.action = SCRIPT_URL; form.target = 'hiddenFrame'; form.style.display = 'none';
             var fields = { date: dateStr, company: company, employee: employee, devices: JSON.stringify(devices) };
             Object.keys(fields).forEach(function(key) {
                 var input = document.createElement('input');
                 input.type = 'hidden'; input.name = key; input.value = fields[key];
                 form.appendChild(input);
             });
-
-            document.body.appendChild(form);
-            form.submit();
-            document.body.removeChild(form);
+            document.body.appendChild(form); form.submit(); document.body.removeChild(form);
 
             setTimeout(function() {
                 setStatus('✅ Акт отправлен на ms-tcentr@mail.ru', 'success');
-                btn.textContent = '✓ Отправлено';
-                btn.style.background = '#4CAF50';
+                btn.textContent = '✓ Отправлено'; btn.style.background = '#4CAF50';
             }, 2000);
         }
 
