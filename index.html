@@ -40,10 +40,9 @@
         #viewfinder .btn-capture:active { background: #4CAF50; }
         #viewfinder .btn-close-view { position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.3); border: none; color: #fff; font-size: 24px; cursor: pointer; z-index: 10001; }
         
-        /* Кнопки управления */
-        #viewfinder .controls { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; z-index: 10001; }
-        #viewfinder .controls .row { display: flex; gap: 4px; align-items: center; }
-        #viewfinder .controls button { width: 40px; height: 40px; border-radius: 8px; border: 2px solid #fff; background: rgba(0,0,0,0.5); color: #fff; font-size: 16px; cursor: pointer; }
+        /* Кнопки управления — один ряд */
+        #viewfinder .controls { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); display: flex; gap: 3px; z-index: 10001; flex-wrap: wrap; justify-content: center; }
+        #viewfinder .controls button { width: 36px; height: 36px; border-radius: 6px; border: 2px solid #fff; background: rgba(0,0,0,0.5); color: #fff; font-size: 14px; cursor: pointer; padding: 0; }
         #viewfinder .controls button:active { background: rgba(255,255,255,0.3); }
         
         input[type="file"] { display: none; }
@@ -83,22 +82,14 @@
         <div class="frame" id="vfFrame"></div>
         <button class="btn-close-view" onclick="closeViewfinder()">✕</button>
         <div class="controls" id="vfControls">
-            <div class="row">
-                <button onclick="resizeFrame(0, -3)">↕−</button>
-                <button onclick="moveFrame(0, -5)">▲</button>
-                <button onclick="resizeFrame(0, 3)">↕+</button>
-            </div>
-            <div class="row">
-                <button onclick="resizeFrame(-3, 0)">↔−</button>
-                <button onclick="moveFrame(-5, 0)">◄</button>
-                <button onclick="moveFrame(5, 0)">►</button>
-                <button onclick="resizeFrame(3, 0)">↔+</button>
-            </div>
-            <div class="row">
-                <button onclick="resizeFrame(0, -3)">↕−</button>
-                <button onclick="moveFrame(0, 5)">▼</button>
-                <button onclick="resizeFrame(0, 3)">↕+</button>
-            </div>
+            <button onclick="resizeFrame(-2, 0)">↔−</button>
+            <button onclick="moveFrame(-3, 0)">◄</button>
+            <button onclick="resizeFrame(0, -2)">↕−</button>
+            <button onclick="moveFrame(0, -3)">▲</button>
+            <button onclick="moveFrame(0, 3)">▼</button>
+            <button onclick="resizeFrame(0, 2)">↕+</button>
+            <button onclick="moveFrame(3, 0)">►</button>
+            <button onclick="resizeFrame(2, 0)">↔+</button>
         </div>
         <button class="btn-capture" onclick="captureFromViewfinder()"></button>
     </div>
@@ -116,14 +107,15 @@
         var typesData = [];
         var deviceCounter = 0;
         
-        // Видоискатель
         var vfStream = null;
         var vfTarget = null;
         var vfDeviceNum = null;
-        var vfFrameW = 70;
-        var vfFrameH = 40;
-        var vfFrameX = 50;
-        var vfFrameY = 45;
+        
+        // Загружаем сохранённые размеры рамки или defaults
+        var vfFrameW = parseFloat(localStorage.getItem('vfFrameW')) || 60;
+        var vfFrameH = parseFloat(localStorage.getItem('vfFrameH')) || 30;
+        var vfFrameX = parseFloat(localStorage.getItem('vfFrameX')) || 50;
+        var vfFrameY = parseFloat(localStorage.getItem('vfFrameY')) || 45;
 
         window.addEventListener('load', function() {
             setStatus('Загрузка справочников...', 'loading');
@@ -247,15 +239,9 @@
             });
         }
 
-        // ========== ВИДОИСКАТЕЛЬ ==========
         function openViewfinder(target, deviceNum) {
             vfTarget = target;
             vfDeviceNum = deviceNum;
-            
-            vfFrameW = 70;
-            vfFrameH = 40;
-            vfFrameX = 50;
-            vfFrameY = 45;
             
             updateFramePosition();
             
@@ -287,21 +273,29 @@
             frame.style.top = (vfFrameY - vfFrameH/2) + '%';
         }
 
+        function saveFramePosition() {
+            localStorage.setItem('vfFrameW', vfFrameW);
+            localStorage.setItem('vfFrameH', vfFrameH);
+            localStorage.setItem('vfFrameX', vfFrameX);
+            localStorage.setItem('vfFrameY', vfFrameY);
+        }
+
         function moveFrame(dx, dy) {
-            var step = 2;
-            vfFrameX = Math.max(vfFrameW/2, Math.min(100 - vfFrameW/2, vfFrameX + dx * step));
-            vfFrameY = Math.max(vfFrameH/2, Math.min(100 - vfFrameH/2, vfFrameY + dy * step));
+            vfFrameX = Math.max(vfFrameW/2, Math.min(100 - vfFrameW/2, vfFrameX + dx * 2));
+            vfFrameY = Math.max(vfFrameH/2, Math.min(100 - vfFrameH/2, vfFrameY + dy * 2));
             updateFramePosition();
+            saveFramePosition();
         }
 
         function resizeFrame(deltaW, deltaH) {
             var newW = vfFrameW + deltaW * 2;
             var newH = vfFrameH + deltaH * 2;
-            if (newW >= 8 && newW <= 95) vfFrameW = newW;
-            if (newH >= 5 && newH <= 85) vfFrameH = newH;
+            if (newW >= 4 && newW <= 95) vfFrameW = newW;
+            if (newH >= 3 && newH <= 85) vfFrameH = newH;
             vfFrameX = Math.max(vfFrameW/2, Math.min(100 - vfFrameW/2, vfFrameX));
             vfFrameY = Math.max(vfFrameH/2, Math.min(100 - vfFrameH/2, vfFrameY));
             updateFramePosition();
+            saveFramePosition();
         }
 
         function captureFromViewfinder() {
@@ -365,7 +359,6 @@
             };
             input.click();
         }
-        // ========== /ВИДОИСКАТЕЛЬ ==========
 
         function recognizeText(dataUrl, target, deviceNum) {
             setStatus('Распознавание...', 'loading');
