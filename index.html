@@ -67,10 +67,12 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
         var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw3PHbAcHAaLmC3cab1HOc7qEiz2erKGfwwQ5GeN2qZbfeid1UbZ3IeYRNA_McNLPuN/exec';
-        
+        var CSV_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJLJVjVpDuLsNRjFg9j7X2NHcDtOgmo4lhiC_CTx2S0ox97Hne91SXQ7XtJJxb9OberlzYUrSXijw6/pub?output=csv&gid=';
+        var GID_TYPES = '441822937';
+        var GID_COMPANIES = '883764981';
+        var GID_EMPLOYEES = '1294860374';
+
         var typesData = [];
-        var companiesData = [];
-        var employeesData = [];
         var deviceCounter = 0;
 
         window.addEventListener('load', function() {
@@ -80,47 +82,36 @@
         });
 
         function loadDictionaries() {
-            var loaded = 0;
-            var total = 3;
-            
-            function checkDone() {
-                loaded++;
-                if (loaded === total) {
-                    updateSelect('companySelect', companiesData, 0);
-                    updateSelect('employeeSelect', employeesData, 1);
-                    setStatus('✅ Готов к работе', 'success');
+            Promise.all([
+                fetch(CSV_BASE + GID_TYPES).then(r => r.text()),
+                fetch(CSV_BASE + GID_COMPANIES).then(r => r.text()),
+                fetch(CSV_BASE + GID_EMPLOYEES).then(r => r.text())
+            ]).then(function(results) {
+                typesData = parseCSV(results[0]);
+                updateSelect('companySelect', parseCSV(results[1]), 0);
+                updateSelect('employeeSelect', parseCSV(results[2]), 1);
+                setStatus('✅ Готов к работе', 'success');
+            }).catch(function(e) {
+                console.error(e);
+                setStatus('⚠️ Ошибка загрузки справочников', 'error');
+            });
+        }
+
+        function parseCSV(csv) {
+            var lines = csv.trim().split('\n');
+            var result = [];
+            for (var i = 1; i < lines.length; i++) {
+                var cells = [], current = '', inQuotes = false;
+                for (var j = 0; j < lines[i].length; j++) {
+                    var ch = lines[i][j];
+                    if (ch === '"') inQuotes = !inQuotes;
+                    else if (ch === ',' && !inQuotes) { cells.push(current.trim()); current = ''; }
+                    else current += ch;
                 }
+                cells.push(current.trim());
+                if (cells.some(function(c) { return c.length > 0; })) result.push(cells);
             }
-            
-            function loadOne(url, callback) {
-                var xhr = new XMLHttpRequest();
-                xhr.open('GET', url, true);
-                xhr.onload = function() {
-                    if (xhr.status === 200) {
-                        try {
-                            var data = JSON.parse(xhr.responseText);
-                            callback(data);
-                        } catch(e) {
-                            console.error('Parse error:', e);
-                        }
-                    }
-                    checkDone();
-                };
-                xhr.onerror = function() {
-                    console.error('XHR error for ' + url);
-                    checkDone();
-                };
-                xhr.ontimeout = function() {
-                    console.error('Timeout for ' + url);
-                    checkDone();
-                };
-                xhr.timeout = 10000;
-                xhr.send();
-            }
-            
-            loadOne(SCRIPT_URL + '?action=getTypes', function(data) { typesData = data; });
-            loadOne(SCRIPT_URL + '?action=getCompanies', function(data) { companiesData = data; });
-            loadOne(SCRIPT_URL + '?action=getEmployees', function(data) { employeesData = data; });
+            return result;
         }
 
         function updateSelect(id, data, col) {
@@ -301,9 +292,7 @@
                 'Ne':'№','Nе':'№','No':'№',
                 'зав':'зав','Зав':'зав','ЗАВ':'зав','3ав':'зав',
                 'KAPAT':'КАРАТ','Kapat':'КАРАТ','kapar':'КАРАТ','Карат':'КАРАТ','карат':'КАРАТ',
-                'КАРAT':'КАРАТ','KAPAT':'КАРАТ','КАРАT':'КАРАТ',
-                'KAPAT-551M-25-0':'КАРАТ-551М-25-0','KAPAT-551M-25.0':'КАРАТ-551М-25-0',
-                'карат-551м-25-0':'КАРАТ-551М-25-0','карат-551м-25.0':'КАРАТ-551М-25-0'
+                'КАРAT':'КАРАТ','КАРАT':'КАРАТ'
             };
             
             var words = cleaned.split(' ');
