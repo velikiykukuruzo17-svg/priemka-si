@@ -80,22 +80,47 @@
         });
 
         function loadDictionaries() {
-            Promise.all([
-                fetch(SCRIPT_URL + '?action=getTypes').then(r => r.json()),
-                fetch(SCRIPT_URL + '?action=getCompanies').then(r => r.json()),
-                fetch(SCRIPT_URL + '?action=getEmployees').then(r => r.json())
-            ]).then(function(results) {
-                typesData = results[0];
-                companiesData = results[1];
-                employeesData = results[2];
-                
-                updateSelect('companySelect', companiesData, 0);
-                updateSelect('employeeSelect', employeesData, 1);
-                setStatus('✅ Готов к работе', 'success');
-            }).catch(function(e) {
-                console.error(e);
-                setStatus('⚠️ Справочники не загружены', 'error');
-            });
+            var loaded = 0;
+            var total = 3;
+            
+            function checkDone() {
+                loaded++;
+                if (loaded === total) {
+                    updateSelect('companySelect', companiesData, 0);
+                    updateSelect('employeeSelect', employeesData, 1);
+                    setStatus('✅ Готов к работе', 'success');
+                }
+            }
+            
+            function loadOne(url, callback) {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        try {
+                            var data = JSON.parse(xhr.responseText);
+                            callback(data);
+                        } catch(e) {
+                            console.error('Parse error:', e);
+                        }
+                    }
+                    checkDone();
+                };
+                xhr.onerror = function() {
+                    console.error('XHR error for ' + url);
+                    checkDone();
+                };
+                xhr.ontimeout = function() {
+                    console.error('Timeout for ' + url);
+                    checkDone();
+                };
+                xhr.timeout = 10000;
+                xhr.send();
+            }
+            
+            loadOne(SCRIPT_URL + '?action=getTypes', function(data) { typesData = data; });
+            loadOne(SCRIPT_URL + '?action=getCompanies', function(data) { companiesData = data; });
+            loadOne(SCRIPT_URL + '?action=getEmployees', function(data) { employeesData = data; });
         }
 
         function updateSelect(id, data, col) {
