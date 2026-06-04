@@ -125,7 +125,7 @@
         var currentCameraTarget = null, currentCameraDevice = null;
         var frameSettings = JSON.parse(localStorage.getItem('cameraFrame') || '{"top":"35%","width":"80%","height":"80px"}');
         var settings = JSON.parse(localStorage.getItem('appSettings') || '{"email":"ms-tcentr@mail.ru"}');
-        var usedAddresses = []; // Адреса в рамках текущего акта
+        var usedAddresses = [];
 
         window.addEventListener('load', function() {
             setStatus('Загрузка справочников...', 'loading');
@@ -191,7 +191,7 @@
                     usedAddresses = [];
                     act.devices.forEach(function(dev) {
                         deviceCounter++;
-                        var b = createDeviceBlock(deviceCounter);
+                        createDeviceBlock(deviceCounter);
                         document.getElementById('nameField' + deviceCounter).value = dev.name || '';
                         document.getElementById('typeField' + deviceCounter).value = dev.type || '';
                         document.getElementById('serialField' + deviceCounter).value = dev.serial || '';
@@ -228,7 +228,7 @@
         }
 
         function addDevice() { deviceCounter++; createDeviceBlock(deviceCounter); }
-        function removeDevice(id) { document.getElementById(id)?.remove(); renumberDevices(); updateAddressDatalists(); }
+        function removeDevice(id) { var b = document.getElementById(id); if (b) b.remove(); renumberDevices(); updateAddressDatalists(); }
         function renumberDevices() { document.querySelectorAll('.device-block').forEach(function(b,i){ b.id='device'+(i+1); var s=b.querySelector('.device-number'); if(s)s.textContent=i+1; }); deviceCounter=document.querySelectorAll('.device-block').length; }
 
         function checkAKB(deviceNum) {
@@ -240,7 +240,7 @@
                     akbRow.style.display = 'flex';
                 } else {
                     akbRow.style.display = 'none';
-                    document.getElementById('akbCheck' + deviceNum).checked = false;
+                    if (document.getElementById('akbCheck' + deviceNum)) document.getElementById('akbCheck' + deviceNum).checked = false;
                 }
             }
         }
@@ -278,7 +278,6 @@
         function selectAutocomplete(deviceNum,name){ document.getElementById('nameField'+deviceNum).value=name; document.getElementById('autocompleteList'+deviceNum).style.display='none'; var ft=findTypeByName(name); if(ft){document.getElementById('typeField'+deviceNum).value=ft; checkAKB(deviceNum);} }
         function hideAutocomplete(deviceNum){ setTimeout(function(){ document.getElementById('autocompleteList'+deviceNum).style.display='none'; },200); }
 
-        // Камера
         function changeFrameSize(dw,dh){ var frame=document.getElementById('cameraFrame'); var w=frame.offsetWidth+dw*window.innerWidth/100; var h=frame.offsetHeight+dh; if(w<50)w=50; if(w>window.innerWidth*0.95)w=window.innerWidth*0.95; if(h<15)h=15; if(h>350)h=350; frame.style.width=w+'px'; frame.style.height=h+'px'; frame.style.left=((window.innerWidth-w)/2)+'px'; frameSettings.width=(w/window.innerWidth*100)+'%'; frameSettings.height=h+'px'; localStorage.setItem('cameraFrame',JSON.stringify(frameSettings)); }
         function openCamera(target,deviceNum){ currentCameraTarget=target; currentCameraDevice=deviceNum; document.getElementById('cameraOverlay').style.display='block'; var frame=document.getElementById('cameraFrame'); frame.style.top=frameSettings.top; frame.style.width=frameSettings.width; frame.style.height=frameSettings.height; frame.style.left=((100-parseFloat(frameSettings.width))/2)+'%'; var video=document.getElementById('cameraVideo'); if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){ navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}}).then(function(s){cameraStream=s;video.srcObject=s;video.play();}).catch(function(){closeCamera();fallbackToFileInput(target,deviceNum);}); }else{fallbackToFileInput(target,deviceNum);} }
         function captureFromCamera(){ if(!currentCameraTarget||!currentCameraDevice)return; var video=document.getElementById('cameraVideo'),frame=document.getElementById('cameraFrame'); var canvas=document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight; var ctx=canvas.getContext('2d');ctx.drawImage(video,0,0,canvas.width,canvas.height); var vr=video.getBoundingClientRect(),fr=frame.getBoundingClientRect(); var sx=Math.max(0,(fr.left-vr.left)*canvas.width/vr.width); var sy=Math.max(0,(fr.top-vr.top)*canvas.height/vr.height); var sw=Math.min(canvas.width-sx,fr.width*canvas.width/vr.width); var sh=Math.min(canvas.height-sy,fr.height*canvas.height/vr.height); var crop=document.createElement('canvas');crop.width=sw;crop.height=sh; crop.getContext('2d').drawImage(canvas,sx,sy,sw,sh,0,0,sw,sh); var dataUrl=crop.toDataURL('image/jpeg',0.9); document.getElementById('preview'+(currentCameraTarget==='name'?'Name':'Serial')+currentCameraDevice).src=dataUrl; document.getElementById('preview'+(currentCameraTarget==='name'?'Name':'Serial')+currentCameraDevice).style.display='block'; closeCamera(); recognizeText(dataUrl,currentCameraTarget,currentCameraDevice); }
@@ -296,7 +295,18 @@
             var company=document.getElementById('companySelect').value,employee=document.getElementById('employeeSelect').value;
             if(!company||!employee){alert('Выберите компанию и принявшего');return;}
             var devices=[],allValid=true;
-            document.querySelectorAll('.device-block').forEach(function(b){var n=b.id.replace('device','');var t=document.getElementById('typeField'+n)?.value.trim()||'',nm=document.getElementById('nameField'+n)?.value.trim()||'',s=document.getElementById('serialField'+n)?.value.trim()||'',addr=document.getElementById('addressField'+n)?.value.trim()||'',akb=document.getElementById('akbCheck'+n)?.checked||false,nt=document.getElementById('noteField'+n)?.value.trim()||'';if(!nm||!t||!s){allValid=false;return;}devices.push({type:t,name:nm,serial:s,address:addr,akb:akb,note:nt});});
+            document.querySelectorAll('.device-block').forEach(function(b){
+                if (b.offsetParent === null) return;
+                var n=b.id.replace('device','');
+                var t=document.getElementById('typeField'+n)?.value.trim()||'',
+                    nm=document.getElementById('nameField'+n)?.value.trim()||'',
+                    s=document.getElementById('serialField'+n)?.value.trim()||'',
+                    addr=document.getElementById('addressField'+n)?.value.trim()||'',
+                    akb=document.getElementById('akbCheck'+n)?.checked||false,
+                    nt=document.getElementById('noteField'+n)?.value.trim()||'';
+                if(!nm||!t||!s){allValid=false;return;}
+                devices.push({type:t,name:nm,serial:s,address:addr,akb:akb,note:nt});
+            });
             if(!allValid||!devices.length){alert('Заполните обязательные поля (Название, Тип, Заводской номер)');return;}
             var btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='Отправка...';setStatus('Формирование и отправка...','loading');
             var now=new Date(),ds=('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear();
