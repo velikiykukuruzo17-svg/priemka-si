@@ -32,109 +32,15 @@
         .hint { font-size: 11px; color: #999; margin-top: 3px; text-align: center; }
         .section-title { font-size: 14px; color: #888; margin: 15px 0 8px; border-top: 1px solid #ddd; padding-top: 12px; }
         
-        /* НОВЫЙ КОМПАКТНЫЙ СКАНЕР */
-        #viewfinder { 
-            display: none; 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(0,0,0,0.85); 
-            z-index: 9999; 
-            align-items: center; 
-            justify-content: center;
-        }
-        #viewfinder.active {
-            display: flex;
-        }
-        .scanner-container {
-            width: 90%;
-            max-width: 350px;
-            background: #1a1a1a;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-            position: relative;
-        }
-        .scanner-video-wrapper {
-            position: relative;
-            width: 100%;
-            height: 220px;
-            background: #000;
-            overflow: hidden;
-        }
-        #vfVideo { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; 
-        }
-        #vfFrame { 
-            position: absolute; 
-            border: 2px solid #4CAF50; 
-            border-radius: 4px; 
-            box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); 
-            pointer-events: none; 
-            transition: all 0.1s ease;
-        }
-        .scanner-controls {
-            display: flex;
-            gap: 6px;
-            padding: 10px;
-            background: #222;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .scanner-controls button {
-            width: 38px;
-            height: 38px;
-            border-radius: 8px;
-            border: 1px solid #444;
-            background: #333;
-            color: #fff;
-            font-size: 16px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.15s;
-            padding: 0;
-        }
-        .scanner-controls button:active {
-            background: #4CAF50;
-            border-color: #4CAF50;
-            transform: scale(0.95);
-        }
-        .scanner-controls .btn-close-scanner {
-            background: #f44336;
-            border-color: #f44336;
-            font-size: 18px;
-            font-weight: bold;
-            width: 44px;
-        }
-        .scanner-controls .btn-close-scanner:active {
-            background: #d32f2f;
-        }
-        .scanner-controls .btn-scan {
-            background: #4CAF50;
-            border-color: #4CAF50;
-            font-size: 22px;
-            width: 50px;
-            height: 44px;
-        }
-        .scanner-controls .btn-scan:active {
-            background: #388E3C;
-        }
-        .scanner-controls .nav-group {
-            display: flex;
-            gap: 3px;
-        }
-        .scanner-controls .nav-group button {
-            font-size: 14px;
-            width: 34px;
-            height: 34px;
-        }
+        #viewfinder { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; }
+        #viewfinder video { width: 100%; height: 100%; object-fit: cover; }
+        #viewfinder .frame { position: absolute; border: 3px solid #4CAF50; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); }
+        #viewfinder .btn-capture { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; border-radius: 50%; background: #fff; border: 4px solid #4CAF50; cursor: pointer; z-index: 10001; }
+        #viewfinder .btn-capture:active { background: #4CAF50; }
+        #viewfinder .btn-close-view { position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.3); border: none; color: #fff; font-size: 24px; cursor: pointer; z-index: 10001; }
+        #viewfinder .controls { position: absolute; bottom: 130px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; z-index: 10001; }
+        #viewfinder .controls button { width: 38px; height: 38px; border-radius: 8px; border: 2px solid #fff; background: rgba(0,0,0,0.5); color: #fff; font-size: 16px; cursor: pointer; }
+        #viewfinder .controls button:active { background: rgba(255,255,255,0.3); }
         
         input[type="file"] { display: none; }
     </style>
@@ -167,28 +73,21 @@
     <div class="hint">Письмо уйдёт на ms-tcentr@mail.ru</div>
     <div class="status" id="status"></div>
 
-    <!-- КОМПАКТНЫЙ СКАНЕР -->
     <div id="viewfinder">
-        <div class="scanner-container">
-            <div class="scanner-video-wrapper">
-                <video id="vfVideo" autoplay playsinline></video>
-                <div id="vfFrame"></div>
-            </div>
-            <div class="scanner-controls">
-                <button onclick="moveFrame(0, -1)" title="Вверх">▲</button>
-                <div class="nav-group">
-                    <button onclick="moveFrame(-1, 0)" title="Влево">◄</button>
-                    <button onclick="moveFrame(1, 0)" title="Вправо">►</button>
-                </div>
-                <button onclick="moveFrame(0, 1)" title="Вниз">▼</button>
-                <button onclick="resizeFrame(0, -1)" title="Уже">↕</button>
-                <button onclick="resizeFrame(-1, 0)" title="Короче">↔</button>
-                <button onclick="resizeFrame(1, 0)" title="Шире">↔</button>
-                <button onclick="resizeFrame(0, 1)" title="Выше">↕</button>
-                <button class="btn-scan" onclick="captureFromViewfinder()" title="Сканировать">📸</button>
-                <button class="btn-close-scanner" onclick="closeViewfinder()">✕</button>
-            </div>
+        <video id="vfVideo" autoplay playsinline></video>
+        <div class="frame" id="vfFrame"></div>
+        <button class="btn-close-view" onclick="closeViewfinder()">✕</button>
+        <div class="controls">
+            <button onclick="resizeFrame(-2,0)">−</button>
+            <button onclick="moveFrame(0,-3)">▲</button>
+            <button onclick="resizeFrame(0,-2)">−</button>
+            <button onclick="moveFrame(-3,0)">◄</button>
+            <button onclick="resizeFrame(2,0)">+</button>
+            <button onclick="moveFrame(3,0)">►</button>
+            <button onclick="moveFrame(0,3)">▼</button>
+            <button onclick="resizeFrame(0,2)">+</button>
         </div>
+        <button class="btn-capture" onclick="captureFromViewfinder()"></button>
     </div>
 
     <iframe name="hiddenFrame" style="display:none;"></iframe>
@@ -203,10 +102,8 @@
 
         var typesData = [];
         var deviceCounter = 0;
-        var vfStream = null;
-        var vfTarget = null;
-        var vfDeviceNum = null;
-        var vfFrameW = 70, vfFrameH = 25, vfFrameX = 50, vfFrameY = 50;
+        var vfStream = null, vfTarget = null, vfDeviceNum = null;
+        var vfFrameW = 70, vfFrameH = 40, vfFrameX = 50, vfFrameY = 45;
 
         window.addEventListener('load', function() {
             setStatus('Загрузка справочников...', 'loading');
@@ -224,9 +121,7 @@
                 updateSelect('companySelect', parseCSV(results[1]), 0);
                 updateSelect('employeeSelect', parseCSV(results[2]), 1);
                 setStatus('✅ Готов к работе', 'success');
-            }).catch(function(e) {
-                setStatus('⚠️ Ошибка загрузки справочников', 'error');
-            });
+            }).catch(function(e) { setStatus('⚠️ Ошибка загрузки справочников', 'error'); });
         }
 
         function parseCSV(csv) {
@@ -252,94 +147,58 @@
             var names = [];
             data.forEach(function(row) {
                 var val = row[col] || row[0] || '';
-                if (val && names.indexOf(val) === -1) {
-                    names.push(val);
-                    sel.innerHTML += '<option value="' + esc(val) + '">' + esc(val) + '</option>';
-                }
+                if (val && names.indexOf(val) === -1) { names.push(val); sel.innerHTML += '<option value="' + esc(val) + '">' + esc(val) + '</option>'; }
             });
         }
 
         function addDevice() {
             deviceCounter++;
-            var container = document.getElementById('devicesContainer');
-            var block = document.createElement('div');
-            block.className = 'device-block';
-            block.id = 'device' + deviceCounter;
-            block.innerHTML = `
-                <div class="device-title"><span class="device-number">${deviceCounter}</span> Прибор</div>
-                <div class="field-group"><label>📷 Название:</label><div class="field-row"><input type="text" id="nameField${deviceCounter}" placeholder="Отсканируйте или введите"><button class="btn-camera" onclick="openViewfinder('name', ${deviceCounter})">📷</button></div><img id="previewName${deviceCounter}" class="preview" alt="Фото названия"></div>
+            var block = document.createElement('div'); block.className = 'device-block'; block.id = 'device' + deviceCounter;
+            block.innerHTML = `<div class="device-title"><span class="device-number">${deviceCounter}</span> Прибор</div>
+                <div class="field-group"><label>📷 Название:</label><div class="field-row"><input type="text" id="nameField${deviceCounter}" placeholder="Отсканируйте или введите"><button class="btn-camera" onclick="openViewfinder('name',${deviceCounter})">📷</button></div><img id="previewName${deviceCounter}" class="preview" alt="Фото названия"></div>
                 <div class="field-group"><label>Тип:</label><div class="field-row"><input type="text" id="typeField${deviceCounter}" placeholder="Авто или вручную" list="typeList"><datalist id="typeList"></datalist></div></div>
-                <div class="field-group"><label>📷 Заводской номер:</label><div class="field-row"><input type="text" id="serialField${deviceCounter}" placeholder="Отсканируйте или введите"><button class="btn-camera" onclick="openViewfinder('serial', ${deviceCounter})">📷</button></div><img id="previewSerial${deviceCounter}" class="preview" alt="Фото номера"></div>
-                <div class="field-group"><label>Примечание:</label><input type="text" id="noteField${deviceCounter}" placeholder="Состояние, комплектность..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-size:15px;"></div>
-            `;
+                <div class="field-group"><label>📷 Заводской номер:</label><div class="field-row"><input type="text" id="serialField${deviceCounter}" placeholder="Отсканируйте или введите"><button class="btn-camera" onclick="openViewfinder('serial',${deviceCounter})">📷</button></div><img id="previewSerial${deviceCounter}" class="preview" alt="Фото номера"></div>
+                <div class="field-group"><label>Примечание:</label><input type="text" id="noteField${deviceCounter}" placeholder="Состояние, комплектность..." style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;"></div>`;
             if (deviceCounter > 1) {
-                var removeBtn = document.createElement('button');
-                removeBtn.className = 'btn-remove'; removeBtn.textContent = '🗑️'; removeBtn.title = 'Удалить прибор';
-                removeBtn.style.cssText = 'position:absolute;top:8px;right:8px;';
-                removeBtn.onclick = function() { removeDevice(block.id); };
-                block.appendChild(removeBtn);
+                var rb = document.createElement('button'); rb.className = 'btn-remove'; rb.textContent = '🗑️'; rb.style.cssText = 'position:absolute;top:8px;right:8px;';
+                rb.onclick = function() { block.remove(); renumberDevices(); }; block.appendChild(rb);
             }
-            container.appendChild(block);
+            document.getElementById('devicesContainer').appendChild(block);
             renumberDevices();
         }
 
         function removeDevice(id) { var b = document.getElementById(id); if (b) b.remove(); renumberDevices(); }
         function renumberDevices() {
-            var blocks = document.querySelectorAll('.device-block');
-            deviceCounter = blocks.length;
-            blocks.forEach(function(block, index) {
-                block.id = 'device' + (index + 1);
-                var span = block.querySelector('.device-number');
-                if (span) span.textContent = index + 1;
-            });
+            var blocks = document.querySelectorAll('.device-block'); deviceCounter = blocks.length;
+            blocks.forEach(function(b, i) { b.id = 'device' + (i+1); var s = b.querySelector('.device-number'); if (s) s.textContent = i+1; });
         }
 
         function openViewfinder(target, deviceNum) {
-            vfTarget = target;
-            vfDeviceNum = deviceNum;
+            vfTarget = target; vfDeviceNum = deviceNum;
             updateFramePosition();
-            var vf = document.getElementById('viewfinder');
-            vf.classList.add('active');
+            document.getElementById('viewfinder').style.display = 'block';
             var video = document.getElementById('vfVideo');
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: 'environment',
-                        width: { ideal: 640 },
-                        height: { ideal: 480 }
-                    } 
-                }).then(function(stream) {
-                    vfStream = stream;
-                    video.srcObject = stream;
-                    video.play();
-                }).catch(function() { 
-                    closeViewfinder(); 
-                    fallbackPhoto(target, deviceNum); 
-                });
-            } else { 
-                closeViewfinder(); 
-                fallbackPhoto(target, deviceNum); 
-            }
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function(stream) {
+                vfStream = stream; video.srcObject = stream; video.play();
+            }).catch(function() { closeViewfinder(); });
         }
 
         function updateFramePosition() {
             var f = document.getElementById('vfFrame');
-            f.style.width = vfFrameW + '%'; 
-            f.style.height = vfFrameH + '%';
-            f.style.left = (vfFrameX - vfFrameW/2) + '%'; 
-            f.style.top = (vfFrameY - vfFrameH/2) + '%';
+            f.style.width = vfFrameW + '%'; f.style.height = vfFrameH + '%';
+            f.style.left = (vfFrameX - vfFrameW/2) + '%'; f.style.top = (vfFrameY - vfFrameH/2) + '%';
         }
 
         function moveFrame(dx, dy) {
-            vfFrameX = Math.max(vfFrameW/2, Math.min(100 - vfFrameW/2, vfFrameX + dx * 3));
-            vfFrameY = Math.max(vfFrameH/2, Math.min(100 - vfFrameH/2, vfFrameY + dy * 3));
+            vfFrameX = Math.max(vfFrameW/2, Math.min(100 - vfFrameW/2, vfFrameX + dx * 2));
+            vfFrameY = Math.max(vfFrameH/2, Math.min(100 - vfFrameH/2, vfFrameY + dy * 2));
             updateFramePosition();
         }
 
         function resizeFrame(dw, dh) {
-            var nw = vfFrameW + dw * 3, nh = vfFrameH + dh * 3;
-            if (nw >= 8 && nw <= 90) vfFrameW = nw;
-            if (nh >= 5 && nh <= 80) vfFrameH = nh;
+            var nw = vfFrameW + dw * 2, nh = vfFrameH + dh * 2;
+            if (nw >= 6 && nw <= 95) vfFrameW = nw;
+            if (nh >= 4 && nh <= 85) vfFrameH = nh;
             vfFrameX = Math.max(vfFrameW/2, Math.min(100 - vfFrameW/2, vfFrameX));
             vfFrameY = Math.max(vfFrameH/2, Math.min(100 - vfFrameH/2, vfFrameY));
             updateFramePosition();
@@ -349,79 +208,45 @@
             var video = document.getElementById('vfVideo');
             var canvas = document.createElement('canvas');
             var frame = document.getElementById('vfFrame');
-            var fr = frame.getBoundingClientRect();
-            var vr = video.getBoundingClientRect();
+            var fr = frame.getBoundingClientRect(), vr = video.getBoundingClientRect();
             var sx = (fr.left - vr.left) * (video.videoWidth / vr.width);
             var sy = (fr.top - vr.top) * (video.videoHeight / vr.height);
             var sw = fr.width * (video.videoWidth / vr.width);
             var sh = fr.height * (video.videoHeight / vr.height);
-            canvas.width = sw; 
-            canvas.height = sh;
+            canvas.width = sw; canvas.height = sh;
             canvas.getContext('2d').drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
             var dataUrl = canvas.toDataURL('image/jpeg', 0.9);
             closeViewfinder();
             var preview = document.getElementById('preview' + (vfTarget === 'name' ? 'Name' : 'Serial') + vfDeviceNum);
-            preview.src = dataUrl; 
-            preview.style.display = 'block';
+            preview.src = dataUrl; preview.style.display = 'block';
             recognizeText(dataUrl, vfTarget, vfDeviceNum);
         }
 
         function closeViewfinder() {
-            var vf = document.getElementById('viewfinder');
-            vf.classList.remove('active');
-            if (vfStream) { 
-                vfStream.getTracks().forEach(function(t) { t.stop(); }); 
-                vfStream = null; 
-            }
+            document.getElementById('viewfinder').style.display = 'none';
+            if (vfStream) { vfStream.getTracks().forEach(function(t) { t.stop(); }); vfStream = null; }
             document.getElementById('vfVideo').srcObject = null;
-        }
-
-        function fallbackPhoto(target, deviceNum) {
-            var input = document.createElement('input'); 
-            input.type = 'file'; 
-            input.accept = 'image/*'; 
-            input.capture = 'environment';
-            input.onchange = function() {
-                if (!input.files || !input.files[0]) return;
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('preview' + (target === 'name' ? 'Name' : 'Serial') + deviceNum).src = e.target.result;
-                    document.getElementById('preview' + (target === 'name' ? 'Name' : 'Serial') + deviceNum).style.display = 'block';
-                    recognizeText(e.target.result, target, deviceNum);
-                };
-                reader.readAsDataURL(input.files[0]);
-            };
-            input.click();
         }
 
         function recognizeText(dataUrl, target, deviceNum) {
             setStatus('Распознавание...', 'loading');
             Tesseract.recognize(dataUrl, 'rus+eng', {
                 tessedit_char_whitelist: 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюяABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789№/-. ',
-                logger: function(m) { 
-                    if (m.status === 'recognizing text') 
-                        setStatus('Распознавание: ' + Math.round(m.progress * 100) + '%', 'loading'); 
-                }
+                logger: function(m) { if (m.status === 'recognizing text') setStatus('Распознавание: ' + Math.round(m.progress * 100) + '%', 'loading'); }
             }).then(function(result) {
                 var text = cleanText(result.data.text);
                 if (target === 'name') {
                     var nameText = extractName(text);
                     document.getElementById('nameField' + deviceNum).value = nameText;
                     var ft = findTypeByName(nameText);
-                    if (ft) { 
-                        document.getElementById('typeField' + deviceNum).value = ft; 
-                        setStatus('✅ Прибор ' + deviceNum + ': ' + nameText, 'success'); 
-                    } else {
-                        setStatus('⚠️ Прибор ' + deviceNum + ': проверьте название', 'error');
-                    }
+                    if (ft) { document.getElementById('typeField' + deviceNum).value = ft; setStatus('✅ Прибор ' + deviceNum + ': ' + nameText, 'success'); }
+                    else setStatus('⚠️ Прибор ' + deviceNum + ': проверьте название', 'error');
                 } else {
                     var serial = extractSerial(text);
                     document.getElementById('serialField' + deviceNum).value = serial;
                     setStatus(serial ? '✅ Прибор ' + deviceNum + ', номер: ' + serial : '⚠️ Прибор ' + deviceNum + ': проверьте номер', serial ? 'success' : 'error');
                 }
-            }).catch(function() { 
-                setStatus('❌ Ошибка распознавания', 'error'); 
-            });
+            }).catch(function() { setStatus('❌ Ошибка распознавания', 'error'); });
         }
 
         function findTypeByName(name) {
@@ -430,10 +255,7 @@
             var best = '', bestScore = 0;
             typesData.forEach(function(row) {
                 var ref = (row[1] || row[0] || '').toLowerCase().replace(/[^a-zа-я0-9]/g, '');
-                if (ref && nc.includes(ref) && ref.length > bestScore) { 
-                    bestScore = ref.length; 
-                    best = row[2] || row[1] || ''; 
-                }
+                if (ref && nc.includes(ref) && ref.length > bestScore) { bestScore = ref.length; best = row[2] || row[1] || ''; }
             });
             return best;
         }
@@ -442,9 +264,7 @@
             var cleaned = text.replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g, ' ').replace(/\s+/g, ' ').trim();
             var fixes = {'Ду':'ДУ','ду':'ДУ','Ne':'№','Nе':'№','No':'№','зав':'зав','Зав':'зав','KAPAT':'КАРАТ','Kapat':'КАРАТ','карат':'КАРАТ','Карат':'КАРАТ'};
             var words = cleaned.split(' ');
-            for (var i = 0; i < words.length; i++) { 
-                if (fixes[words[i]]) words[i] = fixes[words[i]]; 
-            }
+            for (var i = 0; i < words.length; i++) { if (fixes[words[i]]) words[i] = fixes[words[i]]; }
             return words.join(' ');
         }
 
@@ -471,8 +291,7 @@
         function addCompany() {
             var name = prompt('Введите название компании:');
             if (name && name.trim()) {
-                var sel = document.getElementById('companySelect');
-                sel.innerHTML += '<option value="' + esc(name.trim()) + '" selected>' + esc(name.trim()) + '</option>';
+                document.getElementById('companySelect').innerHTML += '<option value="' + esc(name.trim()) + '" selected>' + esc(name.trim()) + '</option>';
                 setStatus('Компания добавлена', 'success');
             }
         }
@@ -481,48 +300,31 @@
             var company = document.getElementById('companySelect').value;
             var employee = document.getElementById('employeeSelect').value;
             if (!company || !employee) { alert('Выберите компанию и принявшего'); return; }
-            var blocks = document.querySelectorAll('.device-block');
-            var devices = [], allValid = true;
-            blocks.forEach(function(block) {
-                var num = block.id.replace('device', '');
-                var type = document.getElementById('typeField' + num)?.value.trim() || '';
-                var name = document.getElementById('nameField' + num)?.value.trim() || '';
-                var serial = document.getElementById('serialField' + num)?.value.trim() || '';
-                var note = document.getElementById('noteField' + num)?.value.trim() || '';
+            var blocks = document.querySelectorAll('.device-block'), devices = [], allValid = true;
+            blocks.forEach(function(b) {
+                var n = b.id.replace('device', '');
+                var type = document.getElementById('typeField' + n)?.value.trim() || '';
+                var name = document.getElementById('nameField' + n)?.value.trim() || '';
+                var serial = document.getElementById('serialField' + n)?.value.trim() || '';
+                var note = document.getElementById('noteField' + n)?.value.trim() || '';
                 if (!name || !type || !serial) { allValid = false; return; }
                 devices.push({ type: type, name: name, serial: serial, note: note });
             });
-            if (!allValid || devices.length === 0) { alert('Заполните все поля для всех приборов'); return; }
-            var btn = document.getElementById('submitBtn');
-            btn.disabled = true; btn.textContent = 'Отправка...';
+            if (!allValid || devices.length === 0) { alert('Заполните все поля'); return; }
+            var btn = document.getElementById('submitBtn'); btn.disabled = true; btn.textContent = 'Отправка...';
             setStatus('Формирование и отправка...', 'loading');
-            var now = new Date();
-            var dateStr = ('0' + now.getDate()).slice(-2) + '.' + ('0' + (now.getMonth() + 1)).slice(-2) + '.' + now.getFullYear();
-            var form = document.createElement('form');
-            form.method = 'POST'; form.action = SCRIPT_URL; form.target = 'hiddenFrame'; form.style.display = 'none';
+            var now = new Date(), dateStr = ('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear();
+            var form = document.createElement('form'); form.method = 'POST'; form.action = SCRIPT_URL; form.target = 'hiddenFrame'; form.style.display = 'none';
             var fields = { date: dateStr, company: company, employee: employee, devices: JSON.stringify(devices) };
-            Object.keys(fields).forEach(function(key) {
-                var input = document.createElement('input');
-                input.type = 'hidden'; input.name = key; input.value = fields[key];
-                form.appendChild(input);
+            Object.keys(fields).forEach(function(k) {
+                var inp = document.createElement('input'); inp.type = 'hidden'; inp.name = k; inp.value = fields[k]; form.appendChild(inp);
             });
             document.body.appendChild(form); form.submit(); document.body.removeChild(form);
-            setTimeout(function() {
-                setStatus('✅ Акт отправлен на ms-tcentr@mail.ru', 'success');
-                btn.textContent = '✓ Отправлено'; btn.style.background = '#4CAF50';
-            }, 2000);
+            setTimeout(function() { setStatus('✅ Акт отправлен', 'success'); btn.textContent = '✓ Отправлено'; btn.style.background = '#4CAF50'; }, 2000);
         }
 
-        function setStatus(msg, cls) { 
-            var el = document.getElementById('status'); 
-            el.textContent = msg; 
-            el.className = 'status'; 
-            if (cls) el.classList.add(cls); 
-        }
-        
-        function esc(s) { 
-            return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); 
-        }
+        function setStatus(msg, cls) { var el = document.getElementById('status'); el.textContent = msg; el.className = 'status'; if (cls) el.classList.add(cls); }
+        function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
     </script>
 </body>
 </html>
