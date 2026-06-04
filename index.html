@@ -7,213 +7,95 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 15px; max-width: 500px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .header h1 { font-size: 18px; color: #333; }
-        .act-number { background: #4CAF50; color: #fff; padding: 8px 14px; border-radius: 20px; font-size: 14px; font-weight: bold; text-align: center; margin-bottom: 15px; }
-        .btn-row { display: flex; gap: 8px; margin-bottom: 10px; }
-        .btn-refresh { flex: 1; background: #FF9800; color: #fff; border: none; border-radius: 8px; padding: 10px; font-size: 14px; cursor: pointer; }
-        .btn-submit { flex: 2; background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 10px; font-size: 15px; font-weight: bold; cursor: pointer; }
-        .btn-settings { background: none; border: none; font-size: 24px; cursor: pointer; }
-        .field-group { margin-bottom: 10px; }
-        .field-group label { display: block; font-size: 12px; font-weight: bold; color: #555; margin-bottom: 3px; }
-        .field-row { display: flex; gap: 5px; }
-        .field-row input, .field-row select { flex: 1; padding: 9px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; background: #fff; }
-        .btn-camera { background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 9px 12px; font-size: 16px; cursor: pointer; min-width: 42px; flex: 0 0 auto; }
-        .btn-remove { background: #f44336; color: #fff; border: none; border-radius: 8px; padding: 9px 12px; font-size: 14px; cursor: pointer; min-width: 42px; flex: 0 0 auto; }
-        .btn-add-device { width: 100%; background: #2196F3; color: #fff; border: none; border-radius: 8px; padding: 12px; font-size: 14px; cursor: pointer; margin: 8px 0; }
-        .device-block { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 10px; margin-bottom: 10px; position: relative; }
-        .device-title { font-size: 13px; font-weight: bold; color: #333; margin-bottom: 6px; }
-        .device-number { background: #eee; border-radius: 50%; width: 22px; height: 22px; display: inline-block; text-align: center; line-height: 22px; font-size: 12px; margin-right: 4px; }
-        .preview { width: 100%; max-height: 120px; object-fit: contain; margin-top: 3px; border-radius: 6px; display: none; }
-        .status { text-align: center; margin-top: 12px; font-size: 13px; color: #666; min-height: 18px; }
-        .status.success { color: #4CAF50; } .status.error { color: #f44336; } .status.loading { color: #FF9800; }
-        .hint { font-size: 10px; color: #999; margin-top: 2px; text-align: center; }
-        .section-title { font-size: 13px; color: #888; margin: 10px 0 6px; border-top: 1px solid #ddd; padding-top: 10px; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { font-size: 20px; color: #333; }
+        .header p { font-size: 12px; color: #888; margin-top: 5px; }
+        .field-group { margin-bottom: 12px; }
+        .field-group label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 4px; }
+        .field-row { display: flex; gap: 6px; }
+        .field-row input, .field-row select { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; background: #fff; }
+        .btn-camera { background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 18px; cursor: pointer; min-width: 46px; flex: 0 0 auto; }
+        .btn-camera:active { background: #388E3C; }
+        .btn-remove { background: #f44336; color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 16px; cursor: pointer; min-width: 46px; flex: 0 0 auto; }
+        .btn-add-device { width: 100%; background: #2196F3; color: #fff; border: none; border-radius: 8px; padding: 14px; font-size: 16px; cursor: pointer; margin: 10px 0; }
+        .btn-submit { width: 100%; background: #FF5722; color: #fff; border: none; border-radius: 8px; padding: 16px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-submit:active { background: #E64A19; }
+        .btn-submit:disabled { background: #ccc; }
+        .device-block { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 12px; margin-bottom: 12px; position: relative; }
+        .device-block .device-title { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 8px; }
+        .device-block .device-number { background: #eee; border-radius: 50%; width: 24px; height: 24px; display: inline-block; text-align: center; line-height: 24px; font-size: 13px; margin-right: 6px; }
+        .preview { width: 100%; max-height: 150px; object-fit: contain; margin-top: 4px; border-radius: 8px; display: none; }
+        .status { text-align: center; margin-top: 15px; font-size: 13px; color: #666; min-height: 20px; }
+        .status.success { color: #4CAF50; }
+        .status.error { color: #f44336; }
+        .status.loading { color: #FF9800; }
+        .hint { font-size: 11px; color: #999; margin-top: 3px; text-align: center; }
+        .section-title { font-size: 14px; color: #888; margin: 15px 0 8px; border-top: 1px solid #ddd; padding-top: 12px; }
         input[type="file"] { display: none; }
-        .autocomplete-wrap { position: relative; flex: 1; }
-        .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; max-height: 180px; overflow-y: auto; background: #fff; border: 1px solid #ddd; border-radius: 0 0 8px 8px; z-index: 100; display: none; list-style: none; }
-        .autocomplete-list li { padding: 9px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #eee; }
-        .autocomplete-list li:hover { background: #E3F2FD; }
-
-        #settingsPanel { display: none; background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
-        #settingsPanel h3 { margin-bottom: 10px; font-size: 14px; }
-        #settingsPanel input { width: 100%; padding: 9px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; margin-bottom: 6px; }
-        #settingsPanel .btn-save { width: 100%; background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 9px; font-size: 14px; cursor: pointer; }
-
-        #cameraOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; touch-action: none; }
-        #cameraVideo { width: 100%; height: 100%; object-fit: cover; }
-        #cameraFrame { position: absolute; border: 3px solid #4CAF50; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.55); }
-        #cameraFrameLabel { position: absolute; top: -26px; left: 0; width: 100%; text-align: center; color: #fff; font-size: 12px; font-weight: bold; }
-        #cameraControls { position: absolute; bottom: 130px; left: 0; width: 100%; display: flex; justify-content: center; gap: 8px; z-index: 10001; flex-wrap: wrap; }
-        #cameraControls button { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; background: rgba(0,0,0,0.6); color: #fff; font-size: 16px; cursor: pointer; }
-        #cameraCaptureBtn { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 65px; height: 65px; background: #fff; border: 4px solid #4CAF50; border-radius: 50%; cursor: pointer; z-index: 10001; }
-        #cameraCloseBtn { position: absolute; top: 15px; right: 15px; background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; z-index: 10001; }
-        .control-label { color: #fff; font-size: 9px; text-align: center; margin: 1px 0; }
-        #recentActsList { display: none; background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 10px; margin-bottom: 10px; max-height: 200px; overflow-y: auto; }
     </style>
 </head>
 <body>
     <div class="header">
-        <div><h1>📋 Приёмка СИ</h1><p style="font-size:11px;">ООО МС «ЦЕНТР ИЗМЕРЕНИЙ»</p></div>
-        <button class="btn-settings" onclick="toggleSettings()" title="Настройки">⚙️</button>
+        <h1>📋 Приёмка средств измерений</h1>
+        <p>ООО МС «ЦЕНТР ИЗМЕРЕНИЙ»</p>
     </div>
 
-    <div id="settingsPanel">
-        <h3>⚙️ Настройки</h3>
-        <label>Email для отправки:</label>
-        <input type="email" id="settingsEmail" placeholder="ms-tcentr@mail.ru">
-        <button class="btn-save" onclick="saveSettings()">💾 Сохранить</button>
+    <div class="field-group">
+        <label>Компания-сдатчик:</label>
+        <div class="field-row">
+            <select id="companySelect"><option value="">-- Загрузка... --</option></select>
+            <button class="btn-camera" onclick="addCompany()" title="Добавить" style="font-size:20px;">➕</button>
+        </div>
     </div>
 
-    <div class="act-number" id="actNumberDisplay">Акт № --</div>
-
-    <div class="btn-row">
-        <button class="btn-refresh" onclick="refreshAct()">🔄 Новый</button>
-        <button class="btn-submit" onclick="submitAct()">💾 Записать</button>
+    <div class="field-group">
+        <label>Кто принял:</label>
+        <select id="employeeSelect"><option value="">-- Загрузка... --</option></select>
     </div>
-    <div class="btn-row">
-        <button class="btn-refresh" onclick="showRecentActs()" style="background:#9C27B0;">📋 Выбрать акт</button>
-    </div>
-    <div id="recentActsList"></div>
 
-    <div class="field-group"><label>Компания-сдатчик:</label><div class="field-row"><select id="companySelect"><option value="">-- Загрузка... --</option></select><button class="btn-camera" onclick="addCompany()" style="font-size:18px;">➕</button></div></div>
-    <div class="field-group"><label>Кто принял:</label><select id="employeeSelect"><option value="">-- Загрузка... --</option></select></div>
     <div class="section-title">Приборы:</div>
     <div id="devicesContainer"></div>
-    <button class="btn-add-device" onclick="addDevice()">➕ Добавить прибор</button>
-    <div class="hint" id="emailHint">Письмо уйдёт на ms-tcentr@mail.ru</div>
-    <div class="status" id="status"></div>
 
-    <div id="cameraOverlay">
-        <video id="cameraVideo" autoplay playsinline></video>
-        <div id="cameraFrame"><div id="cameraFrameLabel">Поместите текст в рамку</div></div>
-        <div id="cameraControls">
-            <div style="text-align:center;"><div class="control-label">Высота</div><button onclick="changeFrameSize(0,-15)">−</button><button onclick="changeFrameSize(0,15)">+</button></div>
-            <div style="text-align:center;"><div class="control-label">Шире</div><button onclick="changeFrameSize(-8,0)">◀</button><button onclick="changeFrameSize(8,0)">▶</button></div>
-            <div style="text-align:center;"><div class="control-label">Уже</div><button onclick="changeFrameSize(-4,0)">◁</button><button onclick="changeFrameSize(4,0)">▷</button></div>
-        </div>
-        <button id="cameraCloseBtn" onclick="closeCamera()">✕</button>
-        <button id="cameraCaptureBtn" onclick="captureFromCamera()"></button>
-    </div>
+    <button class="btn-add-device" onclick="addDevice()">➕ Добавить прибор</button>
+
+    <button class="btn-submit" id="submitBtn" onclick="submitAct()">📧 Сформировать акт и отправить</button>
+    <div class="hint">Письмо уйдёт на ms-tcentr@mail.ru</div>
+    <div class="status" id="status"></div>
 
     <iframe name="hiddenFrame" style="display:none;"></iframe>
 
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
-        var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwb_jTGauowbZxvua3sJrBy4PxfCuELT4z1hz6rDlyTl6p7FcGKINMv2oBuHhbYu2Q4/exec';
-        var CSV_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJLJVjVpDuLsNRjFg9j7X2NHcDtOgmo4lhiC_CTx2S0ox97Hne91SXQ7XtJJxb9OberlzYUrSXijw6/pub?output=csv&gid=';
-        var GID_TYPES = '441822937', GID_COMPANIES = '883764981', GID_EMPLOYEES = '1294860374';
-
-        var typesData = [], deviceCounter = 0, cameraStream = null;
-        var currentCameraTarget = null, currentCameraDevice = null;
-        var frameDragging = false, frameStartY = 0, frameStartTop = 0;
-        var frameSettings = JSON.parse(localStorage.getItem('cameraFrame') || '{"top":"35%","width":"80%","height":"80px"}');
-        var settings = JSON.parse(localStorage.getItem('appSettings') || '{"email":"ms-tcentr@mail.ru"}');
-        var currentActNumber = '';
+        var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw3PHbAcHAaLmC3cab1HOc7qEiz2erKGfwwQ5GeN2qZbfeid1UbZ3IeYRNA_McNLPuN/exec';
+        
+        var typesData = [];
+        var companiesData = [];
+        var employeesData = [];
+        var deviceCounter = 0;
 
         window.addEventListener('load', function() {
-            document.getElementById('settingsEmail').value = settings.email;
-            document.getElementById('emailHint').textContent = 'Письмо уйдёт на ' + settings.email;
+            setStatus('Загрузка справочников...', 'loading');
             loadDictionaries();
-            getNewActNumber();
             addDevice();
-            initFrameDrag();
         });
-
-        function getNewActNumber() {
-            setStatus('Получение номера акта...', 'loading');
-            fetch(SCRIPT_URL + '?action=getActNumber')
-                .then(r => r.text())
-                .then(function(num) {
-                    currentActNumber = num;
-                    document.getElementById('actNumberDisplay').textContent = 'Акт № ' + num;
-                    setStatus('✅ Готов', 'success');
-                })
-                .catch(function() { setStatus('⚠️ Нет связи', 'error'); });
-        }
-
-        function refreshAct() {
-            if (confirm('Начать новый акт? Данные будут очищены.')) {
-                document.getElementById('devicesContainer').innerHTML = '';
-                deviceCounter = 0;
-                addDevice();
-                getNewActNumber();
-            }
-        }
-
-        function showRecentActs() {
-            var list = document.getElementById('recentActsList');
-            if (list.style.display === 'block') { list.style.display = 'none'; return; }
-            setStatus('Загрузка...', 'loading');
-            fetch(SCRIPT_URL + '?action=getRecentActs')
-                .then(r => r.json())
-                .then(function(acts) {
-                    if (acts.length === 0) {
-                        list.innerHTML = '<p style="padding:10px;color:#888;">Нет предыдущих актов</p>';
-                    } else {
-                        list.innerHTML = '<p style="font-weight:bold;margin-bottom:8px;">Последние акты:</p>';
-                        acts.forEach(function(act) {
-                            list.innerHTML += '<div style="padding:8px;border-bottom:1px solid #eee;cursor:pointer;" onclick="selectAct(\'' + act.number + '\',\'' + esc(act.company) + '\')"><b>' + act.number + '</b> — ' + act.company + ' (' + act.date + ')</div>';
-                        });
-                    }
-                    list.style.display = 'block';
-                    setStatus('✅ Выберите акт', 'success');
-                })
-                .catch(function() { setStatus('⚠️ Ошибка', 'error'); });
-        }
-
-        function selectAct(actNumber, company) {
-            currentActNumber = actNumber;
-            document.getElementById('actNumberDisplay').textContent = 'Акт № ' + actNumber;
-            document.getElementById('recentActsList').style.display = 'none';
-            if (company) {
-                var sel = document.getElementById('companySelect');
-                for (var i = 0; i < sel.options.length; i++) {
-                    if (sel.options[i].value === company) { sel.selectedIndex = i; break; }
-                }
-            }
-            setStatus('✅ Выбран ' + actNumber, 'success');
-        }
-
-        function toggleSettings() {
-            var p = document.getElementById('settingsPanel');
-            p.style.display = p.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function saveSettings() {
-            settings.email = document.getElementById('settingsEmail').value.trim() || 'ms-tcentr@mail.ru';
-            localStorage.setItem('appSettings', JSON.stringify(settings));
-            document.getElementById('emailHint').textContent = 'Письмо уйдёт на ' + settings.email;
-            document.getElementById('settingsPanel').style.display = 'none';
-            setStatus('✅ Настройки сохранены', 'success');
-        }
 
         function loadDictionaries() {
             Promise.all([
-                fetch(CSV_BASE + GID_TYPES).then(r => r.text()),
-                fetch(CSV_BASE + GID_COMPANIES).then(r => r.text()),
-                fetch(CSV_BASE + GID_EMPLOYEES).then(r => r.text())
+                fetch(SCRIPT_URL + '?action=getTypes').then(r => r.json()),
+                fetch(SCRIPT_URL + '?action=getCompanies').then(r => r.json()),
+                fetch(SCRIPT_URL + '?action=getEmployees').then(r => r.json())
             ]).then(function(results) {
-                typesData = parseCSV(results[0]);
-                updateSelect('companySelect', parseCSV(results[1]), 0);
-                updateSelect('employeeSelect', parseCSV(results[2]), 1);
-            }).catch(function() {});
-        }
-
-        function parseCSV(csv) {
-            var lines = csv.trim().split('\n'), result = [];
-            for (var i = 1; i < lines.length; i++) {
-                var cells = [], current = '', inQuotes = false;
-                for (var j = 0; j < lines[i].length; j++) {
-                    var ch = lines[i][j];
-                    if (ch === '"') inQuotes = !inQuotes;
-                    else if (ch === ',' && !inQuotes) { cells.push(current.trim()); current = ''; }
-                    else current += ch;
-                }
-                cells.push(current.trim());
-                if (cells.some(function(c) { return c.length > 0; })) result.push(cells);
-            }
-            return result;
+                typesData = results[0];
+                companiesData = results[1];
+                employeesData = results[2];
+                
+                updateSelect('companySelect', companiesData, 0);
+                updateSelect('employeeSelect', employeesData, 1);
+                setStatus('✅ Готов к работе', 'success');
+            }).catch(function(e) {
+                console.error(e);
+                setStatus('⚠️ Справочники не загружены', 'error');
+            });
         }
 
         function updateSelect(id, data, col) {
@@ -221,202 +103,240 @@
             sel.innerHTML = '<option value="">-- Выберите --</option>';
             var names = [];
             data.forEach(function(row) {
-                var v = row[col] || row[0] || '';
-                if (v && names.indexOf(v) === -1) { names.push(v); sel.innerHTML += '<option value="' + esc(v) + '">' + esc(v) + '</option>'; }
+                var val = row[col] || row[0] || '';
+                if (val && names.indexOf(val) === -1) {
+                    names.push(val);
+                    sel.innerHTML += '<option value="' + esc(val) + '">' + esc(val) + '</option>';
+                }
             });
-        }
-
-        function getTypeNames() {
-            var names = [];
-            typesData.forEach(function(row) {
-                var n = row[1] || row[0] || '';
-                if (n && names.indexOf(n) === -1) names.push(n);
-            });
-            return names;
         }
 
         function addDevice() {
             deviceCounter++;
-            var b = document.createElement('div'); b.className = 'device-block'; b.id = 'device' + deviceCounter;
-            b.innerHTML = `<div class="device-title"><span class="device-number">${deviceCounter}</span> Прибор</div>
-                <div class="field-group"><label>📷 Название:</label><div class="field-row">
-                    <div class="autocomplete-wrap">
-                        <input type="text" id="nameField${deviceCounter}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${deviceCounter})" onfocus="filterAutocomplete(${deviceCounter})" onblur="hideAutocomplete(${deviceCounter})">
-                        <ul class="autocomplete-list" id="autocompleteList${deviceCounter}"></ul>
+            var container = document.getElementById('devicesContainer');
+            var block = document.createElement('div');
+            block.className = 'device-block';
+            block.id = 'device' + deviceCounter;
+            block.innerHTML = `
+                <div class="device-title"><span class="device-number">${deviceCounter}</span> Прибор</div>
+                <div class="field-group">
+                    <label>📷 Название:</label>
+                    <div class="field-row">
+                        <input type="text" id="nameField${deviceCounter}" placeholder="Отсканируйте или введите">
+                        <button class="btn-camera" onclick="capturePhoto('name', ${deviceCounter})">📷</button>
                     </div>
-                    <button class="btn-camera" onclick="openCamera('name',${deviceCounter})">📷</button></div><img id="previewName${deviceCounter}" class="preview"></div>
-                <div class="field-group"><label>Тип:</label><input type="text" id="typeField${deviceCounter}" placeholder="Авто или вручную" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:14px;"></div>
-                <div class="field-group"><label>📷 Заводской номер:</label><div class="field-row"><input type="text" id="serialField${deviceCounter}" placeholder="С рамкой или вручную"><button class="btn-camera" onclick="openCamera('serial',${deviceCounter})">📷</button></div><img id="previewSerial${deviceCounter}" class="preview"></div>
-                <div class="field-group"><label>Примечание:</label><input type="text" id="noteField${deviceCounter}" placeholder="Состояние..." style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:14px;"></div>`;
+                    <img id="previewName${deviceCounter}" class="preview" alt="Фото названия">
+                    <input type="file" id="fileName${deviceCounter}" accept="image/*" capture="environment" onchange="processPhoto('name', ${deviceCounter})">
+                </div>
+                <div class="field-group">
+                    <label>Тип:</label>
+                    <div class="field-row">
+                        <input type="text" id="typeField${deviceCounter}" placeholder="Авто или вручную" list="typeList">
+                        <datalist id="typeList"></datalist>
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label>📷 Заводской номер:</label>
+                    <div class="field-row">
+                        <input type="text" id="serialField${deviceCounter}" placeholder="Отсканируйте или введите">
+                        <button class="btn-camera" onclick="capturePhoto('serial', ${deviceCounter})">📷</button>
+                    </div>
+                    <img id="previewSerial${deviceCounter}" class="preview" alt="Фото номера">
+                    <input type="file" id="fileSerial${deviceCounter}" accept="image/*" capture="environment" onchange="processPhoto('serial', ${deviceCounter})">
+                </div>
+                <div class="field-group">
+                    <label>Примечание:</label>
+                    <input type="text" id="noteField${deviceCounter}" placeholder="Состояние, комплектность..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-size:15px;">
+                </div>
+            `;
+            
             if (deviceCounter > 1) {
-                var rb = document.createElement('button'); rb.className = 'btn-remove'; rb.textContent = '🗑️';
-                rb.style.cssText = 'position:absolute;top:6px;right:6px;'; rb.onclick = function() { removeDevice(b.id); };
-                b.appendChild(rb);
+                var removeBtn = document.createElement('button');
+                removeBtn.className = 'btn-remove';
+                removeBtn.textContent = '🗑️';
+                removeBtn.title = 'Удалить прибор';
+                removeBtn.style.position = 'absolute';
+                removeBtn.style.top = '8px';
+                removeBtn.style.right = '8px';
+                removeBtn.onclick = function() { removeDevice(block.id); };
+                block.appendChild(removeBtn);
             }
-            document.getElementById('devicesContainer').appendChild(b);
+            
+            container.appendChild(block);
             renumberDevices();
         }
 
-        function removeDevice(id) { document.getElementById(id)?.remove(); renumberDevices(); }
+        function removeDevice(id) {
+            var block = document.getElementById(id);
+            if (block) block.remove();
+            renumberDevices();
+        }
+
         function renumberDevices() {
-            document.querySelectorAll('.device-block').forEach(function(b,i) {
-                b.id = 'device' + (i+1); var s = b.querySelector('.device-number'); if (s) s.textContent = i+1;
+            var blocks = document.querySelectorAll('.device-block');
+            deviceCounter = blocks.length;
+            blocks.forEach(function(block, index) {
+                var num = index + 1;
+                block.id = 'device' + num;
+                var titleSpan = block.querySelector('.device-number');
+                if (titleSpan) titleSpan.textContent = num;
             });
-            deviceCounter = document.querySelectorAll('.device-block').length;
-        }
-
-        function filterAutocomplete(deviceNum) {
-            var input = document.getElementById('nameField' + deviceNum);
-            var list = document.getElementById('autocompleteList' + deviceNum);
-            var filter = input.value.toLowerCase();
-            var names = getTypeNames();
-            list.innerHTML = '';
-            var matches = filter ? names.filter(function(n) { return n.toLowerCase().includes(filter); }) : names;
-            if (matches.length === 0) { list.style.display = 'none'; return; }
-            matches.slice(0, 20).forEach(function(n) {
-                list.innerHTML += '<li onmousedown="selectAutocomplete(' + deviceNum + ',\'' + esc(n) + '\')">' + esc(n) + '</li>';
-            });
-            list.style.display = 'block';
-        }
-
-        function selectAutocomplete(deviceNum, name) {
-            document.getElementById('nameField' + deviceNum).value = name;
-            document.getElementById('autocompleteList' + deviceNum).style.display = 'none';
-            var ft = findTypeByName(name);
-            if (ft) document.getElementById('typeField' + deviceNum).value = ft;
-        }
-
-        function hideAutocomplete(deviceNum) {
-            setTimeout(function() { document.getElementById('autocompleteList' + deviceNum).style.display = 'none'; }, 200);
         }
 
         function findTypeByName(name) {
             if (!name) return '';
-            var nc = name.toLowerCase().replace(/[^a-zа-я0-9]/g, ''), best = '', bestScore = 0;
+            var nc = name.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
+            var best = '', bestScore = 0;
             typesData.forEach(function(row) {
                 var ref = (row[1] || row[0] || '').toLowerCase().replace(/[^a-zа-я0-9]/g, '');
-                if (ref && nc.includes(ref) && ref.length > bestScore) { bestScore = ref.length; best = row[2] || row[1] || ''; }
+                if (ref && nc.includes(ref) && ref.length > bestScore) {
+                    bestScore = ref.length;
+                    best = row[2] || row[1] || '';
+                }
             });
             return best;
         }
 
-        function initFrameDrag() {
-            var frame = document.getElementById('cameraFrame');
-            frame.addEventListener('touchstart', function(e) {
-                frameDragging = true; frameStartY = e.touches[0].clientY;
-                frameStartTop = frame.getBoundingClientRect().top; e.preventDefault();
-            });
-            window.addEventListener('touchmove', function(e) {
-                if (!frameDragging) return;
-                var nt = frameStartTop + (e.touches[0].clientY - frameStartY);
-                if (nt < 40) nt = 40;
-                if (nt > window.innerHeight - frame.offsetHeight - 180) nt = window.innerHeight - frame.offsetHeight - 180;
-                frame.style.top = nt + 'px'; frameSettings.top = nt + 'px';
-                e.preventDefault();
-            });
-            window.addEventListener('touchend', function() { frameDragging = false; saveFrameSettings(); });
+        function capturePhoto(target, deviceNum) {
+            document.getElementById('file' + (target === 'name' ? 'Name' : 'Serial') + deviceNum).click();
         }
 
-        function changeFrameSize(dw, dh) {
-            var frame = document.getElementById('cameraFrame');
-            var w = frame.offsetWidth + dw * window.innerWidth / 100;
-            var h = frame.offsetHeight + dh;
-            if (w < 50) w = 50; if (w > window.innerWidth * 0.95) w = window.innerWidth * 0.95;
-            if (h < 15) h = 15; if (h > 350) h = 350;
-            frame.style.width = w + 'px'; frame.style.height = h + 'px';
-            frame.style.left = ((window.innerWidth - w) / 2) + 'px';
-            frameSettings.width = (w / window.innerWidth * 100) + '%'; frameSettings.height = h + 'px';
-            saveFrameSettings();
-        }
-
-        function saveFrameSettings() { localStorage.setItem('cameraFrame', JSON.stringify(frameSettings)); }
-
-        function openCamera(target, deviceNum) {
-            currentCameraTarget = target; currentCameraDevice = deviceNum;
-            document.getElementById('cameraOverlay').style.display = 'block';
-            var frame = document.getElementById('cameraFrame');
-            frame.style.top = frameSettings.top; frame.style.width = frameSettings.width;
-            frame.style.height = frameSettings.height;
-            frame.style.left = ((100 - parseFloat(frameSettings.width)) / 2) + '%';
-            var video = document.getElementById('cameraVideo');
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } })
-                    .then(function(s) { cameraStream = s; video.srcObject = s; video.play(); })
-                    .catch(function() { closeCamera(); });
-            }
-        }
-
-        function captureFromCamera() {
-            if (!currentCameraTarget || !currentCameraDevice) return;
-            var video = document.getElementById('cameraVideo'), frame = document.getElementById('cameraFrame');
-            var canvas = document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            var ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            var vr = video.getBoundingClientRect(), fr = frame.getBoundingClientRect();
-            var sx = Math.max(0, (fr.left - vr.left) * canvas.width / vr.width);
-            var sy = Math.max(0, (fr.top - vr.top) * canvas.height / vr.height);
-            var sw = Math.min(canvas.width - sx, fr.width * canvas.width / vr.width);
-            var sh = Math.min(canvas.height - sy, fr.height * canvas.height / vr.height);
-            var crop = document.createElement('canvas'); crop.width = sw; crop.height = sh;
-            crop.getContext('2d').drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
-            var dataUrl = crop.toDataURL('image/jpeg', 0.9);
-            document.getElementById('preview' + (currentCameraTarget === 'name' ? 'Name' : 'Serial') + currentCameraDevice).src = dataUrl;
-            document.getElementById('preview' + (currentCameraTarget === 'name' ? 'Name' : 'Serial') + currentCameraDevice).style.display = 'block';
-            closeCamera();
-            recognizeText(dataUrl, currentCameraTarget, currentCameraDevice);
-        }
-
-        function closeCamera() {
-            if (cameraStream) { cameraStream.getTracks().forEach(function(t) { t.stop(); }); cameraStream = null; }
-            document.getElementById('cameraOverlay').style.display = 'none';
+        function processPhoto(target, deviceNum) {
+            var input = document.getElementById('file' + (target === 'name' ? 'Name' : 'Serial') + deviceNum);
+            if (!input.files || !input.files[0]) return;
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var img = new Image();
+                img.onload = function() {
+                    var canvas = document.createElement('canvas');
+                    var maxW = 1600;
+                    var scale = maxW / img.width;
+                    canvas.width = maxW;
+                    canvas.height = img.height * scale;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    var data = imageData.data;
+                    for (var i = 0; i < data.length; i += 4) {
+                        var gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                        gray = (gray - 128) * 3.0 + 128;
+                        if (gray > 255) gray = 255;
+                        if (gray < 0) gray = 0;
+                        gray = gray > 120 ? 255 : 0;
+                        data[i] = data[i + 1] = data[i + 2] = gray;
+                    }
+                    ctx.putImageData(imageData, 0, 0);
+                    
+                    var processedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    
+                    var preview = document.getElementById('preview' + (target === 'name' ? 'Name' : 'Serial') + deviceNum);
+                    preview.src = processedDataUrl;
+                    preview.style.display = 'block';
+                    
+                    recognizeText(processedDataUrl, target, deviceNum);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(input.files[0]);
         }
 
         function recognizeText(dataUrl, target, deviceNum) {
             setStatus('Распознавание...', 'loading');
             Tesseract.recognize(dataUrl, 'rus+eng', {
                 tessedit_char_whitelist: 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюяABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789№/-. ',
-                logger: function(m) { if (m.status === 'recognizing text') setStatus('Распознавание: ' + Math.round(m.progress * 100) + '%', 'loading'); }
+                logger: function(m) {
+                    if (m.status === 'recognizing text') setStatus('Распознавание: ' + Math.round(m.progress * 100) + '%', 'loading');
+                }
             }).then(function(result) {
                 var text = cleanText(result.data.text);
+                
                 if (target === 'name') {
-                    var nt = extractName(text);
-                    document.getElementById('nameField' + deviceNum).value = nt;
-                    var ft = findTypeByName(nt);
-                    if (ft) { document.getElementById('typeField' + deviceNum).value = ft; setStatus('✅ ' + nt, 'success'); }
-                    else setStatus('⚠️ Проверьте: ' + text.substring(0, 30), 'error');
+                    var nameText = extractName(text);
+                    document.getElementById('nameField' + deviceNum).value = nameText;
+                    var ft = findTypeByName(nameText);
+                    if (ft) { document.getElementById('typeField' + deviceNum).value = ft; setStatus('✅ Прибор ' + deviceNum + ': ' + nameText, 'success'); }
+                    else setStatus('⚠️ Прибор ' + deviceNum + ': проверьте название. Было: ' + text.substring(0, 50), 'error');
                 } else {
                     var serial = extractSerial(text);
                     document.getElementById('serialField' + deviceNum).value = serial;
-                    setStatus(serial ? '✅ Номер: ' + serial : '⚠️ Проверьте номер', serial ? 'success' : 'error');
+                    setStatus(serial ? '✅ Прибор ' + deviceNum + ', номер: ' + serial : '⚠️ Прибор ' + deviceNum + ': проверьте номер', serial ? 'success' : 'error');
                 }
-            }).catch(function() { setStatus('❌ Ошибка', 'error'); });
+            }).catch(function(e) {
+                setStatus('❌ Ошибка распознавания', 'error');
+            });
         }
 
         function cleanText(text) {
-            var c = text.replace(/(\d)\.(\d)/g, '$1-$2').replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g, ' ').replace(/\s+/g, ' ').trim();
-            var fixes = {'Ду':'ДУ','ду':'ДУ','Ne':'№','Nе':'№','No':'№','зав':'зав','Зав':'зав','KAPAT':'КАРАТ','карат':'КАРАТ'};
-            return c.split(' ').map(function(w) { return fixes[w] || w; }).join(' ');
+            var preCleaned = text.replace(/(\d)\.(\d)/g, '$1-$2');
+            var cleaned = preCleaned.replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g, ' ').replace(/\s+/g, ' ').trim();
+            
+            var fixes = {
+                'Ду':'ДУ','ду':'ДУ','дy':'ДУ','ДY':'ДУ','Dy':'ДУ','dy':'ДУ',
+                'Ne':'№','Nе':'№','No':'№',
+                'зав':'зав','Зав':'зав','ЗАВ':'зав','3ав':'зав',
+                'KAPAT':'КАРАТ','Kapat':'КАРАТ','kapar':'КАРАТ','Карат':'КАРАТ','карат':'КАРАТ',
+                'КАРAT':'КАРАТ','KAPAT':'КАРАТ','КАРАT':'КАРАТ',
+                'KAPAT-551M-25-0':'КАРАТ-551М-25-0','KAPAT-551M-25.0':'КАРАТ-551М-25-0',
+                'карат-551м-25-0':'КАРАТ-551М-25-0','карат-551м-25.0':'КАРАТ-551М-25-0'
+            };
+            
+            var words = cleaned.split(' ');
+            for (var i = 0; i < words.length; i++) {
+                if (fixes[words[i]]) words[i] = fixes[words[i]];
+            }
+            
+            var result = [];
+            for (var i = 0; i < words.length; i++) {
+                if (words[i].match(/^[КK]$/i) && i+1 < words.length && words[i+1].match(/^[АA]/i)) {
+                    result.push('КАРАТ');
+                    i += 1;
+                } else {
+                    result.push(words[i]);
+                }
+            }
+            
+            return result.join(' ');
         }
 
         function extractName(text) {
             var noSerial = text.replace(/зав\.?\s*[№Nn]\s*\d+/gi, '').replace(/[№Nn]\s*\d+/gi, '');
-            var tc = noSerial.toLowerCase().replace(/[^a-zа-я0-9]/g, ''), best = '', bestScore = 0;
+            var textClean = noSerial.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
+            
+            var bestMatch = '', bestScore = 0;
+            
             typesData.forEach(function(row) {
-                var ref = (row[1] || row[0] || '').trim(); if (!ref) return;
-                var fw = ref.split(/[\s\-]+/)[0].toLowerCase().replace(/[^a-zа-я0-9]/g, '');
-                if (fw.length >= 3 && tc.indexOf(fw) !== -1 && ref.length > bestScore) { bestScore = ref.length; best = ref; }
+                var refName = (row[1] || row[0] || '').trim();
+                if (!refName) return;
+                var refWords = refName.split(/[\s\-]+/);
+                var firstWord = refWords[0].toLowerCase().replace(/[^a-zа-я0-9]/g, '');
+                if (firstWord.length >= 3 && textClean.indexOf(firstWord) !== -1) {
+                    if (refName.length > bestScore) { bestScore = refName.length; bestMatch = refName; }
+                }
             });
-            return best || noSerial.replace(/\s+/g, ' ').trim();
+            
+            if (bestMatch) return bestMatch;
+            return noSerial.replace(/\s+/g, ' ').trim();
         }
 
         function extractSerial(text) {
-            var m = text.match(/(?:зав\.?\s*)?[№Nn]\s*[:=\-\s]*\s*(\d{3,})/i) || text.match(/\b(\d{4,})\b/);
-            return m ? m[1].replace(/[^\d]/g, '') : '';
+            var patterns = [
+                /зав\.?\s*[№Nn]\s*[:=\-\s]*\s*(\d[\d\s\-\.\/]*\d)/i,
+                /[№Nn]\s*[:=\-\s]*\s*(\d[\d\s\-\.\/]*\d)/i,
+                /\b(\d{4,})\b/
+            ];
+            for (var i = 0; i < patterns.length; i++) {
+                var m = text.match(patterns[i]);
+                if (m) return m[1].replace(/[^\d]/g, '');
+            }
+            return '';
         }
 
         function addCompany() {
             var name = prompt('Введите название компании:');
             if (name && name.trim()) {
-                document.getElementById('companySelect').innerHTML += '<option value="' + esc(name.trim()) + '" selected>' + esc(name.trim()) + '</option>';
+                var sel = document.getElementById('companySelect');
+                sel.innerHTML += '<option value="' + esc(name.trim()) + '" selected>' + esc(name.trim()) + '</option>';
                 setStatus('Компания добавлена', 'success');
             }
         }
@@ -425,45 +345,61 @@
             var company = document.getElementById('companySelect').value;
             var employee = document.getElementById('employeeSelect').value;
             if (!company || !employee) { alert('Выберите компанию и принявшего'); return; }
-            if (!currentActNumber || currentActNumber === '--') { alert('Нет номера акта'); return; }
 
+            var blocks = document.querySelectorAll('.device-block');
             var devices = [], allValid = true;
-            document.querySelectorAll('.device-block').forEach(function(b) {
-                var n = b.id.replace('device', '');
-                var t = document.getElementById('typeField' + n)?.value.trim() || '';
-                var nm = document.getElementById('nameField' + n)?.value.trim() || '';
-                var s = document.getElementById('serialField' + n)?.value.trim() || '';
-                var nt = document.getElementById('noteField' + n)?.value.trim() || '';
-                if (!nm || !t || !s) { allValid = false; return; }
-                devices.push({ type: t, name: nm, serial: s, note: nt });
+            
+            blocks.forEach(function(block) {
+                var num = block.id.replace('device', '');
+                var type = document.getElementById('typeField' + num)?.value.trim() || '';
+                var name = document.getElementById('nameField' + num)?.value.trim() || '';
+                var serial = document.getElementById('serialField' + num)?.value.trim() || '';
+                var note = document.getElementById('noteField' + num)?.value.trim() || '';
+                if (!name || !type || !serial) { allValid = false; return; }
+                devices.push({ type: type, name: name, serial: serial, note: note });
             });
 
-            if (!allValid || !devices.length) { alert('Заполните все поля'); return; }
+            if (!allValid || devices.length === 0) { alert('Заполните все поля для всех приборов'); return; }
 
-            var btn = document.querySelector('.btn-submit');
-            btn.disabled = true; btn.textContent = 'Сохранение...';
-            setStatus('Запись в журнал...', 'loading');
+            var btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Отправка...';
+            setStatus('Формирование и отправка...', 'loading');
 
-            var now = new Date(), ds = ('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear();
+            var now = new Date();
+            var dateStr = ('0' + now.getDate()).slice(-2) + '.' + ('0' + (now.getMonth() + 1)).slice(-2) + '.' + now.getFullYear();
 
             var form = document.createElement('form');
-            form.method = 'POST'; form.action = SCRIPT_URL; form.target = 'hiddenFrame'; form.style.display = 'none';
-            [{n:'date',v:ds},{n:'company',v:company},{n:'employee',v:employee},{n:'devices',v:JSON.stringify(devices)},{n:'actNumber',v:currentActNumber},{n:'email',v:settings.email}].forEach(function(f) {
-                var i = document.createElement('input'); i.type = 'hidden'; i.name = f.n; i.value = f.v; form.appendChild(i);
+            form.method = 'POST';
+            form.action = SCRIPT_URL;
+            form.target = 'hiddenFrame';
+            form.style.display = 'none';
+
+            var fields = { date: dateStr, company: company, employee: employee, devices: JSON.stringify(devices) };
+            Object.keys(fields).forEach(function(key) {
+                var input = document.createElement('input');
+                input.type = 'hidden'; input.name = key; input.value = fields[key];
+                form.appendChild(input);
             });
-            document.body.appendChild(form); form.submit(); document.body.removeChild(form);
+
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
 
             setTimeout(function() {
-                setStatus('✅ Записано в ' + currentActNumber, 'success');
-                btn.textContent = '💾 Записать'; btn.disabled = false;
+                setStatus('✅ Акт отправлен на ms-tcentr@mail.ru', 'success');
+                btn.textContent = '✓ Отправлено';
+                btn.style.background = '#4CAF50';
             }, 2000);
         }
 
         function setStatus(msg, cls) {
-            var el = document.getElementById('status'); el.textContent = msg; el.className = 'status';
+            var el = document.getElementById('status');
+            el.textContent = msg; el.className = 'status';
             if (cls) el.classList.add(cls);
         }
-        function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+        function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
     </script>
 </body>
 </html>
