@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Приёмка СИ</title>
+    <link rel="icon" type="image/png" href="https://drive.google.com/uc?export=view&id=1iygIPf19buf7dI3O0lR3i-u5gZblkPjH">
+    <link rel="apple-touch-icon" href="https://drive.google.com/uc?export=view&id=1iygIPf19buf7dI3O0lR3i-u5gZblkPjH">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 15px; max-width: 500px; margin: 0 auto; }
@@ -34,18 +36,15 @@
         .act-toolbar { display: flex; gap: 8px; margin-bottom: 12px; }
         .checkbox-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 14px; }
         .checkbox-row input { width: 18px; height: 18px; }
-
         .autocomplete-wrap { position: relative; flex: 1; }
         .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: #fff; border: 1px solid #ddd; border-radius: 0 0 8px 8px; z-index: 100; display: none; list-style: none; }
         .autocomplete-list li { padding: 10px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #eee; }
         .autocomplete-list li:hover, .autocomplete-list li.active { background: #E3F2FD; }
         .autocomplete-list li:last-child { border-bottom: none; }
-
         #settingsPanel { display: none; background: #fff; border: 1px solid #ddd; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
         #settingsPanel h3 { margin-bottom: 12px; }
         #settingsPanel input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; margin-bottom: 8px; }
         #settingsPanel .btn-save { width: 100%; background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 10px; font-size: 15px; cursor: pointer; }
-
         #cameraOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; }
         #cameraVideo { width: 100%; height: 100%; object-fit: cover; }
         #cameraFrame { position: absolute; border: 3px solid #4CAF50; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.55); }
@@ -55,14 +54,12 @@
         #cameraCaptureBtn { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; background: #fff; border: 4px solid #4CAF50; border-radius: 50%; cursor: pointer; z-index: 10001; }
         #cameraCloseBtn { position: absolute; top: 20px; right: 20px; background: none; border: none; color: #fff; font-size: 30px; cursor: pointer; z-index: 10001; }
         .control-label { color: #fff; font-size: 10px; text-align: center; margin: 2px 0; }
-
         #actsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; }
         #actsModal .modal-content { background: #fff; margin: 40px auto; padding: 20px; border-radius: 12px; max-width: 450px; max-height: 80%; overflow-y: auto; }
         #actsModal h3 { margin-bottom: 15px; }
         #actsModal .act-item { padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 8px; cursor: pointer; }
         #actsModal .act-item:hover { background: #f0f0f0; }
         #actsModal .btn-close { background: #f44336; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-top: 10px; }
-        
         .serial-row { display: flex; gap: 6px; align-items: center; }
         .serial-row span { font-size: 20px; font-weight: bold; color: #888; padding: 0 4px; }
         .serial-row input { flex: 1; }
@@ -73,19 +70,16 @@
         <div><h1>📋 Приёмка СИ</h1><p>ООО МС «ЦЕНТР ИЗМЕРЕНИЙ»</p></div>
         <button class="btn-settings" onclick="toggleSettings()" title="Настройки">⚙️</button>
     </div>
-
     <div id="settingsPanel">
         <h3>⚙️ Настройки</h3>
         <label>Email для отправки актов:</label>
         <input type="email" id="settingsEmail" placeholder="ms-tcentr@mail.ru">
         <button class="btn-save" onclick="saveSettings()">💾 Сохранить</button>
     </div>
-
     <div class="act-toolbar">
         <button class="btn-new-act" onclick="newAct()">📝 Новый акт</button>
         <button class="btn-select-act" onclick="openActsList()">📂 Выбрать акт</button>
     </div>
-
     <div class="field-group"><label>Компания-сдатчик:</label><div class="field-row"><select id="companySelect"><option value="">-- Загрузка... --</option></select><button class="btn-camera" onclick="addCompany()" style="font-size:20px;">➕</button></div></div>
     <div class="field-group"><label>Кто принял:</label><select id="employeeSelect"><option value="">-- Загрузка... --</option></select></div>
     <div class="section-title">Приборы:</div>
@@ -94,7 +88,6 @@
     <button class="btn-submit" id="submitBtn" onclick="submitAct()">📧 Сформировать акт и отправить</button>
     <div class="hint" id="emailHint">Письмо уйдёт на ms-tcentr@mail.ru</div>
     <div class="status" id="status"></div>
-
     <div id="cameraOverlay">
         <video id="cameraVideo" autoplay playsinline></video>
         <div id="cameraFrame"><div id="cameraFrameLabel">Поместите текст в рамку</div></div>
@@ -106,7 +99,6 @@
         <button id="cameraCloseBtn" onclick="closeCamera()">✕</button>
         <button id="cameraCaptureBtn" onclick="captureFromCamera()"></button>
     </div>
-
     <div id="actsModal">
         <div class="modal-content">
             <h3>📂 Существующие акты</h3>
@@ -114,17 +106,12 @@
             <button class="btn-close" onclick="closeActsList()">Закрыть</button>
         </div>
     </div>
-
     <iframe name="hiddenFrame" style="display:none;"></iframe>
-
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
         var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwb_jTGauowbZxvua3sJrBy4PxfCuELT4z1hz6rDlyTl6p7FcGKINMv2oBuHhbYu2Q4/exec';
         var CSV_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJLJVjVpDuLsNRjFg9j7X2NHcDtOgmo4lhiC_CTx2S0ox97Hne91SXQ7XtJJxb9OberlzYUrSXijw6/pub?output=csv&gid=';
-        var GID_TYPES = '441822937';
-        var GID_COMPANIES = '883764981';
-        var GID_EMPLOYEES = '1294860374';
-
+        var GID_TYPES = '441822937', GID_COMPANIES = '883764981', GID_EMPLOYEES = '1294860374';
         var typesData = [], deviceCounter = 0, cameraStream = null;
         var currentCameraTarget = null, currentCameraDevice = null;
         var frameSettings = JSON.parse(localStorage.getItem('cameraFrame') || '{"top":"35%","width":"80%","height":"80px"}');
@@ -132,9 +119,9 @@
         var usedAddresses = [];
 
         window.addEventListener('load', function() {
-            setStatus('Загрузка справочников...', 'loading');
             document.getElementById('settingsEmail').value = settings.email;
             document.getElementById('emailHint').textContent = 'Письмо уйдёт на ' + settings.email;
+            setStatus('Загрузка справочников...', 'loading');
             loadDictionaries(); addDevice();
         });
 
@@ -199,12 +186,11 @@
                         document.getElementById('nameField' + deviceCounter).value = dev.name || '';
                         document.getElementById('typeField' + deviceCounter).value = dev.type || '';
                         document.getElementById('noteField' + deviceCounter).value = dev.note || '';
-                        // Разбираем серийный номер
                         if (dev.serial && dev.serial.includes('/')) {
                             var parts = dev.serial.split('/');
                             document.getElementById('serialField' + deviceCounter).value = parts[0] || '';
-                            var serial2El = document.getElementById('serialField2_' + deviceCounter);
-                            if (serial2El) serial2El.value = parts[1] || '';
+                            var s2 = document.getElementById('serialField2_' + deviceCounter);
+                            if (s2) s2.value = parts[1] || '';
                             checkDualSerial(deviceCounter);
                         } else {
                             document.getElementById('serialField' + deviceCounter).value = dev.serial || '';
@@ -253,10 +239,7 @@
         function renumberDevices() { document.querySelectorAll('.device-block').forEach(function(b,i){ b.id='device'+(i+1); var s=b.querySelector('.device-number'); if(s)s.textContent=i+1; }); deviceCounter=document.querySelectorAll('.device-block').length; }
 
         function checkType(deviceNum) {
-            var typeField = document.getElementById('typeField' + deviceNum);
-            var typeVal = (typeField?.value || '').toLowerCase();
-            
-            // АКБ
+            var typeVal = (document.getElementById('typeField' + deviceNum)?.value || '').toLowerCase();
             var akbRow = document.getElementById('akbRow' + deviceNum);
             if (akbRow) {
                 if (typeVal.includes('тепловычислитель') || typeVal.includes('тепловыч')) {
@@ -266,22 +249,16 @@
                     if (document.getElementById('akbCheck' + deviceNum)) document.getElementById('akbCheck' + deviceNum).checked = false;
                 }
             }
-            
-            // Двойной серийник
             checkDualSerial(deviceNum, typeVal);
         }
 
         function checkDualSerial(deviceNum, typeVal) {
-            if (!typeVal) {
-                typeVal = (document.getElementById('typeField' + deviceNum)?.value || '').toLowerCase();
-            }
+            if (!typeVal) typeVal = (document.getElementById('typeField' + deviceNum)?.value || '').toLowerCase();
             var isDual = typeVal.includes('термометр сопротивления') || typeVal.includes('ктсп') || typeVal.includes('термометр');
-            
             var slash = document.getElementById('serialSlash' + deviceNum);
             var field2 = document.getElementById('serialField2_' + deviceNum);
             var btn2 = document.getElementById('serialBtn2_' + deviceNum);
             var btn1 = document.getElementById('serialBtn' + deviceNum);
-            
             if (isDual) {
                 if (slash) slash.style.display = 'inline';
                 if (field2) field2.style.display = 'block';
@@ -299,24 +276,16 @@
             var typeVal = (document.getElementById('typeField' + deviceNum)?.value || '').toLowerCase();
             var isDual = typeVal.includes('термометр сопротивления') || typeVal.includes('ктсп') || typeVal.includes('термометр');
             if (!isDual) return;
-            
-            var serial1 = document.getElementById('serialField' + deviceNum)?.value || '';
-            var lastChar = serial1.slice(-1).toUpperCase();
+            var s1 = document.getElementById('serialField' + deviceNum)?.value || '';
+            var lastChar = s1.slice(-1).toUpperCase();
             var field2 = document.getElementById('serialField2_' + deviceNum);
-            
             if (!field2 || !lastChar) return;
-            
-            // Подсказка: если Х → предложить Г, если Г → предложить Х
             if (lastChar === 'Х' || lastChar === 'X') {
-                var suggestion = serial1.slice(0, -1) + 'Г';
-                if (field2.value === '' || field2.value === suggestion) {
-                    field2.value = suggestion;
-                }
+                var sug = s1.slice(0, -1) + 'Г';
+                if (field2.value === '' || field2.value === sug) field2.value = sug;
             } else if (lastChar === 'Г' || lastChar === 'G') {
-                var suggestion = serial1.slice(0, -1) + 'Х';
-                if (field2.value === '' || field2.value === suggestion) {
-                    field2.value = suggestion;
-                }
+                var sug = s1.slice(0, -1) + 'Х';
+                if (field2.value === '' || field2.value === sug) field2.value = sug;
             }
         }
 
@@ -333,9 +302,7 @@
                 var list = document.getElementById('addressList' + n);
                 if (list) {
                     list.innerHTML = '';
-                    usedAddresses.forEach(function(a) {
-                        list.innerHTML += '<option value="' + esc(a) + '">';
-                    });
+                    usedAddresses.forEach(function(a) { list.innerHTML += '<option value="' + esc(a) + '">'; });
                 }
             });
         }
@@ -370,22 +337,14 @@
                     return;
                 }
                 navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}})
-                    .then(function(s){
-                        cameraStream=s;
-                        window._cachedStream=s;
-                        video.srcObject=s;
-                        video.play();
-                    })
-                    .catch(function(){closeCamera();fallbackToFileInput(target,deviceNum);});
-            }else{fallbackToFileInput(target,deviceNum);}
+                    .then(function(s){ cameraStream=s; window._cachedStream=s; video.srcObject=s; video.play(); })
+                    .catch(function(){ closeCamera(); fallbackToFileInput(target,deviceNum); });
+            }else{ fallbackToFileInput(target,deviceNum); }
         }
 
         function captureFromCamera(){ if(!currentCameraTarget||!currentCameraDevice)return; var video=document.getElementById('cameraVideo'),frame=document.getElementById('cameraFrame'); var canvas=document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight; var ctx=canvas.getContext('2d');ctx.drawImage(video,0,0,canvas.width,canvas.height); var vr=video.getBoundingClientRect(),fr=frame.getBoundingClientRect(); var sx=Math.max(0,(fr.left-vr.left)*canvas.width/vr.width); var sy=Math.max(0,(fr.top-vr.top)*canvas.height/vr.height); var sw=Math.min(canvas.width-sx,fr.width*canvas.width/vr.width); var sh=Math.min(canvas.height-sy,fr.height*canvas.height/vr.height); var crop=document.createElement('canvas');crop.width=sw;crop.height=sh; crop.getContext('2d').drawImage(canvas,sx,sy,sw,sh,0,0,sw,sh); var dataUrl=crop.toDataURL('image/jpeg',0.9); document.getElementById('preview'+(currentCameraTarget==='name'?'Name':'Serial')+currentCameraDevice).src=dataUrl; document.getElementById('preview'+(currentCameraTarget==='name'?'Name':'Serial')+currentCameraDevice).style.display='block'; closeCamera(); recognizeText(dataUrl,currentCameraTarget,currentCameraDevice); }
 
-        function closeCamera(){
-            document.getElementById('cameraOverlay').style.display='none';
-            document.getElementById('cameraVideo').srcObject=null;
-        }
+        function closeCamera(){ document.getElementById('cameraOverlay').style.display='none'; document.getElementById('cameraVideo').srcObject=null; }
 
         function fallbackToFileInput(target,deviceNum){ closeCamera(); var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.capture='environment'; inp.onchange=function(){ if(!inp.files||!inp.files[0])return; var reader=new FileReader(); reader.onload=function(e){ var img=new Image(); img.onload=function(){ var c=document.createElement('canvas');c.width=img.width;c.height=img.height*0.25; c.getContext('2d').drawImage(img,0,img.height*0.375,img.width,img.height*0.25,0,0,img.width,img.height*0.25); var url=c.toDataURL('image/jpeg',0.85); document.getElementById('preview'+(target==='name'?'Name':'Serial')+deviceNum).src=url; document.getElementById('preview'+(target==='name'?'Name':'Serial')+deviceNum).style.display='block'; recognizeText(url,target,deviceNum); };img.src=e.target.result; };reader.readAsDataURL(inp.files[0]); };inp.click(); }
 
@@ -421,12 +380,7 @@
             var form=document.createElement('form');form.method='POST';form.action=SCRIPT_URL;form.target='hiddenFrame';form.style.display='none';
             [{n:'date',v:ds},{n:'company',v:company},{n:'employee',v:employee},{n:'devices',v:JSON.stringify(devices)},{n:'email',v:settings.email}].forEach(function(f){var i=document.createElement('input');i.type='hidden';i.name=f.n;i.value=f.v;form.appendChild(i);});
             document.body.appendChild(form);form.submit();document.body.removeChild(form);
-            setTimeout(function(){
-                setStatus('✅ Акт отправлен на '+settings.email,'success');
-                btn.textContent = '📧 Сформировать акт и отправить';
-                btn.style.background = '#FF5722';
-                btn.disabled = false;
-            },2000);
+            setTimeout(function(){ setStatus('✅ Акт отправлен на '+settings.email,'success'); btn.textContent='📧 Сформировать акт и отправить'; btn.style.background='#FF5722'; btn.disabled=false; },2000);
         }
         function setStatus(msg,cls){var el=document.getElementById('status');el.textContent=msg;el.className='status';if(cls)el.classList.add(cls);}
         function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
