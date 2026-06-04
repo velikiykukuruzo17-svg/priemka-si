@@ -11,7 +11,7 @@
         .header h1 { font-size: 20px; color: #333; }
         .header p { font-size: 12px; color: #888; margin-top: 5px; }
         .btn-settings { background: none; border: none; font-size: 24px; cursor: pointer; }
-        .field-group { margin-bottom: 12px; }
+        .field-group { margin-bottom: 10px; }
         .field-group label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 4px; }
         .field-row { display: flex; gap: 6px; }
         .field-row input, .field-row select { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; background: #fff; }
@@ -32,6 +32,8 @@
         .section-title { font-size: 14px; color: #888; margin: 15px 0 8px; border-top: 1px solid #ddd; padding-top: 12px; }
         input[type="file"] { display: none; }
         .act-toolbar { display: flex; gap: 8px; margin-bottom: 12px; }
+        .checkbox-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 14px; }
+        .checkbox-row input { width: 18px; height: 18px; }
 
         .autocomplete-wrap { position: relative; flex: 1; }
         .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: #fff; border: 1px solid #ddd; border-radius: 0 0 8px 8px; z-index: 100; display: none; list-style: none; }
@@ -44,7 +46,7 @@
         #settingsPanel input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; margin-bottom: 8px; }
         #settingsPanel .btn-save { width: 100%; background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 10px; font-size: 15px; cursor: pointer; }
 
-        #cameraOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; touch-action: none; }
+        #cameraOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; }
         #cameraVideo { width: 100%; height: 100%; object-fit: cover; }
         #cameraFrame { position: absolute; border: 3px solid #4CAF50; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.55); }
         #cameraFrameLabel { position: absolute; top: -28px; left: 0; width: 100%; text-align: center; color: #fff; font-size: 13px; font-weight: bold; }
@@ -123,6 +125,7 @@
         var currentCameraTarget = null, currentCameraDevice = null;
         var frameSettings = JSON.parse(localStorage.getItem('cameraFrame') || '{"top":"35%","width":"80%","height":"80px"}');
         var settings = JSON.parse(localStorage.getItem('appSettings') || '{"email":"ms-tcentr@mail.ru"}');
+        var usedAddresses = []; // Адреса в рамках текущего акта
 
         window.addEventListener('load', function() {
             setStatus('Загрузка справочников...', 'loading');
@@ -144,21 +147,19 @@
         function updateSelect(id,data,col){ var sel=document.getElementById(id); sel.innerHTML='<option value="">-- Выберите --</option>'; var names=[]; data.forEach(function(r){ var v=r[col]||r[0]||''; if(v&&names.indexOf(v)===-1){names.push(v); sel.innerHTML+='<option value="'+esc(v)+'">'+esc(v)+'</option>'; } }); }
         function getTypeNames(){ var names=[]; typesData.forEach(function(r){ var n=r[1]||r[0]||''; if(n&&names.indexOf(n)===-1) names.push(n); }); return names; }
 
-        // Новый акт
         function newAct() {
             if (confirm('Очистить все поля и начать новый акт?')) {
                 document.getElementById('devicesContainer').innerHTML = '';
                 deviceCounter = 0;
+                usedAddresses = [];
                 addDevice();
                 setStatus('✅ Новый акт', 'success');
             }
         }
 
-        // Выбрать акт
         function openActsList() {
             document.getElementById('actsModal').style.display = 'block';
             document.getElementById('actsList').innerHTML = 'Загрузка...';
-            
             fetch(SCRIPT_URL + '?action=getActs')
                 .then(r => r.json())
                 .then(function(acts) {
@@ -174,14 +175,10 @@
                     if (keys.length === 0) html = 'Нет сохранённых актов.';
                     document.getElementById('actsList').innerHTML = html;
                 })
-                .catch(function() {
-                    document.getElementById('actsList').innerHTML = 'Ошибка загрузки.';
-                });
+                .catch(function() { document.getElementById('actsList').innerHTML = 'Ошибка загрузки.'; });
         }
 
-        function closeActsList() {
-            document.getElementById('actsModal').style.display = 'none';
-        }
+        function closeActsList() { document.getElementById('actsModal').style.display = 'none'; }
 
         function loadAct(actNum) {
             fetch(SCRIPT_URL + '?action=getActs')
@@ -189,10 +186,9 @@
                 .then(function(acts) {
                     var act = acts[actNum];
                     if (!act) return;
-                    
                     document.getElementById('devicesContainer').innerHTML = '';
                     deviceCounter = 0;
-                    
+                    usedAddresses = [];
                     act.devices.forEach(function(dev) {
                         deviceCounter++;
                         var b = createDeviceBlock(deviceCounter);
@@ -200,10 +196,12 @@
                         document.getElementById('typeField' + deviceCounter).value = dev.type || '';
                         document.getElementById('serialField' + deviceCounter).value = dev.serial || '';
                         document.getElementById('noteField' + deviceCounter).value = dev.note || '';
+                        if (dev.address) {
+                            document.getElementById('addressField' + deviceCounter).value = dev.address;
+                            if (usedAddresses.indexOf(dev.address) === -1) usedAddresses.push(dev.address);
+                        }
                     });
-                    
                     if (deviceCounter === 0) addDevice();
-                    
                     closeActsList();
                     setStatus('✅ Загружен акт №' + actNum, 'success');
                 });
@@ -213,8 +211,10 @@
             var b = document.createElement('div'); b.className = 'device-block'; b.id = 'device' + num;
             b.innerHTML = `<div class="device-title"><span class="device-number">${num}</span> Прибор</div>
                 <div class="field-group"><label>📷 Название:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${num})" onfocus="filterAutocomplete(${num})" onblur="hideAutocomplete(${num})"><ul class="autocomplete-list" id="autocompleteList${num}"></ul></div><button class="btn-camera" onclick="openCamera('name',${num})">📷</button></div><img id="previewName${num}" class="preview"></div>
-                <div class="field-group"><label>Тип:</label><input type="text" id="typeField${num}" placeholder="Авто или вручную" list="typeList" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;"></div>
+                <div class="field-group"><label>Тип:</label><input type="text" id="typeField${num}" placeholder="Авто или вручную" list="typeList" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;" oninput="checkAKB(${num})"></div>
                 <div class="field-group"><label>📷 Заводской номер:</label><div class="field-row"><input type="text" id="serialField${num}" placeholder="С рамкой или вручную"><button class="btn-camera" onclick="openCamera('serial',${num})">📷</button></div><img id="previewSerial${num}" class="preview"></div>
+                <div class="field-group"><label>Адрес:</label><div class="field-row"><input type="text" id="addressField${num}" placeholder="Введите или выберите" list="addressList${num}" onchange="addAddressToList(this.value)"><datalist id="addressList${num}"></datalist></div></div>
+                <div class="checkbox-row" id="akbRow${num}" style="display:none;"><input type="checkbox" id="akbCheck${num}"><label for="akbCheck${num}">Замена АКБ</label></div>
                 <div class="field-group"><label>Примечание:</label><input type="text" id="noteField${num}" placeholder="Состояние..." style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;"></div>`;
             if (num > 1) {
                 var rb = document.createElement('button'); rb.className = 'btn-remove'; rb.textContent = '🗑️';
@@ -222,13 +222,48 @@
                 b.appendChild(rb);
             }
             document.getElementById('devicesContainer').appendChild(b);
+            updateAddressDatalists();
             renumberDevices();
             return b;
         }
 
         function addDevice() { deviceCounter++; createDeviceBlock(deviceCounter); }
-        function removeDevice(id) { document.getElementById(id)?.remove(); renumberDevices(); }
+        function removeDevice(id) { document.getElementById(id)?.remove(); renumberDevices(); updateAddressDatalists(); }
         function renumberDevices() { document.querySelectorAll('.device-block').forEach(function(b,i){ b.id='device'+(i+1); var s=b.querySelector('.device-number'); if(s)s.textContent=i+1; }); deviceCounter=document.querySelectorAll('.device-block').length; }
+
+        function checkAKB(deviceNum) {
+            var typeField = document.getElementById('typeField' + deviceNum);
+            var akbRow = document.getElementById('akbRow' + deviceNum);
+            if (typeField && akbRow) {
+                var typeVal = typeField.value.toLowerCase();
+                if (typeVal.includes('тепловычислитель') || typeVal.includes('тепловыч')) {
+                    akbRow.style.display = 'flex';
+                } else {
+                    akbRow.style.display = 'none';
+                    document.getElementById('akbCheck' + deviceNum).checked = false;
+                }
+            }
+        }
+
+        function addAddressToList(address) {
+            if (address && usedAddresses.indexOf(address) === -1) {
+                usedAddresses.push(address);
+                updateAddressDatalists();
+            }
+        }
+
+        function updateAddressDatalists() {
+            document.querySelectorAll('.device-block').forEach(function(b) {
+                var n = b.id.replace('device', '');
+                var list = document.getElementById('addressList' + n);
+                if (list) {
+                    list.innerHTML = '';
+                    usedAddresses.forEach(function(a) {
+                        list.innerHTML += '<option value="' + esc(a) + '">';
+                    });
+                }
+            });
+        }
 
         function filterAutocomplete(deviceNum) {
             var input=document.getElementById('nameField'+deviceNum), list=document.getElementById('autocompleteList'+deviceNum);
@@ -240,7 +275,7 @@
             matches.slice(0,20).forEach(function(n){ list.innerHTML+='<li data-name="'+esc(n)+'" onmousedown="selectAutocomplete('+deviceNum+',\''+esc(n)+'\')">'+esc(n)+'</li>'; });
             list.style.display='block';
         }
-        function selectAutocomplete(deviceNum,name){ document.getElementById('nameField'+deviceNum).value=name; document.getElementById('autocompleteList'+deviceNum).style.display='none'; var ft=findTypeByName(name); if(ft)document.getElementById('typeField'+deviceNum).value=ft; }
+        function selectAutocomplete(deviceNum,name){ document.getElementById('nameField'+deviceNum).value=name; document.getElementById('autocompleteList'+deviceNum).style.display='none'; var ft=findTypeByName(name); if(ft){document.getElementById('typeField'+deviceNum).value=ft; checkAKB(deviceNum);} }
         function hideAutocomplete(deviceNum){ setTimeout(function(){ document.getElementById('autocompleteList'+deviceNum).style.display='none'; },200); }
 
         // Камера
@@ -251,7 +286,7 @@
         function fallbackToFileInput(target,deviceNum){ closeCamera(); var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.capture='environment'; inp.onchange=function(){ if(!inp.files||!inp.files[0])return; var reader=new FileReader(); reader.onload=function(e){ var img=new Image(); img.onload=function(){ var c=document.createElement('canvas');c.width=img.width;c.height=img.height*0.25; c.getContext('2d').drawImage(img,0,img.height*0.375,img.width,img.height*0.25,0,0,img.width,img.height*0.25); var url=c.toDataURL('image/jpeg',0.85); document.getElementById('preview'+(target==='name'?'Name':'Serial')+deviceNum).src=url; document.getElementById('preview'+(target==='name'?'Name':'Serial')+deviceNum).style.display='block'; recognizeText(url,target,deviceNum); };img.src=e.target.result; };reader.readAsDataURL(inp.files[0]); };inp.click(); }
 
         function findTypeByName(name){ if(!name)return''; var nc=name.toLowerCase().replace(/[^a-zа-я0-9]/g,''),best='',bestScore=0; typesData.forEach(function(r){var ref=(r[1]||r[0]||'').toLowerCase().replace(/[^a-zа-я0-9]/g,'');if(ref&&nc.includes(ref)&&ref.length>bestScore){bestScore=ref.length;best=r[2]||r[1]||'';}});return best; }
-        function recognizeText(dataUrl,target,deviceNum){ setStatus('Распознавание...','loading'); Tesseract.recognize(dataUrl,'rus+eng',{tessedit_char_whitelist:'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюяABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789№/-. ',logger:function(m){if(m.status==='recognizing text')setStatus('Распознавание: '+Math.round(m.progress*100)+'%','loading');}}).then(function(result){var text=cleanText(result.data.text);if(target==='name'){var nt=extractName(text);document.getElementById('nameField'+deviceNum).value=nt;var ft=findTypeByName(nt);if(ft){document.getElementById('typeField'+deviceNum).value=ft;setStatus('✅ '+nt,'success');}else setStatus('⚠️ Проверьте. Распознано: '+text.substring(0,40),'error');}else{var serial=extractSerial(text);document.getElementById('serialField'+deviceNum).value=serial;setStatus(serial?'✅ Номер: '+serial:'⚠️ Проверьте номер',serial?'success':'error');}}).catch(function(){setStatus('❌ Ошибка распознавания','error');}); }
+        function recognizeText(dataUrl,target,deviceNum){ setStatus('Распознавание...','loading'); Tesseract.recognize(dataUrl,'rus+eng',{tessedit_char_whitelist:'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюяABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789№/-. ',logger:function(m){if(m.status==='recognizing text')setStatus('Распознавание: '+Math.round(m.progress*100)+'%','loading');}}).then(function(result){var text=cleanText(result.data.text);if(target==='name'){var nt=extractName(text);document.getElementById('nameField'+deviceNum).value=nt;var ft=findTypeByName(nt);if(ft){document.getElementById('typeField'+deviceNum).value=ft;checkAKB(deviceNum);setStatus('✅ '+nt,'success');}else setStatus('⚠️ Проверьте. Распознано: '+text.substring(0,40),'error');}else{var serial=extractSerial(text);document.getElementById('serialField'+deviceNum).value=serial;setStatus(serial?'✅ Номер: '+serial:'⚠️ Проверьте номер',serial?'success':'error');}}).catch(function(){setStatus('❌ Ошибка распознавания','error');}); }
         function cleanText(text){ var c=text.replace(/(\d)\.(\d)/g,'$1-$2').replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g,' ').replace(/\s+/g,' ').trim(); var fixes={'Ду':'ДУ','ду':'ДУ','Ne':'№','Nе':'№','No':'№','зав':'зав','Зав':'зав','KAPAT':'КАРАТ','Kapat':'КАРАТ','карат':'КАРАТ','Карат':'КАРАТ'}; return c.split(' ').map(function(w){return fixes[w]||w;}).join(' '); }
         function extractName(text){ var noSerial=text.replace(/зав\.?\s*[№Nn]\s*\d+/gi,'').replace(/[№Nn]\s*\d+/gi,''); var tc=noSerial.toLowerCase().replace(/[^a-zа-я0-9]/g,''),best='',bestScore=0; typesData.forEach(function(r){var ref=(r[1]||r[0]||'').trim();if(!ref)return;var fw=ref.split(/[\s\-]+/)[0].toLowerCase().replace(/[^a-zа-я0-9]/g,'');if(fw.length>=3&&tc.indexOf(fw)!==-1&&ref.length>bestScore){bestScore=ref.length;best=ref;}});return best||noSerial.replace(/\s+/g,' ').trim(); }
         function extractSerial(text){ var m=text.match(/(?:зав\.?\s*)?[№Nn]\s*[:=\-\s]*\s*(\d{3,})/i)||text.match(/\b(\d{4,})\b/); return m?m[1].replace(/[^\d]/g,''):''; }
@@ -261,8 +296,8 @@
             var company=document.getElementById('companySelect').value,employee=document.getElementById('employeeSelect').value;
             if(!company||!employee){alert('Выберите компанию и принявшего');return;}
             var devices=[],allValid=true;
-            document.querySelectorAll('.device-block').forEach(function(b){var n=b.id.replace('device','');var t=document.getElementById('typeField'+n)?.value.trim()||'',nm=document.getElementById('nameField'+n)?.value.trim()||'',s=document.getElementById('serialField'+n)?.value.trim()||'',nt=document.getElementById('noteField'+n)?.value.trim()||'';if(!nm||!t||!s){allValid=false;return;}devices.push({type:t,name:nm,serial:s,note:nt});});
-            if(!allValid||!devices.length){alert('Заполните все поля');return;}
+            document.querySelectorAll('.device-block').forEach(function(b){var n=b.id.replace('device','');var t=document.getElementById('typeField'+n)?.value.trim()||'',nm=document.getElementById('nameField'+n)?.value.trim()||'',s=document.getElementById('serialField'+n)?.value.trim()||'',addr=document.getElementById('addressField'+n)?.value.trim()||'',akb=document.getElementById('akbCheck'+n)?.checked||false,nt=document.getElementById('noteField'+n)?.value.trim()||'';if(!nm||!t||!s){allValid=false;return;}devices.push({type:t,name:nm,serial:s,address:addr,akb:akb,note:nt});});
+            if(!allValid||!devices.length){alert('Заполните обязательные поля (Название, Тип, Заводской номер)');return;}
             var btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='Отправка...';setStatus('Формирование и отправка...','loading');
             var now=new Date(),ds=('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear();
             var form=document.createElement('form');form.method='POST';form.action=SCRIPT_URL;form.target='hiddenFrame';form.style.display='none';
