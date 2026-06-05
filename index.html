@@ -176,18 +176,28 @@
                 .then(r => r.json())
                 .then(function(acts) {
                     var act = acts[actNum];
-                    if (!act) return;
+                    if (!act) {
+                        Object.keys(acts).forEach(function(key) {
+                            if (key === actNum || key.replace(/\./g, '\\.') === actNum) {
+                                act = acts[key];
+                            }
+                        });
+                    }
+                    if (!act) { alert('Акт не найден'); return; }
+                    
                     document.getElementById('devicesContainer').innerHTML = '';
                     deviceCounter = 0;
                     usedAddresses = [];
+                    
                     act.devices.forEach(function(dev) {
                         deviceCounter++;
                         createDeviceBlock(deviceCounter);
                         document.getElementById('nameField' + deviceCounter).value = dev.name || '';
                         document.getElementById('typeField' + deviceCounter).value = dev.type || '';
                         document.getElementById('noteField' + deviceCounter).value = dev.note || '';
-                        if (dev.serial && dev.serial.includes('/')) {
-                            var parts = dev.serial.split('/');
+                        
+                        if (dev.serial && String(dev.serial).includes('/')) {
+                            var parts = String(dev.serial).split('/');
                             document.getElementById('serialField' + deviceCounter).value = parts[0] || '';
                             var s2 = document.getElementById('serialField2_' + deviceCounter);
                             if (s2) s2.value = parts[1] || '';
@@ -195,11 +205,22 @@
                         } else {
                             document.getElementById('serialField' + deviceCounter).value = dev.serial || '';
                         }
+                        
                         if (dev.address) {
                             document.getElementById('addressField' + deviceCounter).value = dev.address;
                             if (usedAddresses.indexOf(dev.address) === -1) usedAddresses.push(dev.address);
                         }
+                        
+                        var typeVal = (dev.type || '').toLowerCase();
+                        if (typeVal.includes('тепловычислитель') || typeVal.includes('тепловыч')) {
+                            checkType(deviceCounter);
+                            if (dev.akb) {
+                                var akbCheck = document.getElementById('akbCheck' + deviceCounter);
+                                if (akbCheck) akbCheck.checked = true;
+                            }
+                        }
                     });
+                    
                     if (deviceCounter === 0) addDevice();
                     closeActsList();
                     setStatus('✅ Загружен акт №' + actNum, 'success');
@@ -254,7 +275,7 @@
 
         function checkDualSerial(deviceNum, typeVal) {
             if (!typeVal) typeVal = (document.getElementById('typeField' + deviceNum)?.value || '').toLowerCase();
-            var isDual = typeVal.includes('термометр сопротивления') || typeVal.includes('ктсп') || typeVal.includes('термометр');
+            var isDual = typeVal.includes('термометр сопротивления') || typeVal.includes('ктсп') || typeVal.includes('ктптр') || typeVal.includes('тспа');
             var slash = document.getElementById('serialSlash' + deviceNum);
             var field2 = document.getElementById('serialField2_' + deviceNum);
             var btn2 = document.getElementById('serialBtn2_' + deviceNum);
@@ -274,7 +295,7 @@
 
         function suggestSecondSerial(deviceNum) {
             var typeVal = (document.getElementById('typeField' + deviceNum)?.value || '').toLowerCase();
-            var isDual = typeVal.includes('термометр сопротивления') || typeVal.includes('ктсп') || typeVal.includes('термометр');
+            var isDual = typeVal.includes('термометр сопротивления') || typeVal.includes('ктсп') || typeVal.includes('ктптр') || typeVal.includes('тспа');
             if (!isDual) return;
             var s1 = document.getElementById('serialField' + deviceNum)?.value || '';
             var lastChar = s1.slice(-1).toUpperCase();
