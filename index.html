@@ -66,8 +66,6 @@
         .serial-row { display: flex; gap: 6px; align-items: center; }
         .serial-row span { font-size: 20px; font-weight: bold; color: #888; padding: 0 4px; }
         .serial-row input { flex: 1; }
-        
-        /* Стили для вариантов распознавания */
         .voice-variants { margin-top: 8px; display: none; }
         .voice-variants.active { display: block; }
         .voice-variant-item { padding: 8px 12px; margin: 4px 0; background: #f0f0f0; border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
@@ -75,10 +73,7 @@
         .voice-variant-item.selected { background: #4CAF50; color: white; }
         .voice-status { font-size: 11px; color: #E91E63; margin-top: 4px; display: none; }
         .voice-status.active { display: block; }
-        
-        /* Индикатор записи для кнопки в строке */
-        .voice-row-indicator { display: none; position: absolute; top: -8px; right: -8px; width: 16px; height: 16px; background: #FF5722; border-radius: 50%; animation: pulse 1s infinite; }
-        .voice-row-indicator.active { display: block; }
+        .serial-hint { font-size: 10px; color: #999; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -211,9 +206,22 @@
                         if (currentVoiceField === 'name') {
                             showVoiceVariants(voiceResults);
                         } else {
-                            // Для других полей берём первый результат
+                            var rawValue = voiceResults[0];
+                            var processedValue;
+                            
+                            if (currentVoiceField === 'serialField') {
+                                processedValue = extractSerialEnhanced(rawValue);
+                            } else {
+                                processedValue = rawValue;
+                            }
+                            
                             var field = document.getElementById(currentVoiceField + currentVoiceDevice);
-                            if (field) field.value = voiceResults[0];
+                            if (field && processedValue) {
+                                field.value = processedValue;
+                                if (currentVoiceField === 'serialField') {
+                                    suggestSecondSerial(currentVoiceDevice);
+                                }
+                            }
                             stopVoiceInput();
                         }
                     }
@@ -250,22 +258,23 @@
             isListening = true;
             voiceResults = [];
             
-            // Активируем кнопку
-            var btn = document.querySelector('.voice-btn-' + field + '-' + deviceNum);
+            var btnClass = (field === 'name') ? 'voice-btn-name-' + deviceNum : 'voice-btn-serial-' + deviceNum;
+            var btn = document.querySelector('.' + btnClass);
             if (btn) btn.classList.add('listening');
             
-            // Показываем статус
-            var statusEl = document.getElementById('voiceStatus' + deviceNum);
+            var statusId = (field === 'name') ? 'voiceStatus' + deviceNum : 'voiceStatusSerial' + deviceNum;
+            var statusEl = document.getElementById(statusId);
             if (statusEl) {
                 statusEl.textContent = '🎤 Говорите...';
                 statusEl.classList.add('active');
             }
             
-            // Скрываем старые варианты
-            var variantsEl = document.getElementById('voiceVariants' + deviceNum);
-            if (variantsEl) {
-                variantsEl.classList.remove('active');
-                variantsEl.innerHTML = '';
+            if (field === 'name') {
+                var variantsEl = document.getElementById('voiceVariants' + deviceNum);
+                if (variantsEl) {
+                    variantsEl.classList.remove('active');
+                    variantsEl.innerHTML = '';
+                }
             }
             
             try { recognition.start(); } catch(e) {}
@@ -275,10 +284,7 @@
         function stopVoiceInput() {
             isListening = false;
             
-            // Деактивируем все кнопки
             document.querySelectorAll('.btn-voice').forEach(function(b) { b.classList.remove('listening'); });
-            
-            // Скрываем все статусы
             document.querySelectorAll('.voice-status').forEach(function(s) { s.classList.remove('active'); });
             
             try { recognition.stop(); } catch(e) {}
@@ -294,12 +300,10 @@
             
             if (!variantsEl) return;
             
-            // Ищем совпадения типов для каждого варианта
             var allVariants = [];
             results.forEach(function(text) {
                 var matches = findTypeMatches(text);
                 matches.forEach(function(match) {
-                    // Проверяем, нет ли уже такого варианта
                     var exists = allVariants.some(function(v) { return v.name === match.name; });
                     if (!exists) {
                         allVariants.push(match);
@@ -307,7 +311,6 @@
                 });
             });
             
-            // Если нет совпадений, показываем сырой текст
             if (allVariants.length === 0) {
                 results.forEach(function(text) {
                     if (text.length > 3) {
@@ -316,10 +319,7 @@
                 });
             }
             
-            // Сортируем по скору
             allVariants.sort(function(a, b) { return b.score - a.score; });
-            
-            // Показываем топ-5
             var topVariants = allVariants.slice(0, 5);
             
             if (topVariants.length > 0) {
@@ -352,11 +352,9 @@
         function selectVoiceVariant(name) {
             if (!currentVoiceDevice) return;
             
-            // Заполняем поле названия
             var nameField = document.getElementById('nameField' + currentVoiceDevice);
             if (nameField) nameField.value = name;
             
-            // Автоподбор типа
             var ft = findTypeByName(name);
             if (ft) {
                 var typeField = document.getElementById('typeField' + currentVoiceDevice);
@@ -366,7 +364,6 @@
                 }
             }
             
-            // Скрываем варианты
             var variantsEl = document.getElementById('voiceVariants' + currentVoiceDevice);
             if (variantsEl) {
                 variantsEl.classList.remove('active');
@@ -482,6 +479,151 @@
             return costs[s2.length];
         }
 
+        function extractSerialEnhanced(text) {
+            var patterns = [
+                /(?:номер|заводской|серийный|зав\.?\s*)?[№Nn]\s*[:=\-\s]*\s*(\d[\d\-\/\s]+\d)/i,
+                /(?:номер|заводской|серийный|зав)\s+(?:прибора|изделия|устройства)?\s*[:=\-\s]*\s*(\d[\d\-\/\s]+\d)/i,
+                /номер\s+(\d[\d\-\/\s]+\d)/i
+            ];
+            
+            for (var i = 0; i < patterns.length; i++) {
+                var match = text.match(patterns[i]);
+                if (match) {
+                    var serial = match[1].trim();
+                    return smartProcessSerial(serial);
+                }
+            }
+            
+            var allNumbers = text.match(/\d+/g);
+            if (!allNumbers || allNumbers.length === 0) return null;
+            
+            if (allNumbers.length === 1) {
+                return allNumbers[0].length >= 4 ? allNumbers[0] : null;
+            }
+            
+            return smartCombineNumbers(allNumbers, text);
+        }
+
+        function smartProcessSerial(rawSerial) {
+            if (!rawSerial) return null;
+            
+            // Если уже содержит / или - возвращаем как есть
+            if (/[\/\-]/.test(rawSerial)) {
+                return rawSerial.replace(/[^\d\-\/]/g, '');
+            }
+            
+            // Разбиваем по пробелам
+            var parts = rawSerial.split(/\s+/);
+            if (parts.length <= 1) {
+                return rawSerial.replace(/[^\d]/g, '');
+            }
+            
+            return smartCombineNumbers(parts, rawSerial);
+        }
+
+        function smartCombineNumbers(numbers, originalText) {
+            if (numbers.length === 0) return null;
+            if (numbers.length === 1) return numbers[0].length >= 4 ? numbers[0] : null;
+            
+            // Находим позиции чисел в тексте
+            var positions = [];
+            var searchPos = 0;
+            for (var i = 0; i < numbers.length; i++) {
+                var num = String(numbers[i]);
+                var pos = originalText.indexOf(num, searchPos);
+                if (pos !== -1) {
+                    positions.push({ number: num, position: pos, length: num.length });
+                    searchPos = pos + num.length;
+                }
+            }
+            
+            if (positions.length < 2) return numbers.join('');
+            
+            // Группируем числа по расстоянию между ними
+            var groups = [];
+            var currentGroup = [positions[0]];
+            
+            for (var i = 1; i < positions.length; i++) {
+                var prevEnd = positions[i-1].position + positions[i-1].length;
+                var distance = positions[i].position - prevEnd;
+                
+                if (distance <= 2) {
+                    // Маленькое расстояние - сливаем
+                    currentGroup.push(positions[i]);
+                } else {
+                    // Большое расстояние - новый номер
+                    groups.push(currentGroup);
+                    currentGroup = [positions[i]];
+                }
+            }
+            groups.push(currentGroup);
+            
+            // Формируем результат
+            var result = groups.map(function(group) {
+                return group.map(function(item) { return item.number; }).join('');
+            }).filter(function(n) { return n.length > 0; });
+            
+            if (result.length === 1) {
+                var num = result[0].replace(/[^\d]/g, '');
+                if (num.length > 7) {
+                    // Длинный номер - пробуем разделить
+                    var parts = num.match(/^(\d{4,6})(\d{4,})$/);
+                    if (parts) {
+                        return parts[1] + '/' + parts[2];
+                    }
+                }
+                return num.length >= 4 ? num : null;
+            } else if (result.length === 2) {
+                return result[0] + '/' + result[1];
+            } else {
+                return result.join('/');
+            }
+        }
+
+        function cleanSerialNumber(serial) {
+            if (!serial) return '';
+            if (serial.includes('/') || serial.includes('-')) {
+                return serial.replace(/[^\d\-\/]/g, '');
+            }
+            if (serial.length > 7) {
+                var parts = serial.match(/^(\d{4,6})(\d{4,})$/);
+                if (parts) {
+                    return parts[1] + '/' + parts[2];
+                }
+            }
+            return serial.replace(/[^\d]/g, '');
+        }
+
+        function addSerialInputHandler(deviceNum) {
+            var serialField = document.getElementById('serialField' + deviceNum);
+            if (!serialField) return;
+            
+            serialField.addEventListener('blur', function() {
+                var value = this.value.trim();
+                if (!value) return;
+                
+                // Убираем буквы, оставляем цифры, пробелы, слеши, дефисы
+                var cleaned = value.replace(/[^\d\s\-\/]/g, '').replace(/\s+/g, ' ').trim();
+                
+                if (cleaned.includes(' ')) {
+                    var parts = cleaned.split(/\s+/);
+                    var numbers = parts.filter(function(p) { return p.length > 0; });
+                    
+                    if (numbers.length === 2) {
+                        // Два числа - составной номер
+                        this.value = numbers[0] + '/' + numbers[1];
+                    } else if (numbers.length > 2) {
+                        // Много чисел - группируем
+                        this.value = smartCombineNumbers(numbers, cleaned) || cleaned.replace(/\s/g, '');
+                    } else {
+                        this.value = cleaned.replace(/\s/g, '');
+                    }
+                } else {
+                    this.value = cleaned;
+                }
+            });
+        }
+
         function createDeviceBlock(num) {
             var b = document.createElement('div'); b.className = 'device-block'; b.id = 'device' + num;
             b.innerHTML = `<div class="device-title"><span class="device-number">${num}</span> Прибор</div>
@@ -500,9 +642,10 @@
                     <img id="previewName${num}" class="preview">
                 </div>
                 <div class="field-group"><label>Тип:</label><input type="text" id="typeField${num}" placeholder="Авто или вручную" list="typeList" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;" oninput="checkType(${num})"></div>
-                <div class="field-group"><label>📷 Заводской номер:</label>
+                <div class="field-group">
+                    <label>📷 Заводской номер:</label>
                     <div class="serial-row" id="serialRow${num}">
-                        <input type="text" id="serialField${num}" placeholder="Номер" oninput="suggestSecondSerial(${num})">
+                        <input type="text" id="serialField${num}" placeholder="Номер">
                         <span id="serialSlash${num}" style="display:none;">/</span>
                         <input type="text" id="serialField2_${num}" placeholder="Вторая часть" style="display:none;">
                         <button class="btn-camera" onclick="openCamera('serial',${num})" style="display:none;" id="serialBtn2_${num}">📷</button>
@@ -511,7 +654,9 @@
                     <button class="btn-camera" onclick="openCamera('serial',${num})" id="serialBtn${num}">📷</button>
                     <button class="btn-voice voice-btn-serial-${num}" onclick="startVoiceInput(${num},'serialField')" title="Голосовой ввод номера" id="serialVoiceBtn${num}">🎤</button>
                     <div class="voice-status" id="voiceStatusSerial${num}"></div>
-                    <img id="previewSerial${num}" class="preview"></div>
+                    <div class="serial-hint">💡 Номер с пробелом: "865 451" → 865451, "45678 10" → 45678/10</div>
+                    <img id="previewSerial${num}" class="preview">
+                </div>
                 <div class="field-group"><label>Адрес:</label><div class="field-row"><input type="text" id="addressField${num}" placeholder="Введите или выберите" list="addressList${num}" onchange="addAddressToList(this.value)"><datalist id="addressList${num}"></datalist></div></div>
                 <div class="checkbox-row" id="akbRow${num}" style="display:none;"><input type="checkbox" id="akbCheck${num}"><label for="akbCheck${num}">Замена АКБ</label></div>
                 <div class="field-group"><label>Примечание:</label><input type="text" id="noteField${num}" placeholder="Состояние..." style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;"></div>`;
@@ -521,6 +666,11 @@
                 b.appendChild(rb);
             }
             document.getElementById('devicesContainer').appendChild(b);
+            
+            setTimeout(function() {
+                addSerialInputHandler(num);
+            }, 100);
+            
             updateAddressDatalists();
             renumberDevices();
             return b;
