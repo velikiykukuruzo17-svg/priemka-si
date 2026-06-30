@@ -71,11 +71,16 @@
         .serial-row span { font-size: 20px; font-weight: bold; color: #888; padding: 0 4px; }
         .serial-row input { flex: 1; }
         #voiceModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10000; text-align: center; }
-        #voiceModal .voice-modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; }
+        #voiceModal .voice-modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; max-width: 90%; width: 400px; }
         #voiceModal .voice-icon { font-size: 80px; animation: pulse 1.5s infinite; }
-        #voiceModal .voice-text { font-size: 18px; margin-top: 20px; }
+        #voiceModal .voice-text { font-size: 18px; margin-top: 20px; min-height: 50px; }
         #voiceModal .voice-hint { font-size: 13px; color: #aaa; margin-top: 10px; }
+        #voiceModal .voice-hint small { display: block; margin-top: 5px; color: #888; }
         #voiceModal .btn-voice-close { background: #f44336; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 30px; }
+        #voiceModal .voice-correction { margin-top: 15px; font-size: 14px; text-align: left; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; }
+        #voiceModal .voice-correction div { margin: 5px 0; }
+        #voiceModal .voice-correction b { color: #4CAF50; }
+        .voice-step { color: #FFD700; font-size: 12px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -109,10 +114,14 @@
     <div id="voiceModal">
         <div class="voice-modal-content">
             <div class="voice-icon">🎤</div>
-            <div class="voice-text" id="voiceText">Говорите...</div>
-            <div class="voice-hint">Например: "Водосчётчик ВСХ-15 номер 1234567 адрес улица Ленина 5"</div>
-            <div id="voiceFields" style="margin-top:15px;font-size:14px;text-align:left;max-width:300px;margin-left:auto;margin-right:auto;"></div>
-            <button class="btn-voice-close" onclick="stopGlobalVoice()">Завершить</button>
+            <div class="voice-text" id="voiceText">Говорите чётко и не спеша...</div>
+            <div class="voice-step" id="voiceStep"></div>
+            <div class="voice-correction" id="voiceFields"></div>
+            <div class="voice-hint">
+                Пример: "Водосчётчик ВСХ 15 номер 12345678 адрес улица Ленина 5"
+                <small>Говорите: название, потом НОМЕР, потом АДРЕС</small>
+            </div>
+            <button class="btn-voice-close" onclick="stopGlobalVoice()">✅ Завершить и заполнить</button>
         </div>
     </div>
 
@@ -137,6 +146,7 @@
     <iframe name="hiddenFrame" style="display:none;"></iframe>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
+        // ... (предыдущие переменные остаются без изменений)
         var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwb_jTGauowbZxvua3sJrBy4PxfCuELT4z1hz6rDlyTl6p7FcGKINMv2oBuHhbYu2Q4/exec';
         var CSV_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJLJVjVpDuLsNRjFg9j7X2NHcDtOgmo4lhiC_CTx2S0ox97Hne91SXQ7XtJJxb9OberlzYUrSXijw6/pub?output=csv&gid=';
         var GID_TYPES = '441822937', GID_COMPANIES = '883764981', GID_EMPLOYEES = '1294860374';
@@ -152,6 +162,9 @@
         var isListening = false;
         var voiceTargetDevice = null;
         var collectedVoiceData = {};
+        var voiceStep = 0; // 0=название, 1=номер, 2=адрес
+        var lastInterimResult = '';
+        var finalTranscript = '';
 
         window.addEventListener('load', function() {
             document.getElementById('settingsEmail').value = settings.email;
@@ -169,42 +182,50 @@
                 recognition.lang = 'ru-RU';
                 recognition.interimResults = true;
                 recognition.continuous = true;
-                recognition.maxAlternatives = 1;
+                recognition.maxAlternatives = 3; // Увеличиваем для лучшего выбора
 
                 recognition.onresult = function(event) {
-                    var transcript = '';
+                    var allAlternatives = [];
+                    var interimTranscript = '';
+                    
                     for (var i = event.resultIndex; i < event.results.length; i++) {
-                        transcript += event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            // Собираем все альтернативы для финального результата
+                            for (var j = 0; j < event.results[i].length; j++) {
+                                allAlternatives.push(event.results[i][j].transcript.trim());
+                            }
+                        } else {
+                            interimTranscript += event.results[i][0].transcript;
+                        }
                     }
                     
-                    if (voiceTargetDevice !== null) {
-                        // Режим заполнения конкретного поля
-                        var fieldId = 'nameField' + voiceTargetDevice;
-                        var input = document.getElementById(fieldId);
-                        if (input && transcript) {
-                            input.value = transcript;
-                            var ft = findTypeByName(transcript);
-                            if (ft) {
-                                document.getElementById('typeField' + voiceTargetDevice).value = ft;
-                                checkType(voiceTargetDevice);
-                            }
-                        }
-                    } else {
-                        // Глобальный режим - парсим всю фразу
-                        parseGlobalVoice(transcript);
+                    // Выбираем лучший вариант из альтернатив
+                    var bestTranscript = selectBestTranscript(allAlternatives, interimTranscript);
+                    
+                    if (bestTranscript) {
+                        finalTranscript = bestTranscript;
+                        processVoiceInput(bestTranscript, false);
+                    } else if (interimTranscript) {
+                        processVoiceInput(interimTranscript, true);
                     }
                 };
 
                 recognition.onerror = function(event) {
                     console.log('Voice error:', event.error);
                     if (event.error === 'no-speech') {
-                        setStatus('🎤 Ничего не услышано, попробуйте снова', 'error');
+                        document.getElementById('voiceText').textContent = 'Ничего не услышано. Говорите громче и чётче...';
+                    } else if (event.error === 'audio-capture') {
+                        document.getElementById('voiceText').textContent = 'Проблема с микрофоном. Проверьте доступ.';
                     }
                 };
 
                 recognition.onend = function() {
                     if (isListening) {
-                        try { recognition.start(); } catch(e) {}
+                        try { 
+                            recognition.start(); 
+                        } catch(e) {
+                            // Уже запущено
+                        }
                     }
                 };
 
@@ -214,6 +235,38 @@
                 document.getElementById('globalVoiceBtn').style.display = 'none';
                 console.log('Speech Recognition не поддерживается');
             }
+        }
+
+        // Функция выбора лучшего варианта из альтернатив
+        function selectBestTranscript(alternatives, interim) {
+            if (alternatives.length === 0) return interim || '';
+            
+            // Оцениваем каждый вариант
+            var scored = alternatives.map(function(alt) {
+                var score = 0;
+                var lower = alt.toLowerCase();
+                
+                // Бонус за ключевые слова
+                if (/\bномер\b|\bзаводской\b|\b№\b/i.test(lower)) score += 10;
+                if (/\bадрес\b|\bулица\b|\bдом\b/i.test(lower)) score += 10;
+                if (/\d{4,}/.test(lower)) score += 15; // Есть цифры (похоже на номер)
+                
+                // Бонус за длину (более полные фразы)
+                score += alt.length / 10;
+                
+                // Штраф за повторяющиеся слова
+                var words = lower.split(/\s+/);
+                var uniqueWords = {};
+                words.forEach(function(w) { uniqueWords[w] = true; });
+                if (Object.keys(uniqueWords).length < words.length * 0.7) score -= 5;
+                
+                return { text: alt, score: score };
+            });
+            
+            // Сортируем по убыванию скора
+            scored.sort(function(a, b) { return b.score - a.score; });
+            
+            return scored[0].text;
         }
 
         function startGlobalVoice() {
@@ -234,17 +287,21 @@
                 lastDevice = deviceCounter;
             }
             
-            voiceTargetDevice = null; // глобальный режим
+            voiceTargetDevice = lastDevice;
             collectedVoiceData = {};
+            voiceStep = 0;
+            finalTranscript = '';
+            lastInterimResult = '';
             isListening = true;
             
             document.getElementById('voiceModal').style.display = 'block';
-            document.getElementById('voiceText').textContent = '🎤 Говорите...';
+            document.getElementById('voiceText').textContent = '🎤 Жду название прибора...';
+            document.getElementById('voiceStep').textContent = 'Шаг 1/3: Назовите тип и модель прибора';
             document.getElementById('voiceFields').innerHTML = '';
             document.getElementById('globalVoiceBtn').classList.add('listening');
             
             try { recognition.start(); } catch(e) {}
-            setStatus('🎤 Слушаю...', 'loading');
+            setStatus('🎤 Говорите название...', 'loading');
         }
 
         function stopGlobalVoice() {
@@ -258,89 +315,189 @@
             if (Object.keys(collectedVoiceData).length > 0) {
                 fillDeviceFromVoice(collectedVoiceData);
             }
-            setStatus('✅ Готов', 'success');
+            setStatus('✅ Данные заполнены', 'success');
         }
 
-        function startVoiceForField(target, deviceNum) {
-            if (!isVoiceSupported) {
-                alert('Голосовой ввод не поддерживается. Используйте Chrome.');
-                return;
-            }
+        function processVoiceInput(transcript, isInterim) {
+            if (!transcript || transcript === lastInterimResult) return;
+            lastInterimResult = transcript;
             
-            if (isListening) {
-                stopVoiceForField();
-                return;
-            }
-
-            voiceTargetDevice = deviceNum;
-            isListening = true;
+            // Нормализуем текст
+            var text = transcript.toLowerCase()
+                .replace(/запятая/gi, ',')
+                .replace(/точка/gi, '.')
+                .replace(/тире/gi, '-')
+                .replace(/двоеточие/gi, ':')
+                .replace(/слеш/gi, '/')
+                .replace(/пробел/gi, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
             
-            try { recognition.start(); } catch(e) {}
-            
-            var btn = document.querySelector('[onclick="startVoiceForField(\'' + target + '\',' + deviceNum + ')"]');
-            if (btn) btn.classList.add('listening');
-            
-            setStatus('🎤 Говорите название...', 'loading');
-        }
-
-        function stopVoiceForField() {
-            isListening = false;
-            voiceTargetDevice = null;
-            try { recognition.stop(); } catch(e) {}
-            
-            document.querySelectorAll('.btn-voice').forEach(function(b) { b.classList.remove('listening'); });
-            setStatus('✅ Готов', 'success');
-        }
-
-        function parseGlobalVoice(transcript) {
-            var text = transcript.toLowerCase();
+            document.getElementById('voiceText').textContent = '🎤 ' + transcript;
             
             // Пытаемся распознать название прибора
-            var nameMatch = findTypeInVoice(text);
-            if (nameMatch && !collectedVoiceData.name) {
-                collectedVoiceData.name = nameMatch;
-                document.getElementById('voiceFields').innerHTML += '<div>📦 Название: <b>' + nameMatch + '</b></div>';
+            if (voiceStep === 0) {
+                var nameMatch = findTypeInVoiceEnhanced(text);
+                if (nameMatch && !collectedVoiceData.name) {
+                    collectedVoiceData.name = nameMatch;
+                    voiceStep = 1;
+                    document.getElementById('voiceStep').textContent = 'Шаг 2/3: Назовите заводской номер';
+                    document.getElementById('voiceFields').innerHTML += '<div>✅ Название: <b>' + nameMatch + '</b></div>';
+                    
+                    if (!isInterim) {
+                        document.getElementById('voiceText').textContent = '🎤 Отлично! Теперь номер...';
+                    }
+                }
             }
             
-            // Ищем заводской номер (последовательность из 4+ цифр)
-            var serialMatch = text.match(/(?:номер|заводской|серийный|№|зав)\s*[:]?\s*(\d{4,})/i) || text.match(/\b(\d{5,})\b/);
-            if (serialMatch && !collectedVoiceData.serial) {
-                collectedVoiceData.serial = serialMatch[1];
-                document.getElementById('voiceFields').innerHTML += '<div>🔢 Номер: <b>' + serialMatch[1] + '</b></div>';
+            // Ищем заводской номер
+            if (voiceStep === 1 || voiceStep === 0) {
+                var serialMatch = extractSerialEnhanced(text);
+                if (serialMatch && !collectedVoiceData.serial) {
+                    collectedVoiceData.serial = serialMatch;
+                    if (voiceStep === 0) voiceStep = 1;
+                    voiceStep = 2;
+                    document.getElementById('voiceStep').textContent = 'Шаг 3/3: Назовите адрес установки';
+                    document.getElementById('voiceFields').innerHTML += '<div>✅ Номер: <b>' + serialMatch + '</b></div>';
+                    
+                    if (!isInterim) {
+                        document.getElementById('voiceText').textContent = '🎤 Номер принят! Теперь адрес...';
+                    }
+                }
             }
             
             // Ищем адрес
-            var addressMatch = text.match(/(?:адрес|улица|дом|квартира|ул\.?|д\.?|кв\.?)\s*[:]?\s*(.+?)(?:номер|заводской|$)/i);
-            if (!addressMatch) {
-                addressMatch = text.match(/(?:улица|проспект|переулок|проезд)\s+.+?(?:\d+)/i);
+            if (voiceStep === 2 || voiceStep === 0) {
+                var addressMatch = extractAddressEnhanced(text);
+                if (addressMatch && !collectedVoiceData.address) {
+                    collectedVoiceData.address = addressMatch;
+                    document.getElementById('voiceFields').innerHTML += '<div>✅ Адрес: <b>' + addressMatch + '</b></div>';
+                    document.getElementById('voiceStep').textContent = '✅ Все данные собраны!';
+                    
+                    if (!isInterim) {
+                        document.getElementById('voiceText').textContent = '🎤 Всё записано! Нажмите "Завершить"';
+                    }
+                }
             }
-            if (addressMatch && !collectedVoiceData.address) {
-                collectedVoiceData.address = addressMatch[1] || addressMatch[0];
-                document.getElementById('voiceFields').innerHTML += '<div>📍 Адрес: <b>' + (addressMatch[1] || addressMatch[0]) + '</b></div>';
-            }
-            
-            // Обновляем отображаемый текст
-            document.getElementById('voiceText').textContent = '🎤 ' + (text || 'Слушаю...');
         }
 
-        function findTypeInVoice(text) {
+        function findTypeInVoiceEnhanced(text) {
             var names = getTypeNames();
             var best = '';
             var bestScore = 0;
             
+            // Расширенный список ключевых слов для приборов
+            var prefixes = [
+                'водосчётчик', 'водосчетчик', 'счётчик', 'счетчик', 'тепловычислитель',
+                'манометр', 'термометр', 'датчик', 'преобразователь', 'расходомер',
+                'корректор', 'вычислитель', 'контроллер', 'измеритель', 'сигнализатор',
+                'анализатор', 'уровнемер', 'регистратор', 'плотномер', 'вискозиметр',
+                'влагомер', 'газоанализатор', 'дефектоскоп', 'калибратор', 'мультиметр',
+                'осциллограф', 'пирометр', 'тахометр', 'термостат', 'толщиномер',
+                'вольтметр', 'амперметр', 'ваттметр', 'частотомер', 'шумомер'
+            ];
+            
+            // Сначала пробуем найти полное совпадение из справочника
             names.forEach(function(name) {
                 var clean = name.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
                 if (clean.length < 3) return;
                 
-                if (text.includes(clean)) {
+                // Точное совпадение (название полностью в тексте)
+                if (text.indexOf(clean) !== -1) {
                     if (clean.length > bestScore) {
                         bestScore = clean.length;
                         best = name;
                     }
                 }
+                
+                // Совпадение по частям (первые слова названия)
+                var parts = name.toLowerCase().split(/[\s\-]+/);
+                if (parts.length > 0 && text.indexOf(parts[0]) !== -1) {
+                    var score = parts[0].length * 2;
+                    if (score > bestScore) {
+                        bestScore = score;
+                        best = name;
+                    }
+                }
             });
             
+            // Если не нашли в справочнике, ищем в тексте
+            if (!best) {
+                for (var i = 0; i < prefixes.length; i++) {
+                    var idx = text.indexOf(prefixes[i]);
+                    if (idx !== -1) {
+                        // Берем 3 слова начиная с найденного префикса
+                        var words = text.substring(idx).split(/\s+/);
+                        best = words.slice(0, 3).join(' ');
+                        break;
+                    }
+                }
+            }
+            
             return best;
+        }
+
+        function extractSerialEnhanced(text) {
+            // Множество паттернов для поиска номера
+            var patterns = [
+                // Явное указание номера
+                /(?:номер|заводской|серийный|зав\.?\s*)?[№Nn]\s*[:=\-\s]*\s*(\d[\d\-\/]+)/i,
+                // Номер после ключевых слов
+                /(?:номер|заводской|серийный|зав)\s+(?:прибора|изделия|устройства)?\s*[:=\-\s]*\s*(\d[\d\-\/]+)/i,
+                // Просто длинное число (5+ цифр)
+                /\b(\d{5,})\b/,
+                // Число с дефисом или слешем (для составных номеров)
+                /\b(\d{2,}[\-\/]\d{2,})\b/,
+                // Число после слова "номер" даже без знака №
+                /номер\s+(\d[\d\-\/]+)/i
+            ];
+            
+            for (var i = 0; i < patterns.length; i++) {
+                var match = text.match(patterns[i]);
+                if (match) {
+                    // Очищаем номер от лишних символов, но сохраняем структуру
+                    var serial = match[1].replace(/[^\d\-\/]/g, '');
+                    if (serial.length >= 4) {
+                        return serial;
+                    }
+                }
+            }
+            
+            return null;
+        }
+
+        function extractAddressEnhanced(text) {
+            var patterns = [
+                // Адрес с ключевыми словами
+                /(?:адрес|улица|ул\.?|проспект|пр\.?|переулок|пер\.?|проезд|бульвар|площадь|пл\.?|шоссе|набережная)\s*[:]?\s*(.+?)(?:$|\.|\,|\;)/i,
+                // Улица с номером дома
+                /(?:улица|ул\.?|проспект|пр\.?)\s+[а-яА-ЯёЁ\s]+\s*(?:дом|д\.?)?\s*\d+[\dа-яА-Я]*/i,
+                // Просто длинная фраза после "адрес"
+                /адрес\s+(.+?)(?:номер|заводской|$)/i,
+                // Улица и дом
+                /[а-яА-ЯёЁ]+\s+(?:улица|проспект|переулок)\s*[,]?\s*(?:дом|д\.?)?\s*\d+/i
+            ];
+            
+            for (var i = 0; i < patterns.length; i++) {
+                var match = text.match(patterns[i]);
+                if (match) {
+                    var address = match[1] || match[0];
+                    // Очищаем и форматируем адрес
+                    address = address
+                        .replace(/^[:,\s]+/, '')
+                        .replace(/[,;]+$/, '')
+                        .trim();
+                    
+                    // Делаем первую букву заглавной
+                    address = address.charAt(0).toUpperCase() + address.slice(1);
+                    
+                    if (address.length > 5) {
+                        return address;
+                    }
+                }
+            }
+            
+            return null;
         }
 
         function findEmptyDevice() {
@@ -357,39 +514,44 @@
         }
 
         function fillDeviceFromVoice(data) {
-            var deviceNum = findEmptyDevice();
-            if (!deviceNum) {
-                addDevice();
-                deviceNum = deviceCounter;
+            if (!voiceTargetDevice) {
+                var emptyDevice = findEmptyDevice();
+                if (emptyDevice) {
+                    voiceTargetDevice = emptyDevice;
+                } else {
+                    addDevice();
+                    voiceTargetDevice = deviceCounter;
+                }
             }
             
             if (data.name) {
-                document.getElementById('nameField' + deviceNum).value = data.name;
+                document.getElementById('nameField' + voiceTargetDevice).value = data.name;
                 var ft = findTypeByName(data.name);
                 if (ft) {
-                    document.getElementById('typeField' + deviceNum).value = ft;
-                    checkType(deviceNum);
+                    document.getElementById('typeField' + voiceTargetDevice).value = ft;
+                    checkType(voiceTargetDevice);
                 }
             }
             
             if (data.serial) {
-                document.getElementById('serialField' + deviceNum).value = data.serial;
-                suggestSecondSerial(deviceNum);
+                document.getElementById('serialField' + voiceTargetDevice).value = data.serial;
+                suggestSecondSerial(voiceTargetDevice);
             }
             
             if (data.address) {
-                document.getElementById('addressField' + deviceNum).value = data.address;
+                document.getElementById('addressField' + voiceTargetDevice).value = data.address;
                 addAddressToList(data.address);
             }
             
             setStatus('✅ Данные заполнены голосом', 'success');
         }
 
-        // Модифицируем createDeviceBlock для добавления кнопок голосового ввода
+        // ... (остальные функции как в предыдущей версии)
+        
         function createDeviceBlock(num) {
             var b = document.createElement('div'); b.className = 'device-block'; b.id = 'device' + num;
             b.innerHTML = `<div class="device-title"><span class="device-number">${num}</span> Прибор</div>
-                <div class="field-group"><label>📷 Название:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${num})" onfocus="filterAutocomplete(${num})" onblur="hideAutocomplete(${num})"><ul class="autocomplete-list" id="autocompleteList${num}"></ul></div><button class="btn-camera" onclick="openCamera('name',${num})">📷</button><button class="btn-voice" onclick="startVoiceForField('name',${num})" title="Голосовой ввод">🎤</button></div><img id="previewName${num}" class="preview"></div>
+                <div class="field-group"><label>📷 Название:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${num})" onfocus="filterAutocomplete(${num})" onblur="hideAutocomplete(${num})"><ul class="autocomplete-list" id="autocompleteList${num}"></ul></div><button class="btn-camera" onclick="openCamera('name',${num})">📷</button></div><img id="previewName${num}" class="preview"></div>
                 <div class="field-group"><label>Тип:</label><input type="text" id="typeField${num}" placeholder="Авто или вручную" list="typeList" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;" oninput="checkType(${num})"></div>
                 <div class="field-group"><label>📷 Заводской номер:</label>
                     <div class="serial-row" id="serialRow${num}">
@@ -414,7 +576,6 @@
             return b;
         }
 
-        // Остальные функции остаются без изменений
         function addDevice() { deviceCounter++; createDeviceBlock(deviceCounter); }
         function removeDevice(id) { var b = document.getElementById(id); if (b) b.remove(); renumberDevices(); updateAddressDatalists(); }
         function renumberDevices() { document.querySelectorAll('.device-block').forEach(function(b,i){ b.id='device'+(i+1); var s=b.querySelector('.device-number'); if(s)s.textContent=i+1; }); deviceCounter=document.querySelectorAll('.device-block').length; }
@@ -430,6 +591,8 @@
         function parseCSV(csv) { var lines=csv.trim().split('\n'), result=[]; for(var i=1;i<lines.length;i++){ var cells=[],cur='',q=false; for(var j=0;j<lines[i].length;j++){ var c=lines[i][j]; if(c=='"')q=!q; else if(c===','&&!q){cells.push(cur.trim());cur='';} else cur+=c; } cells.push(cur.trim()); if(cells.some(function(c){return c.length>0;})) result.push(cells); } return result; }
         function updateSelect(id,data,col){ var sel=document.getElementById(id); sel.innerHTML='<option value="">-- Выберите --</option>'; var names=[]; data.forEach(function(r){ var v=r[col]||r[0]||''; if(v&&names.indexOf(v)===-1){names.push(v); sel.innerHTML+='<option value="'+esc(v)+'">'+esc(v)+'</option>'; } }); }
         function getTypeNames(){ var names=[]; typesData.forEach(function(r){ var n=r[1]||r[0]||''; if(n&&names.indexOf(n)===-1) names.push(n); }); return names; }
+
+        // ... (все остальные функции без изменений: newAct, openActsList, closeActsList, loadAct, checkType, checkDualSerial, suggestSecondSerial, addAddressToList, updateAddressDatalists, filterAutocomplete, selectAutocomplete, hideAutocomplete, changeFrameSize, openCamera, captureFromCamera, closeCamera, fallbackToFileInput, findTypeByName, recognizeText, cleanText, extractName, extractSerial, addCompany, submitAct, setStatus, esc)
 
         function newAct() {
             if (confirm('Очистить все поля и начать новый акт?')) {
@@ -520,6 +683,9 @@
                 });
         }
 
+        // Остальные функции (checkType, checkDualSerial, suggestSecondSerial и т.д.) 
+        // остаются такими же как в предыдущей версии
+        
         function checkType(deviceNum) {
             var typeVal = (document.getElementById('typeField' + deviceNum)?.value || '').toLowerCase();
             var akbRow = document.getElementById('akbRow' + deviceNum);
