@@ -46,8 +46,10 @@
         .autocomplete-list li:last-child { border-bottom: none; }
         #settingsPanel { display: none; background: #fff; border: 1px solid #ddd; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
         #settingsPanel h3 { margin-bottom: 12px; }
-        #settingsPanel input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; margin-bottom: 8px; }
-        #settingsPanel .btn-save { width: 100%; background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 10px; font-size: 15px; cursor: pointer; }
+        #settingsPanel label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 4px; }
+        #settingsPanel input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
+        #settingsPanel .btn-save { width: 100%; background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 12px; font-size: 15px; cursor: pointer; }
+        #settingsPanel .email-status { font-size: 12px; margin-top: 5px; }
         #cameraOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; }
         #cameraVideo { width: 100%; height: 100%; object-fit: cover; }
         #cameraFrame { position: absolute; border: 3px solid #4CAF50; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.55); }
@@ -87,9 +89,10 @@
     </div>
     <div id="settingsPanel">
         <h3>⚙️ Настройки</h3>
-        <label>Email для отправки актов:</label>
+        <label>📧 Email для отправки актов:</label>
         <input type="email" id="settingsEmail" placeholder="ms-tcentr@mail.ru">
-        <button class="btn-save" onclick="saveSettings()">💾 Сохранить</button>
+        <div class="email-status" id="emailStatus"></div>
+        <button class="btn-save" onclick="saveSettings()">💾 Сохранить настройки</button>
     </div>
     <div class="act-toolbar">
         <button class="btn-new-act" onclick="newAct()">📝 Новый акт</button>
@@ -101,7 +104,7 @@
     <div id="devicesContainer"></div>
     <button class="btn-add-device" onclick="addDevice()">➕ Добавить прибор</button>
     <button class="btn-submit" id="submitBtn" onclick="submitAct()">📧 Сформировать акт и отправить</button>
-    <div class="hint" id="emailHint">Письмо уйдёт на ms-tcentr@mail.ru</div>
+    <div class="hint" id="emailHint">Письмо уйдёт на указанную в настройках почту</div>
     <div class="status" id="status"></div>
 
     <div id="cameraOverlay">
@@ -131,7 +134,7 @@
         var typesData = [], deviceCounter = 0, cameraStream = null;
         var currentCameraTarget = null, currentCameraDevice = null;
         var frameSettings = JSON.parse(localStorage.getItem('cameraFrame') || '{"top":"35%","width":"80%","height":"80px"}');
-        var settings = JSON.parse(localStorage.getItem('appSettings') || '{"email":"ms-tcentr@mail.ru"}');
+        var settings = JSON.parse(localStorage.getItem('appSettings') || '{"email":""}');
         var usedAddresses = [];
 
         var recognition = null;
@@ -141,11 +144,11 @@
         var currentVoiceField = null;
         var voiceResults = [];
         var allTypesFromSheet = [];
-        var dualSerialStep = 0; // 0=первый номер, 1=второй номер
+        var dualSerialStep = 0;
 
         window.addEventListener('load', function() {
-            document.getElementById('settingsEmail').value = settings.email;
-            document.getElementById('emailHint').textContent = 'Письмо уйдёт на ' + settings.email;
+            document.getElementById('settingsEmail').value = settings.email || '';
+            updateEmailHint();
             setStatus('Загрузка справочников...', 'loading');
             loadDictionaries();
             loadAllTypesFromSheet();
@@ -153,8 +156,40 @@
             initVoiceRecognition();
         });
 
-        function toggleSettings() { var p = document.getElementById('settingsPanel'); p.style.display = p.style.display === 'none' ? 'block' : 'none'; }
-        function saveSettings() { settings.email = document.getElementById('settingsEmail').value.trim() || 'ms-tcentr@mail.ru'; localStorage.setItem('appSettings', JSON.stringify(settings)); document.getElementById('emailHint').textContent = 'Письмо уйдёт на ' + settings.email; document.getElementById('settingsPanel').style.display = 'none'; setStatus('✅ Настройки сохранены', 'success'); }
+        function toggleSettings() { 
+            var p = document.getElementById('settingsPanel'); 
+            p.style.display = p.style.display === 'none' ? 'block' : 'none'; 
+            if (p.style.display === 'block') {
+                document.getElementById('settingsEmail').value = settings.email || '';
+            }
+        }
+        
+        function saveSettings() { 
+            var newEmail = document.getElementById('settingsEmail').value.trim();
+            settings.email = newEmail;
+            localStorage.setItem('appSettings', JSON.stringify(settings));
+            updateEmailHint();
+            document.getElementById('settingsPanel').style.display = 'none';
+            
+            if (newEmail) {
+                setStatus('✅ Настройки сохранены. Письма будут уходить на ' + newEmail, 'success');
+            } else {
+                setStatus('⚠️ Email не указан. Письма не будут отправляться.', 'error');
+            }
+        }
+        
+        function updateEmailHint() {
+            var email = settings.email || '';
+            if (email) {
+                document.getElementById('emailHint').textContent = '📧 Письмо уйдёт на ' + email;
+                document.getElementById('emailStatus').textContent = '✅ Текущий email: ' + email;
+                document.getElementById('emailStatus').style.color = '#4CAF50';
+            } else {
+                document.getElementById('emailHint').textContent = '⚠️ Укажите email в настройках (⚙️)';
+                document.getElementById('emailStatus').textContent = 'Email не указан';
+                document.getElementById('emailStatus').style.color = '#f44336';
+            }
+        }
 
         function loadDictionaries() {
             Promise.all([fetch(CSV_BASE+GID_TYPES).then(r=>r.text()), fetch(CSV_BASE+GID_COMPANIES).then(r=>r.text()), fetch(CSV_BASE+GID_EMPLOYEES).then(r=>r.text())])
@@ -179,7 +214,6 @@
                             }
                         }
                     });
-                    console.log('📋 Загружено типов: ' + allTypesFromSheet.length);
                 })
                 .catch(function(error) {
                     console.error('Ошибка загрузки типов:', error);
@@ -216,7 +250,6 @@
                         if (currentVoiceField === 'name') {
                             showVoiceVariants(voiceResults);
                         } else if (currentVoiceField === 'serial_dual_1') {
-                            // Первый номер термометра
                             var serial = extractSerialEnhanced(voiceResults[0]);
                             var field = document.getElementById('serialDual1_' + currentVoiceDevice);
                             if (field && serial) {
@@ -224,57 +257,45 @@
                                 dualSerialStep = 1;
                                 var statusEl = document.getElementById('voiceStatusSerial' + currentVoiceDevice);
                                 if (statusEl) {
-                                    statusEl.textContent = '✅ Первый номер: ' + serial + '. Теперь скажите второй номер...';
+                                    statusEl.textContent = '✅ Первый: ' + serial + '. Скажите второй...';
                                     statusEl.classList.add('active');
                                 }
-                                // Автоматически запускаем запись второго номера
                                 stopVoiceInput();
                                 setTimeout(function() {
                                     startVoiceInput(currentVoiceDevice, 'serial_dual_2');
                                 }, 800);
                             }
                         } else if (currentVoiceField === 'serial_dual_2') {
-                            // Второй номер термометра
                             var serial = extractSerialEnhanced(voiceResults[0]);
                             var field = document.getElementById('serialDual2_' + currentVoiceDevice);
                             if (field && serial) {
                                 field.value = serial;
                                 var statusEl = document.getElementById('voiceStatusSerial' + currentVoiceDevice);
                                 if (statusEl) {
-                                    statusEl.textContent = '✅ Второй номер: ' + serial;
+                                    statusEl.textContent = '✅ Второй: ' + serial;
                                     statusEl.classList.add('active');
-                                    setTimeout(function() { statusEl.classList.remove('active'); }, 2000);
                                 }
                             }
                             stopVoiceInput();
                         } else {
-                            // Обычный номер
-                            var rawValue = voiceResults[0];
-                            var processedValue = extractSerialEnhanced(rawValue);
-                            
+                            var processedValue = extractSerialEnhanced(voiceResults[0]);
                             var field = document.getElementById(currentVoiceField + currentVoiceDevice);
-                            if (field && processedValue) {
-                                field.value = processedValue;
-                            }
+                            if (field && processedValue) field.value = processedValue;
                             stopVoiceInput();
                         }
                     }
                 };
 
                 recognition.onerror = function(event) {
-                    console.log('Voice error:', event.error);
                     stopVoiceInput();
                 };
 
                 recognition.onend = function() {
-                    if (isListening) {
-                        // Если ждём второй номер - перезапускаем
-                        if (currentVoiceField === 'serial_dual_2' && dualSerialStep === 1) {
-                            try { recognition.start(); } catch(e) {}
-                            return;
-                        }
-                        stopVoiceInput();
+                    if (isListening && currentVoiceField === 'serial_dual_2' && dualSerialStep === 1) {
+                        try { recognition.start(); } catch(e) {}
+                        return;
                     }
+                    stopVoiceInput();
                 };
 
                 isVoiceSupported = true;
@@ -298,7 +319,6 @@
             isListening = true;
             voiceResults = [];
             
-            // Подсвечиваем нужную кнопку
             document.querySelectorAll('.btn-voice').forEach(function(b) { b.classList.remove('listening'); });
             
             var btnClass = '';
@@ -310,27 +330,6 @@
             var btn = document.querySelector('.' + btnClass);
             if (btn) btn.classList.add('listening');
             
-            var statusId = 'voiceStatusSerial' + deviceNum;
-            var statusEl = document.getElementById(statusId);
-            if (statusEl) {
-                if (field === 'serial_dual_1') {
-                    statusEl.textContent = '🎤 Назовите первый номер...';
-                } else if (field === 'serial_dual_2') {
-                    statusEl.textContent = '🎤 Назовите второй номер...';
-                } else {
-                    statusEl.textContent = '🎤 Говорите...';
-                }
-                statusEl.classList.add('active');
-            }
-            
-            if (field === 'name') {
-                var variantsEl = document.getElementById('voiceVariants' + deviceNum);
-                if (variantsEl) {
-                    variantsEl.classList.remove('active');
-                    variantsEl.innerHTML = '';
-                }
-            }
-            
             try { recognition.start(); } catch(e) {}
             setStatus('🎤 Слушаю...', 'loading');
         }
@@ -338,20 +337,8 @@
         function stopVoiceInput() {
             isListening = false;
             dualSerialStep = 0;
-            
             document.querySelectorAll('.btn-voice').forEach(function(b) { b.classList.remove('listening'); });
-            
             try { recognition.stop(); } catch(e) {}
-            
-            // Не убираем статус сразу, чтобы пользователь видел результат
-            setTimeout(function() {
-                if (!isListening) {
-                    document.querySelectorAll('.voice-status').forEach(function(s) { 
-                        if (s.textContent.indexOf('✅') === -1) s.classList.remove('active'); 
-                    });
-                }
-            }, 3000);
-            
             setStatus('✅ Готов', 'success');
         }
 
@@ -360,7 +347,6 @@
             
             var variantsEl = document.getElementById('voiceVariants' + currentVoiceDevice);
             var statusEl = document.getElementById('voiceStatus' + currentVoiceDevice);
-            
             if (!variantsEl) return;
             
             var allVariants = [];
@@ -368,17 +354,13 @@
                 var matches = findTypeMatches(text);
                 matches.forEach(function(match) {
                     var exists = allVariants.some(function(v) { return v.name === match.name; });
-                    if (!exists) {
-                        allVariants.push(match);
-                    }
+                    if (!exists) allVariants.push(match);
                 });
             });
             
             if (allVariants.length === 0) {
                 results.forEach(function(text) {
-                    if (text.length > 3) {
-                        allVariants.push({ name: text, score: 0 });
-                    }
+                    if (text.length > 3) allVariants.push({ name: text, score: 0 });
                 });
             }
             
@@ -391,22 +373,11 @@
                     var item = document.createElement('div');
                     item.className = 'voice-variant-item';
                     item.textContent = (index + 1) + '. ' + variant.name;
-                    item.onclick = function() {
-                        selectVoiceVariant(variant.name);
-                    };
+                    item.onclick = function() { selectVoiceVariant(variant.name); };
                     variantsEl.appendChild(item);
                 });
                 variantsEl.classList.add('active');
-                
-                if (statusEl) {
-                    statusEl.textContent = '✅ Выберите вариант из списка';
-                    statusEl.classList.add('active');
-                }
-            } else {
-                if (statusEl) {
-                    statusEl.textContent = '⚠️ Ничего не распознано';
-                    statusEl.classList.add('active');
-                }
+                if (statusEl) { statusEl.textContent = '✅ Выберите вариант'; statusEl.classList.add('active'); }
             }
             
             stopVoiceInput();
@@ -421,24 +392,11 @@
             var ft = findTypeByName(name);
             if (ft) {
                 var typeField = document.getElementById('typeField' + currentVoiceDevice);
-                if (typeField) {
-                    typeField.value = ft;
-                    checkType(currentVoiceDevice);
-                }
+                if (typeField) { typeField.value = ft; checkType(currentVoiceDevice); }
             }
             
             var variantsEl = document.getElementById('voiceVariants' + currentVoiceDevice);
-            if (variantsEl) {
-                variantsEl.classList.remove('active');
-                variantsEl.innerHTML = '';
-            }
-            
-            var statusEl = document.getElementById('voiceStatus' + currentVoiceDevice);
-            if (statusEl) {
-                statusEl.textContent = '✅ Выбрано: ' + name;
-                statusEl.classList.add('active');
-                setTimeout(function() { statusEl.classList.remove('active'); }, 2000);
-            }
+            if (variantsEl) { variantsEl.classList.remove('active'); variantsEl.innerHTML = ''; }
             
             currentVoiceDevice = null;
             currentVoiceField = null;
@@ -447,7 +405,6 @@
 
         function findTypeMatches(text) {
             if (!text) return [];
-            
             var cleanText = text.toLowerCase().replace(/[^a-zа-я0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
             var typesToSearch = allTypesFromSheet.length > 0 ? allTypesFromSheet : getTypeNames();
             var words = cleanText.split(/\s+/);
@@ -456,11 +413,8 @@
             typesToSearch.forEach(function(sheetType) {
                 var typeClean = sheetType.toLowerCase().replace(/[^a-zа-я0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
                 if (typeClean.length < 2) return;
-                
                 var score = calculateMatchScore(cleanText, words, typeClean);
-                if (score > 10) {
-                    results.push({ name: sheetType, score: score });
-                }
+                if (score > 10) results.push({ name: sheetType, score: score });
             });
             
             results.sort(function(a, b) { return b.score - a.score; });
@@ -470,33 +424,19 @@
         function calculateMatchScore(text, textWords, typeName) {
             var score = 0;
             var typeWords = typeName.split(/\s+/);
-            
-            if (text.indexOf(typeName) !== -1) {
-                score += 100;
-            }
+            if (text.indexOf(typeName) !== -1) score += 100;
             
             var matchedWords = 0;
             typeWords.forEach(function(typeWord) {
                 if (typeWord.length < 2) return;
-                
                 for (var i = 0; i < textWords.length; i++) {
                     var textWord = textWords[i];
-                    
-                    if (textWord === typeWord) {
-                        score += 30;
-                        matchedWords++;
-                    } else if (typeWord.startsWith(textWord) && textWord.length >= 2) {
-                        score += 20;
-                        matchedWords++;
-                    } else if (textWord.startsWith(typeWord) && typeWord.length >= 2) {
-                        score += 15;
-                        matchedWords++;
-                    } else {
+                    if (textWord === typeWord) { score += 30; matchedWords++; }
+                    else if (typeWord.startsWith(textWord) && textWord.length >= 2) { score += 20; matchedWords++; }
+                    else if (textWord.startsWith(typeWord) && typeWord.length >= 2) { score += 15; matchedWords++; }
+                    else {
                         var similarity = stringSimilarity(textWord, typeWord);
-                        if (similarity > 0.6 && typeWord.length >= 3) {
-                            score += Math.floor(similarity * 20);
-                            matchedWords++;
-                        }
+                        if (similarity > 0.6 && typeWord.length >= 3) { score += Math.floor(similarity * 20); matchedWords++; }
                     }
                 }
             });
@@ -506,9 +446,7 @@
             
             var abbr = typeName.replace(/[^a-zа-я]/g, '');
             if (abbr.length >= 2 && text.indexOf(abbr) !== -1) score += 40;
-            
             score += Math.min(typeName.length, 15);
-            
             return score;
         }
 
@@ -517,14 +455,12 @@
             if (s1 === s2) return 1.0;
             var longer = s1.length > s2.length ? s1 : s2;
             var shorter = s1.length > s2.length ? s2 : s1;
-            var longerLength = longer.length;
-            if (longerLength === 0) return 1.0;
-            return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
+            if (longer.length === 0) return 1.0;
+            return (longer.length - editDistance(longer, shorter)) / parseFloat(longer.length);
         }
 
         function editDistance(s1, s2) {
-            s1 = s1.toLowerCase();
-            s2 = s2.toLowerCase();
+            s1 = s1.toLowerCase(); s2 = s2.toLowerCase();
             var costs = [];
             for (var i = 0; i <= s1.length; i++) {
                 var lastValue = i;
@@ -551,31 +487,20 @@
             
             for (var i = 0; i < patterns.length; i++) {
                 var match = text.match(patterns[i]);
-                if (match) {
-                    var serial = match[1].trim();
-                    return smartProcessSerial(serial);
-                }
+                if (match) return smartProcessSerial(match[1].trim());
             }
             
             var allNumbers = text.match(/\d+/g);
             if (!allNumbers || allNumbers.length === 0) return null;
-            
-            if (allNumbers.length === 1) {
-                return allNumbers[0].length >= 4 ? allNumbers[0] : null;
-            }
-            
+            if (allNumbers.length === 1) return allNumbers[0].length >= 4 ? allNumbers[0] : null;
             return smartCombineNumbers(allNumbers, text);
         }
 
         function smartProcessSerial(rawSerial) {
             if (!rawSerial) return null;
-            if (/[\/\-]/.test(rawSerial)) {
-                return rawSerial.replace(/[^\d\-\/]/g, '');
-            }
+            if (/[\/\-]/.test(rawSerial)) return rawSerial.replace(/[^\d\-\/]/g, '');
             var parts = rawSerial.split(/\s+/);
-            if (parts.length <= 1) {
-                return rawSerial.replace(/[^\d]/g, '');
-            }
+            if (parts.length <= 1) return rawSerial.replace(/[^\d]/g, '');
             return smartCombineNumbers(parts, rawSerial);
         }
 
@@ -588,71 +513,43 @@
             for (var i = 0; i < numbers.length; i++) {
                 var num = String(numbers[i]);
                 var pos = originalText.indexOf(num, searchPos);
-                if (pos !== -1) {
-                    positions.push({ number: num, position: pos, length: num.length });
-                    searchPos = pos + num.length;
-                }
+                if (pos !== -1) { positions.push({ number: num, position: pos, length: num.length }); searchPos = pos + num.length; }
             }
             
             if (positions.length < 2) return numbers.join('');
             
-            var groups = [];
-            var currentGroup = [positions[0]];
-            
+            var groups = [], currentGroup = [positions[0]];
             for (var i = 1; i < positions.length; i++) {
                 var prevEnd = positions[i-1].position + positions[i-1].length;
                 var distance = positions[i].position - prevEnd;
-                
-                if (distance <= 2) {
-                    currentGroup.push(positions[i]);
-                } else {
-                    groups.push(currentGroup);
-                    currentGroup = [positions[i]];
-                }
+                if (distance <= 2) currentGroup.push(positions[i]);
+                else { groups.push(currentGroup); currentGroup = [positions[i]]; }
             }
             groups.push(currentGroup);
             
-            var result = groups.map(function(group) {
-                return group.map(function(item) { return item.number; }).join('');
-            }).filter(function(n) { return n.length > 0; });
+            var result = groups.map(function(g) { return g.map(function(i) { return i.number; }).join(''); }).filter(function(n) { return n.length > 0; });
             
             if (result.length === 1) {
                 var num = result[0].replace(/[^\d]/g, '');
-                if (num.length > 7) {
-                    var parts = num.match(/^(\d{4,6})(\d{4,})$/);
-                    if (parts) return parts[1] + '/' + parts[2];
-                }
+                if (num.length > 7) { var parts = num.match(/^(\d{4,6})(\d{4,})$/); if (parts) return parts[1] + '/' + parts[2]; }
                 return num.length >= 4 ? num : null;
-            } else if (result.length === 2) {
-                return result[0] + '/' + result[1];
-            } else {
-                return result.join('/');
-            }
+            } else if (result.length === 2) return result[0] + '/' + result[1];
+            else return result.join('/');
         }
 
         function addSerialInputHandler(deviceNum) {
             var serialField = document.getElementById('serialField' + deviceNum);
             if (!serialField) return;
-            
             serialField.addEventListener('blur', function() {
                 var value = this.value.trim();
                 if (!value) return;
                 var cleaned = value.replace(/[^\d\s\-\/]/g, '').replace(/\s+/g, ' ').trim();
-                
                 if (cleaned.includes(' ')) {
                     var parts = cleaned.split(/\s+/);
                     var numbers = parts.filter(function(p) { return p.length > 0; });
-                    
-                    if (numbers.length === 2) {
-                        this.value = numbers[0] + '/' + numbers[1];
-                    } else if (numbers.length > 2) {
-                        this.value = smartCombineNumbers(numbers, cleaned) || cleaned.replace(/\s/g, '');
-                    } else {
-                        this.value = cleaned.replace(/\s/g, '');
-                    }
-                } else {
-                    this.value = cleaned;
-                }
+                    if (numbers.length === 2) this.value = numbers[0] + '/' + numbers[1];
+                    else this.value = smartCombineNumbers(numbers, cleaned) || cleaned.replace(/\s/g, '');
+                } else this.value = cleaned;
             });
         }
 
@@ -707,11 +604,7 @@
                 b.appendChild(rb);
             }
             document.getElementById('devicesContainer').appendChild(b);
-            
-            setTimeout(function() {
-                addSerialInputHandler(num);
-            }, 100);
-            
+            setTimeout(function() { addSerialInputHandler(num); }, 100);
             updateAddressDatalists();
             renumberDevices();
             return b;
@@ -725,12 +618,8 @@
             var typeVal = (document.getElementById('typeField' + deviceNum)?.value || '').toLowerCase();
             var akbRow = document.getElementById('akbRow' + deviceNum);
             if (akbRow) {
-                if (typeVal.includes('тепловычислитель') || typeVal.includes('тепловыч')) {
-                    akbRow.style.display = 'flex';
-                } else {
-                    akbRow.style.display = 'none';
-                    if (document.getElementById('akbCheck' + deviceNum)) document.getElementById('akbCheck' + deviceNum).checked = false;
-                }
+                if (typeVal.includes('тепловычислитель') || typeVal.includes('тепловыч')) akbRow.style.display = 'flex';
+                else { akbRow.style.display = 'none'; if (document.getElementById('akbCheck' + deviceNum)) document.getElementById('akbCheck' + deviceNum).checked = false; }
             }
             checkDualSerial(deviceNum, typeVal);
         }
@@ -738,7 +627,6 @@
         function checkDualSerial(deviceNum, typeVal) {
             if (!typeVal) typeVal = (document.getElementById('typeField' + deviceNum)?.value || '').toLowerCase();
             var isDual = isDualSerialType(deviceNum);
-            
             var dualBlock = document.getElementById('serialDualBlock' + deviceNum);
             var serialField = document.getElementById('serialField' + deviceNum);
             var serialBtn = document.getElementById('serialBtn' + deviceNum);
@@ -746,26 +634,15 @@
             var serialHint = document.getElementById('serialHint' + deviceNum);
             
             if (isDual) {
-                // Показываем блок с двумя номерами
                 if (dualBlock) dualBlock.classList.add('active');
-                // Скрываем обычное поле номера
                 if (serialField) serialField.style.display = 'none';
                 if (serialBtn) serialBtn.style.display = 'none';
                 if (serialVoiceBtn) serialVoiceBtn.style.display = 'none';
                 if (serialHint) serialHint.style.display = 'none';
-                
-                // Автозаполнение второго номера если первый заканчивается на Х/Г
                 var dual1 = document.getElementById('serialDual1_' + deviceNum);
-                var dual2 = document.getElementById('serialDual2_' + deviceNum);
-                if (dual1 && dual2) {
-                    dual1.addEventListener('input', function() {
-                        autoSuggestDualSerial(deviceNum);
-                    });
-                }
+                if (dual1) dual1.addEventListener('input', function() { autoSuggestDualSerial(deviceNum); });
             } else {
-                // Скрываем блок с двумя номерами
                 if (dualBlock) dualBlock.classList.remove('active');
-                // Показываем обычное поле
                 if (serialField) serialField.style.display = 'block';
                 if (serialBtn) serialBtn.style.display = 'block';
                 if (serialVoiceBtn) serialVoiceBtn.style.display = 'block';
@@ -777,45 +654,21 @@
             var dual1 = document.getElementById('serialDual1_' + deviceNum);
             var dual2 = document.getElementById('serialDual2_' + deviceNum);
             if (!dual1 || !dual2) return;
-            
             var s1 = dual1.value.trim();
             if (s1.length < 4) return;
-            
             var lastChar = s1.slice(-1).toUpperCase();
-            
-            if (lastChar === 'Х' || lastChar === 'X') {
-                var sug = s1.slice(0, -1) + 'Г';
-                if (dual2.value === '' || dual2.value === sug || dual2.value === s1.slice(0, -1) + 'х') {
-                    dual2.value = sug;
-                }
-            } else if (lastChar === 'Г' || lastChar === 'G') {
-                var sug = s1.slice(0, -1) + 'Х';
-                if (dual2.value === '' || dual2.value === sug || dual2.value === s1.slice(0, -1) + 'г') {
-                    dual2.value = sug;
-                }
-            }
+            if (lastChar === 'Х' || lastChar === 'X') { var sug = s1.slice(0, -1) + 'Г'; if (dual2.value === '' || dual2.value === sug) dual2.value = sug; }
+            else if (lastChar === 'Г' || lastChar === 'G') { var sug = s1.slice(0, -1) + 'Х'; if (dual2.value === '' || dual2.value === sug) dual2.value = sug; }
         }
 
-        function suggestSecondSerial(deviceNum) {
-            // Эта функция больше не нужна для dual serial, но оставим для обратной совместимости
-            autoSuggestDualSerial(deviceNum);
-        }
+        function suggestSecondSerial(deviceNum) { autoSuggestDualSerial(deviceNum); }
 
-        function addAddressToList(address) {
-            if (address && usedAddresses.indexOf(address) === -1) {
-                usedAddresses.push(address);
-                updateAddressDatalists();
-            }
-        }
-
+        function addAddressToList(address) { if (address && usedAddresses.indexOf(address) === -1) { usedAddresses.push(address); updateAddressDatalists(); } }
         function updateAddressDatalists() {
             document.querySelectorAll('.device-block').forEach(function(b) {
                 var n = b.id.replace('device', '');
                 var list = document.getElementById('addressList' + n);
-                if (list) {
-                    list.innerHTML = '';
-                    usedAddresses.forEach(function(a) { list.innerHTML += '<option value="' + esc(a) + '">'; });
-                }
+                if (list) { list.innerHTML = ''; usedAddresses.forEach(function(a) { list.innerHTML += '<option value="' + esc(a) + '">'; }); }
             });
         }
 
@@ -842,12 +695,7 @@
             frame.style.left=((100-parseFloat(frameSettings.width))/2)+'%';
             var video=document.getElementById('cameraVideo');
             if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
-                if(window._cachedStream){
-                    cameraStream=window._cachedStream;
-                    video.srcObject=cameraStream;
-                    video.play();
-                    return;
-                }
+                if(window._cachedStream){ cameraStream=window._cachedStream; video.srcObject=cameraStream; video.play(); return; }
                 navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}})
                     .then(function(s){ cameraStream=s; window._cachedStream=s; video.srcObject=s; video.play(); })
                     .catch(function(){ closeCamera(); fallbackToFileInput(target,deviceNum); });
@@ -870,8 +718,7 @@
         function newAct() {
             if (confirm('Очистить все поля и начать новый акт?')) {
                 document.getElementById('devicesContainer').innerHTML = '';
-                deviceCounter = 0;
-                usedAddresses = [];
+                deviceCounter = 0; usedAddresses = [];
                 addDevice();
                 setStatus('✅ Новый акт', 'success');
             }
@@ -905,20 +752,15 @@
                 .then(r => r.json())
                 .then(function(act) {
                     if (act.error) { alert(act.error); return; }
-                    
                     document.getElementById('devicesContainer').innerHTML = '';
-                    deviceCounter = 0;
-                    usedAddresses = [];
-                    
+                    deviceCounter = 0; usedAddresses = [];
                     act.devices.forEach(function(dev) {
                         deviceCounter++;
                         createDeviceBlock(deviceCounter);
                         document.getElementById('nameField' + deviceCounter).value = dev.name || '';
                         document.getElementById('typeField' + deviceCounter).value = dev.type || '';
                         document.getElementById('noteField' + deviceCounter).value = dev.note || '';
-                        
                         checkType(deviceCounter);
-                        
                         if (isDualSerialType(deviceCounter)) {
                             if (dev.serial && String(dev.serial).includes('/')) {
                                 var parts = String(dev.serial).split('/');
@@ -928,28 +770,11 @@
                                 if (dual2) dual2.value = parts[1] || '';
                             }
                         } else {
-                            if (dev.serial && String(dev.serial).includes('/')) {
-                                var parts = String(dev.serial).split('/');
-                                document.getElementById('serialField' + deviceCounter).value = parts[0] || '';
-                            } else {
-                                document.getElementById('serialField' + deviceCounter).value = dev.serial || '';
-                            }
+                            document.getElementById('serialField' + deviceCounter).value = dev.serial || '';
                         }
-                        
-                        if (dev.address) {
-                            document.getElementById('addressField' + deviceCounter).value = dev.address;
-                            if (usedAddresses.indexOf(dev.address) === -1) usedAddresses.push(dev.address);
-                        }
-                        
-                        var typeVal = (dev.type || '').toLowerCase();
-                        if (typeVal.includes('тепловычислитель') || typeVal.includes('тепловыч')) {
-                            if (dev.akb) {
-                                var akbCheck = document.getElementById('akbCheck' + deviceCounter);
-                                if (akbCheck) akbCheck.checked = true;
-                            }
-                        }
+                        if (dev.address) { document.getElementById('addressField' + deviceCounter).value = dev.address; if (usedAddresses.indexOf(dev.address) === -1) usedAddresses.push(dev.address); }
+                        if ((dev.type || '').toLowerCase().includes('тепловычислитель') && dev.akb) { var akbCheck = document.getElementById('akbCheck' + deviceCounter); if (akbCheck) akbCheck.checked = true; }
                     });
-                    
                     if (deviceCounter === 0) addDevice();
                     closeActsList();
                     setStatus('✅ Загружен акт №' + actNum, 'success');
@@ -968,7 +793,6 @@
                     addr=document.getElementById('addressField'+n)?.value.trim()||'',
                     akb=document.getElementById('akbCheck'+n)?.checked||false,
                     nt=document.getElementById('noteField'+n)?.value.trim()||'';
-                
                 var serial = '';
                 if (isDualSerialType(parseInt(n))) {
                     var s1 = document.getElementById('serialDual1_'+n)?.value.trim()||'';
@@ -979,17 +803,23 @@
                     serial = document.getElementById('serialField'+n)?.value.trim()||'';
                     if(!serial){allValid=false;return;}
                 }
-                
                 if(!nm||!t){allValid=false;return;}
                 devices.push({type:t,name:nm,serial:serial,address:addr,akb:akb,note:nt});
             });
             if(!allValid||!devices.length){alert('Заполните обязательные поля (Название, Тип, Заводской номер)');return;}
-            var btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='Отправка...';setStatus('Формирование и отправка...','loading');
+            
+            var email = settings.email || '';
+            if (!email) {
+                alert('Укажите email в настройках (⚙️) для отправки акта!');
+                return;
+            }
+            
+            var btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='Отправка...';setStatus('Формирование и отправка на ' + email + '...','loading');
             var now=new Date(),ds=('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear();
             var form=document.createElement('form');form.method='POST';form.action=SCRIPT_URL;form.target='hiddenFrame';form.style.display='none';
-            [{n:'date',v:ds},{n:'company',v:company},{n:'employee',v:employee},{n:'devices',v:JSON.stringify(devices)},{n:'email',v:settings.email}].forEach(function(f){var i=document.createElement('input');i.type='hidden';i.name=f.n;i.value=f.v;form.appendChild(i);});
+            [{n:'date',v:ds},{n:'company',v:company},{n:'employee',v:employee},{n:'devices',v:JSON.stringify(devices)},{n:'email',v:email}].forEach(function(f){var i=document.createElement('input');i.type='hidden';i.name=f.n;i.value=f.v;form.appendChild(i);});
             document.body.appendChild(form);form.submit();document.body.removeChild(form);
-            setTimeout(function(){ setStatus('✅ Акт отправлен на '+settings.email,'success'); btn.textContent='📧 Сформировать акт и отправить'; btn.style.background='#FF5722'; btn.disabled=false; },2000);
+            setTimeout(function(){ setStatus('✅ Акт отправлен на ' + email,'success'); btn.textContent='📧 Сформировать акт и отправить'; btn.style.background='#FF5722'; btn.disabled=false; },2000);
         }
         function setStatus(msg,cls){var el=document.getElementById('status');el.textContent=msg;el.className='status';if(cls)el.classList.add(cls);}
         function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
