@@ -142,7 +142,8 @@
     <iframe name="hiddenFrame" style="display:none;"></iframe>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
-        var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwb_jTGauowbZxvua3sJrBy4PxfCuELT4z1hz6rDlyTl6p7FcGKINMv2oBuHhbYu2Q4/exec';
+        // ОБНОВЛЁННЫЙ URL ВАШЕГО СКРИПТА
+        var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJsAHDVPiWNFJl5xU_Iq5ncY7tILkr_T18D1zZKCQ8WQA8iFheE2L2MQ_9yzUQ4DsS/exec';
         var CSV_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJLJVjVpDuLsNRjFg9j7X2NHcDtOgmo4lhiC_CTx2S0ox97Hne91SXQ7XtJJxb9OberlzYUrSXijw6/pub?output=csv&gid=';
         var GID_TYPES = '441822937', GID_COMPANIES = '883764981', GID_EMPLOYEES = '1294860374';
         var typesData = [], deviceCounter = 0, cameraStream = null;
@@ -158,14 +159,14 @@
         var collectedVoiceData = {};
         var voiceStep = 0;
         var lastInterimResult = '';
-        var allTypesFromSheet = []; // Все типы из Google таблицы
+        var allTypesFromSheet = [];
 
         window.addEventListener('load', function() {
             document.getElementById('settingsEmail').value = settings.email;
             document.getElementById('emailHint').textContent = 'Письмо уйдёт на ' + settings.email;
             setStatus('Загрузка справочников...', 'loading');
             loadDictionaries();
-            loadAllTypesFromSheet(); // Загружаем все типы
+            loadAllTypesFromSheet();
             addDevice();
             initVoiceRecognition();
         });
@@ -350,7 +351,6 @@
             
             document.getElementById('voiceText').textContent = '🎤 ' + transcript;
             
-            // Шаг 1: Название прибора
             if (voiceStep === 0) {
                 var nameMatch = findTypeInVoiceEnhanced(text);
                 if (nameMatch && !collectedVoiceData.name) {
@@ -365,7 +365,6 @@
                 }
             }
             
-            // Шаг 2: Заводской номер
             if (voiceStep === 1) {
                 var serialMatch = extractSerialEnhanced(text);
                 if (serialMatch && !collectedVoiceData.serial) {
@@ -380,7 +379,6 @@
                 }
             }
             
-            // Шаг 3: Адрес
             if (voiceStep === 2) {
                 var addressMatch = extractAddressEnhanced(text);
                 if (addressMatch && !collectedVoiceData.address) {
@@ -399,8 +397,6 @@
             if (!text) return null;
             
             var cleanText = text.toLowerCase().replace(/[^a-zа-я0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
-            
-            // Используем данные из таблицы если загружены, иначе getTypeNames()
             var typesToSearch = allTypesFromSheet.length > 0 ? allTypesFromSheet : getTypeNames();
             
             var words = cleanText.split(/\s+/);
@@ -421,22 +417,15 @@
             results.sort(function(a, b) { return b.score - a.score; });
             
             if (results.length > 0) {
-                console.log('📊 Топ-3 совпадений:');
-                results.slice(0, 3).forEach(function(r, i) {
-                    console.log('  ' + (i+1) + '. ' + r.type + ' (скор: ' + r.score + ')');
-                });
-                
                 bestMatch = results[0];
                 
                 if (bestMatch.score < 20) {
                     var abbrMatch = findAbbreviation(cleanText, typesToSearch);
                     if (abbrMatch) {
-                        console.log('✅ Найдено по аббревиатуре: ' + abbrMatch);
                         return abbrMatch;
                     }
                 }
                 
-                console.log('✅ Лучшее совпадение: ' + bestMatch.type);
                 return bestMatch.type;
             }
             
@@ -856,16 +845,10 @@
         function closeActsList() { document.getElementById('actsModal').style.display = 'none'; }
 
         function loadAct(actNum) {
-            fetch(SCRIPT_URL + '?action=getActs')
+            fetch(SCRIPT_URL + '?action=getAct&number=' + encodeURIComponent(actNum))
                 .then(r => r.json())
-                .then(function(acts) {
-                    var act = acts[actNum];
-                    if (!act) {
-                        Object.keys(acts).forEach(function(key) {
-                            if (key === actNum || key.replace(/\./g, '\\.') === actNum) act = acts[key];
-                        });
-                    }
-                    if (!act) { alert('Акт не найден'); return; }
+                .then(function(act) {
+                    if (act.error) { alert(act.error); return; }
                     
                     document.getElementById('devicesContainer').innerHTML = '';
                     deviceCounter = 0;
