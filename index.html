@@ -18,13 +18,13 @@
         .field-row { display: flex; gap: 6px; }
         .field-row input, .field-row select { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; background: #fff; }
         .btn-camera { background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 18px; cursor: pointer; min-width: 46px; flex: 0 0 auto; }
+        .btn-voice { background: #E91E63; color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 18px; cursor: pointer; min-width: 46px; flex: 0 0 auto; transition: all 0.3s; }
+        .btn-voice.listening { background: #FF5722; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         .btn-remove { background: #f44336; color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 16px; cursor: pointer; min-width: 46px; flex: 0 0 auto; }
         .btn-new-act { background: #FF9800; color: #fff; border: none; border-radius: 8px; padding: 12px 16px; font-size: 15px; cursor: pointer; margin-right: 8px; }
         .btn-select-act { background: #9C27B0; color: #fff; border: none; border-radius: 8px; padding: 12px 16px; font-size: 15px; cursor: pointer; }
         .btn-add-device { width: 100%; background: #2196F3; color: #fff; border: none; border-radius: 8px; padding: 14px; font-size: 16px; cursor: pointer; margin: 10px 0; }
-        .btn-voice { background: #E91E63; color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 18px; cursor: pointer; min-width: 46px; flex: 0 0 auto; transition: all 0.3s; }
-        .btn-voice.listening { background: #FF5722; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         .btn-submit { width: 100%; background: #FF5722; color: #fff; border: none; border-radius: 8px; padding: 16px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn-submit:disabled { background: #ccc; }
         .device-block { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 12px; margin-bottom: 12px; position: relative; }
@@ -66,17 +66,19 @@
         .serial-row { display: flex; gap: 6px; align-items: center; }
         .serial-row span { font-size: 20px; font-weight: bold; color: #888; padding: 0 4px; }
         .serial-row input { flex: 1; }
-        #voiceModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10000; text-align: center; }
-        #voiceModal .voice-modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; max-width: 90%; width: 400px; }
-        #voiceModal .voice-icon { font-size: 80px; animation: pulse 1.5s infinite; }
-        #voiceModal .voice-text { font-size: 18px; margin-top: 20px; min-height: 50px; }
-        #voiceModal .voice-hint { font-size: 13px; color: #aaa; margin-top: 10px; }
-        #voiceModal .voice-hint small { display: block; margin-top: 5px; color: #888; }
-        #voiceModal .btn-voice-close { background: #f44336; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 30px; }
-        #voiceModal .voice-correction { margin-top: 15px; font-size: 14px; text-align: left; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; }
-        #voiceModal .voice-correction div { margin: 5px 0; }
-        #voiceModal .voice-correction b { color: #4CAF50; }
-        .voice-step { color: #FFD700; font-size: 12px; margin-top: 10px; }
+        
+        /* Стили для вариантов распознавания */
+        .voice-variants { margin-top: 8px; display: none; }
+        .voice-variants.active { display: block; }
+        .voice-variant-item { padding: 8px 12px; margin: 4px 0; background: #f0f0f0; border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+        .voice-variant-item:hover { background: #E3F2FD; transform: scale(1.02); }
+        .voice-variant-item.selected { background: #4CAF50; color: white; }
+        .voice-status { font-size: 11px; color: #E91E63; margin-top: 4px; display: none; }
+        .voice-status.active { display: block; }
+        
+        /* Индикатор записи для кнопки в строке */
+        .voice-row-indicator { display: none; position: absolute; top: -8px; right: -8px; width: 16px; height: 16px; background: #FF5722; border-radius: 50%; animation: pulse 1s infinite; }
+        .voice-row-indicator.active { display: block; }
     </style>
 </head>
 <body>
@@ -96,30 +98,12 @@
     </div>
     <div class="field-group"><label>Компания-сдатчик:</label><div class="field-row"><select id="companySelect"><option value="">-- Загрузка... --</option></select><button class="btn-camera" onclick="addCompany()" style="font-size:20px;">➕</button></div></div>
     <div class="field-group"><label>Кто принял:</label><select id="employeeSelect"><option value="">-- Загрузка... --</option></select></div>
-    <div class="section-title">
-        Приборы:
-        <button id="globalVoiceBtn" class="btn-voice" onclick="startGlobalVoice()" title="Голосовой ввод прибора" style="float:right;margin-top:-6px;">🎤</button>
-    </div>
+    <div class="section-title">Приборы:</div>
     <div id="devicesContainer"></div>
     <button class="btn-add-device" onclick="addDevice()">➕ Добавить прибор</button>
     <button class="btn-submit" id="submitBtn" onclick="submitAct()">📧 Сформировать акт и отправить</button>
     <div class="hint" id="emailHint">Письмо уйдёт на ms-tcentr@mail.ru</div>
     <div class="status" id="status"></div>
-    
-    <!-- Голосовой модал -->
-    <div id="voiceModal">
-        <div class="voice-modal-content">
-            <div class="voice-icon">🎤</div>
-            <div class="voice-text" id="voiceText">Говорите чётко и не спеша...</div>
-            <div class="voice-step" id="voiceStep"></div>
-            <div class="voice-correction" id="voiceFields"></div>
-            <div class="voice-hint">
-                Пример: "Водосчётчик ВСХ 15 номер 12345678 адрес улица Ленина 5"
-                <small>Говорите: название, потом НОМЕР, потом АДРЕС</small>
-            </div>
-            <button class="btn-voice-close" onclick="stopGlobalVoice()">✅ Завершить и заполнить</button>
-        </div>
-    </div>
 
     <div id="cameraOverlay">
         <video id="cameraVideo" autoplay playsinline></video>
@@ -142,7 +126,6 @@
     <iframe name="hiddenFrame" style="display:none;"></iframe>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
-        // ОБНОВЛЁННЫЙ URL ВАШЕГО СКРИПТА
         var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJsAHDVPiWNFJl5xU_Iq5ncY7tILkr_T18D1zZKCQ8WQA8iFheE2L2MQ_9yzUQ4DsS/exec';
         var CSV_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJLJVjVpDuLsNRjFg9j7X2NHcDtOgmo4lhiC_CTx2S0ox97Hne91SXQ7XtJJxb9OberlzYUrSXijw6/pub?output=csv&gid=';
         var GID_TYPES = '441822937', GID_COMPANIES = '883764981', GID_EMPLOYEES = '1294860374';
@@ -155,10 +138,9 @@
         var recognition = null;
         var isVoiceSupported = false;
         var isListening = false;
-        var voiceTargetDevice = null;
-        var collectedVoiceData = {};
-        var voiceStep = 0;
-        var lastInterimResult = '';
+        var currentVoiceDevice = null;
+        var currentVoiceField = null;
+        var voiceResults = [];
         var allTypesFromSheet = [];
 
         window.addEventListener('load', function() {
@@ -197,7 +179,7 @@
                             }
                         }
                     });
-                    console.log('📋 Загружено типов приборов из таблицы: ' + allTypesFromSheet.length);
+                    console.log('📋 Загружено типов: ' + allTypesFromSheet.length);
                 })
                 .catch(function(error) {
                     console.error('Ошибка загрузки типов:', error);
@@ -213,195 +195,202 @@
             if (SpeechRecognition) {
                 recognition = new SpeechRecognition();
                 recognition.lang = 'ru-RU';
-                recognition.interimResults = true;
-                recognition.continuous = true;
-                recognition.maxAlternatives = 3;
+                recognition.interimResults = false;
+                recognition.continuous = false;
+                recognition.maxAlternatives = 5;
 
                 recognition.onresult = function(event) {
-                    var allAlternatives = [];
-                    var interimTranscript = '';
-                    
-                    for (var i = event.resultIndex; i < event.results.length; i++) {
-                        if (event.results[i].isFinal) {
-                            for (var j = 0; j < event.results[i].length; j++) {
-                                allAlternatives.push(event.results[i][j].transcript.trim());
-                            }
-                        } else {
-                            interimTranscript += event.results[i][0].transcript;
+                    voiceResults = [];
+                    for (var i = 0; i < event.results.length; i++) {
+                        for (var j = 0; j < event.results[i].length; j++) {
+                            voiceResults.push(event.results[i][j].transcript.trim());
                         }
                     }
                     
-                    var bestTranscript = selectBestTranscript(allAlternatives, interimTranscript);
-                    
-                    if (bestTranscript) {
-                        processVoiceInput(bestTranscript, false);
-                    } else if (interimTranscript) {
-                        processVoiceInput(interimTranscript, true);
+                    if (voiceResults.length > 0 && currentVoiceDevice && currentVoiceField) {
+                        if (currentVoiceField === 'name') {
+                            showVoiceVariants(voiceResults);
+                        } else {
+                            // Для других полей берём первый результат
+                            var field = document.getElementById(currentVoiceField + currentVoiceDevice);
+                            if (field) field.value = voiceResults[0];
+                            stopVoiceInput();
+                        }
                     }
                 };
 
                 recognition.onerror = function(event) {
                     console.log('Voice error:', event.error);
-                    if (event.error === 'no-speech') {
-                        document.getElementById('voiceText').textContent = 'Ничего не услышано. Говорите громче и чётче...';
-                    } else if (event.error === 'audio-capture') {
-                        document.getElementById('voiceText').textContent = 'Проблема с микрофоном. Проверьте доступ.';
-                    }
+                    stopVoiceInput();
                 };
 
                 recognition.onend = function() {
                     if (isListening) {
-                        try { recognition.start(); } catch(e) {}
+                        stopVoiceInput();
                     }
                 };
 
                 isVoiceSupported = true;
-                document.getElementById('globalVoiceBtn').style.display = 'inline-block';
-            } else {
-                document.getElementById('globalVoiceBtn').style.display = 'none';
-                console.log('Speech Recognition не поддерживается');
             }
         }
 
-        function selectBestTranscript(alternatives, interim) {
-            if (alternatives.length === 0) return interim || '';
-            
-            var scored = alternatives.map(function(alt) {
-                var score = 0;
-                var lower = alt.toLowerCase();
-                
-                if (/\bномер\b|\bзаводской\b|\b№\b/i.test(lower)) score += 10;
-                if (/\bадрес\b|\bулица\b|\bдом\b/i.test(lower)) score += 10;
-                if (/\d{4,}/.test(lower)) score += 15;
-                
-                score += alt.length / 10;
-                
-                var words = lower.split(/\s+/);
-                var uniqueWords = {};
-                words.forEach(function(w) { uniqueWords[w] = true; });
-                if (Object.keys(uniqueWords).length < words.length * 0.7) score -= 5;
-                
-                return { text: alt, score: score };
-            });
-            
-            scored.sort(function(a, b) { return b.score - a.score; });
-            return scored[0].text;
-        }
-
-        function startGlobalVoice() {
+        function startVoiceInput(deviceNum, field) {
             if (!isVoiceSupported) {
-                alert('Голосовой ввод не поддерживается вашим браузером. Используйте Chrome.');
+                alert('Голосовой ввод не поддерживается. Используйте Chrome.');
                 return;
             }
             
             if (isListening) {
-                stopGlobalVoice();
+                stopVoiceInput();
                 return;
             }
-
-            var lastDevice = findEmptyDevice();
-            if (!lastDevice) {
-                addDevice();
-                lastDevice = deviceCounter;
+            
+            currentVoiceDevice = deviceNum;
+            currentVoiceField = field;
+            isListening = true;
+            voiceResults = [];
+            
+            // Активируем кнопку
+            var btn = document.querySelector('.voice-btn-' + field + '-' + deviceNum);
+            if (btn) btn.classList.add('listening');
+            
+            // Показываем статус
+            var statusEl = document.getElementById('voiceStatus' + deviceNum);
+            if (statusEl) {
+                statusEl.textContent = '🎤 Говорите...';
+                statusEl.classList.add('active');
             }
             
-            voiceTargetDevice = lastDevice;
-            collectedVoiceData = {};
-            voiceStep = 0;
-            lastInterimResult = '';
-            isListening = true;
-            
-            document.getElementById('voiceModal').style.display = 'block';
-            document.getElementById('voiceText').textContent = '🎤 Жду название прибора...';
-            document.getElementById('voiceStep').textContent = 'Шаг 1/3: Назовите тип и модель прибора';
-            document.getElementById('voiceFields').innerHTML = '';
-            document.getElementById('globalVoiceBtn').classList.add('listening');
+            // Скрываем старые варианты
+            var variantsEl = document.getElementById('voiceVariants' + deviceNum);
+            if (variantsEl) {
+                variantsEl.classList.remove('active');
+                variantsEl.innerHTML = '';
+            }
             
             try { recognition.start(); } catch(e) {}
-            setStatus('🎤 Говорите название...', 'loading');
+            setStatus('🎤 Слушаю...', 'loading');
         }
 
-        function stopGlobalVoice() {
+        function stopVoiceInput() {
             isListening = false;
-            voiceTargetDevice = null;
-            document.getElementById('voiceModal').style.display = 'none';
-            document.getElementById('globalVoiceBtn').classList.remove('listening');
+            
+            // Деактивируем все кнопки
+            document.querySelectorAll('.btn-voice').forEach(function(b) { b.classList.remove('listening'); });
+            
+            // Скрываем все статусы
+            document.querySelectorAll('.voice-status').forEach(function(s) { s.classList.remove('active'); });
             
             try { recognition.stop(); } catch(e) {}
             
-            if (Object.keys(collectedVoiceData).length > 0) {
-                fillDeviceFromVoice(collectedVoiceData);
-            }
-            setStatus('✅ Данные заполнены', 'success');
+            setStatus('✅ Готов', 'success');
         }
 
-        function processVoiceInput(transcript, isInterim) {
-            if (!transcript || transcript === lastInterimResult) return;
-            lastInterimResult = transcript;
+        function showVoiceVariants(results) {
+            if (!currentVoiceDevice) return;
             
-            var text = transcript.toLowerCase()
-                .replace(/запятая/gi, ',')
-                .replace(/точка/gi, '.')
-                .replace(/тире/gi, '-')
-                .replace(/двоеточие/gi, ':')
-                .replace(/слеш/gi, '/')
-                .replace(/пробел/gi, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
+            var variantsEl = document.getElementById('voiceVariants' + currentVoiceDevice);
+            var statusEl = document.getElementById('voiceStatus' + currentVoiceDevice);
             
-            document.getElementById('voiceText').textContent = '🎤 ' + transcript;
+            if (!variantsEl) return;
             
-            if (voiceStep === 0) {
-                var nameMatch = findTypeInVoiceEnhanced(text);
-                if (nameMatch && !collectedVoiceData.name) {
-                    collectedVoiceData.name = nameMatch;
-                    voiceStep = 1;
-                    document.getElementById('voiceStep').textContent = 'Шаг 2/3: Назовите заводской номер';
-                    document.getElementById('voiceFields').innerHTML += '<div>✅ Название: <b>' + nameMatch + '</b></div>';
-                    
-                    if (!isInterim) {
-                        document.getElementById('voiceText').textContent = '🎤 Отлично! Теперь номер...';
+            // Ищем совпадения типов для каждого варианта
+            var allVariants = [];
+            results.forEach(function(text) {
+                var matches = findTypeMatches(text);
+                matches.forEach(function(match) {
+                    // Проверяем, нет ли уже такого варианта
+                    var exists = allVariants.some(function(v) { return v.name === match.name; });
+                    if (!exists) {
+                        allVariants.push(match);
                     }
+                });
+            });
+            
+            // Если нет совпадений, показываем сырой текст
+            if (allVariants.length === 0) {
+                results.forEach(function(text) {
+                    if (text.length > 3) {
+                        allVariants.push({ name: text, score: 0 });
+                    }
+                });
+            }
+            
+            // Сортируем по скору
+            allVariants.sort(function(a, b) { return b.score - a.score; });
+            
+            // Показываем топ-5
+            var topVariants = allVariants.slice(0, 5);
+            
+            if (topVariants.length > 0) {
+                variantsEl.innerHTML = '';
+                topVariants.forEach(function(variant, index) {
+                    var item = document.createElement('div');
+                    item.className = 'voice-variant-item';
+                    item.textContent = (index + 1) + '. ' + variant.name;
+                    item.onclick = function() {
+                        selectVoiceVariant(variant.name);
+                    };
+                    variantsEl.appendChild(item);
+                });
+                variantsEl.classList.add('active');
+                
+                if (statusEl) {
+                    statusEl.textContent = '✅ Выберите вариант из списка';
+                    statusEl.classList.add('active');
+                }
+            } else {
+                if (statusEl) {
+                    statusEl.textContent = '⚠️ Ничего не распознано';
+                    statusEl.classList.add('active');
                 }
             }
             
-            if (voiceStep === 1) {
-                var serialMatch = extractSerialEnhanced(text);
-                if (serialMatch && !collectedVoiceData.serial) {
-                    collectedVoiceData.serial = serialMatch;
-                    voiceStep = 2;
-                    document.getElementById('voiceStep').textContent = 'Шаг 3/3: Назовите адрес установки';
-                    document.getElementById('voiceFields').innerHTML += '<div>✅ Номер: <b>' + serialMatch + '</b></div>';
-                    
-                    if (!isInterim) {
-                        document.getElementById('voiceText').textContent = '🎤 Номер принят! Теперь адрес...';
-                    }
-                }
-            }
-            
-            if (voiceStep === 2) {
-                var addressMatch = extractAddressEnhanced(text);
-                if (addressMatch && !collectedVoiceData.address) {
-                    collectedVoiceData.address = addressMatch;
-                    document.getElementById('voiceFields').innerHTML += '<div>✅ Адрес: <b>' + addressMatch + '</b></div>';
-                    document.getElementById('voiceStep').textContent = '✅ Все данные собраны!';
-                    
-                    if (!isInterim) {
-                        document.getElementById('voiceText').textContent = '🎤 Всё записано! Нажмите "Завершить"';
-                    }
-                }
-            }
+            stopVoiceInput();
         }
 
-        function findTypeInVoiceEnhanced(text) {
-            if (!text) return null;
+        function selectVoiceVariant(name) {
+            if (!currentVoiceDevice) return;
+            
+            // Заполняем поле названия
+            var nameField = document.getElementById('nameField' + currentVoiceDevice);
+            if (nameField) nameField.value = name;
+            
+            // Автоподбор типа
+            var ft = findTypeByName(name);
+            if (ft) {
+                var typeField = document.getElementById('typeField' + currentVoiceDevice);
+                if (typeField) {
+                    typeField.value = ft;
+                    checkType(currentVoiceDevice);
+                }
+            }
+            
+            // Скрываем варианты
+            var variantsEl = document.getElementById('voiceVariants' + currentVoiceDevice);
+            if (variantsEl) {
+                variantsEl.classList.remove('active');
+                variantsEl.innerHTML = '';
+            }
+            
+            var statusEl = document.getElementById('voiceStatus' + currentVoiceDevice);
+            if (statusEl) {
+                statusEl.textContent = '✅ Выбрано: ' + name;
+                statusEl.classList.add('active');
+                setTimeout(function() { statusEl.classList.remove('active'); }, 2000);
+            }
+            
+            currentVoiceDevice = null;
+            currentVoiceField = null;
+            setStatus('✅ ' + name, 'success');
+        }
+
+        function findTypeMatches(text) {
+            if (!text) return [];
             
             var cleanText = text.toLowerCase().replace(/[^a-zа-я0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
             var typesToSearch = allTypesFromSheet.length > 0 ? allTypesFromSheet : getTypeNames();
-            
             var words = cleanText.split(/\s+/);
-            var bestMatch = null;
-            var bestScore = -1;
             var results = [];
             
             typesToSearch.forEach(function(sheetType) {
@@ -409,27 +398,13 @@
                 if (typeClean.length < 2) return;
                 
                 var score = calculateMatchScore(cleanText, words, typeClean);
-                if (score > 0) {
-                    results.push({ type: sheetType, score: score, clean: typeClean });
+                if (score > 10) {
+                    results.push({ name: sheetType, score: score });
                 }
             });
             
             results.sort(function(a, b) { return b.score - a.score; });
-            
-            if (results.length > 0) {
-                bestMatch = results[0];
-                
-                if (bestMatch.score < 20) {
-                    var abbrMatch = findAbbreviation(cleanText, typesToSearch);
-                    if (abbrMatch) {
-                        return abbrMatch;
-                    }
-                }
-                
-                return bestMatch.type;
-            }
-            
-            return null;
+            return results.slice(0, 5);
         }
 
         function calculateMatchScore(text, textWords, typeName) {
@@ -450,113 +425,54 @@
                     if (textWord === typeWord) {
                         score += 30;
                         matchedWords++;
-                        continue;
-                    }
-                    
-                    if (typeWord.startsWith(textWord) && textWord.length >= 2) {
+                    } else if (typeWord.startsWith(textWord) && textWord.length >= 2) {
                         score += 20;
                         matchedWords++;
-                        continue;
-                    }
-                    
-                    if (textWord.startsWith(typeWord) && typeWord.length >= 2) {
+                    } else if (textWord.startsWith(typeWord) && typeWord.length >= 2) {
                         score += 15;
                         matchedWords++;
-                        continue;
-                    }
-                    
-                    var similarity = stringSimilarity(textWord, typeWord);
-                    if (similarity > 0.7 && typeWord.length >= 3) {
-                        score += Math.floor(similarity * 25);
-                        matchedWords++;
+                    } else {
+                        var similarity = stringSimilarity(textWord, typeWord);
+                        if (similarity > 0.6 && typeWord.length >= 3) {
+                            score += Math.floor(similarity * 20);
+                            matchedWords++;
+                        }
                     }
                 }
             });
             
-            if (matchedWords >= typeWords.length) {
-                score += 50;
-            } else if (matchedWords > 0) {
-                score += matchedWords * 10;
-            }
+            if (matchedWords >= typeWords.length) score += 50;
+            else if (matchedWords > 0) score += matchedWords * 8;
             
             var abbr = typeName.replace(/[^a-zа-я]/g, '');
-            if (abbr.length >= 2 && text.indexOf(abbr) !== -1) {
-                score += 40;
-            }
+            if (abbr.length >= 2 && text.indexOf(abbr) !== -1) score += 40;
             
-            score += Math.min(typeName.length, 20);
+            score += Math.min(typeName.length, 15);
             
             return score;
-        }
-
-        function findAbbreviation(text, typesToSearch) {
-            if (!typesToSearch) typesToSearch = allTypesFromSheet.length > 0 ? allTypesFromSheet : getTypeNames();
-            
-            var words = text.split(/\s+/);
-            var potentialAbbr = words.filter(function(w) {
-                return w.length >= 2 && w.length <= 5 && /^[a-zа-я]+$/i.test(w);
-            });
-            
-            var bestMatch = null;
-            var bestScore = 0;
-            
-            typesToSearch.forEach(function(sheetType) {
-                var typeClean = sheetType.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
-                
-                potentialAbbr.forEach(function(abbr) {
-                    var abbrClean = abbr.toLowerCase().replace(/[^a-zа-я]/g, '');
-                    
-                    if (typeClean.indexOf(abbrClean) !== -1) {
-                        var score = abbrClean.length * 20;
-                        if (score > bestScore) {
-                            bestScore = score;
-                            bestMatch = sheetType;
-                        }
-                    }
-                    
-                    var typeWords = sheetType.toLowerCase().split(/[\s\-]+/);
-                    var initials = typeWords.map(function(w) { return w[0] || ''; }).join('');
-                    if (initials.length >= 2 && abbrClean === initials) {
-                        var score2 = abbrClean.length * 25;
-                        if (score2 > bestScore) {
-                            bestScore = score2;
-                            bestMatch = sheetType;
-                        }
-                    }
-                });
-            });
-            
-            return bestMatch;
         }
 
         function stringSimilarity(s1, s2) {
             if (!s1 || !s2) return 0;
             if (s1 === s2) return 1.0;
-            
             var longer = s1.length > s2.length ? s1 : s2;
             var shorter = s1.length > s2.length ? s2 : s1;
             var longerLength = longer.length;
-            
             if (longerLength === 0) return 1.0;
-            
             return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
         }
 
         function editDistance(s1, s2) {
             s1 = s1.toLowerCase();
             s2 = s2.toLowerCase();
-            
             var costs = [];
             for (var i = 0; i <= s1.length; i++) {
                 var lastValue = i;
                 for (var j = 0; j <= s2.length; j++) {
-                    if (i === 0) {
-                        costs[j] = j;
-                    } else if (j > 0) {
+                    if (i === 0) costs[j] = j;
+                    else if (j > 0) {
                         var newValue = costs[j - 1];
-                        if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
-                            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-                        }
+                        if (s1.charAt(i - 1) !== s2.charAt(j - 1)) newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
                         costs[j - 1] = lastValue;
                         lastValue = newValue;
                     }
@@ -566,106 +482,23 @@
             return costs[s2.length];
         }
 
-        function extractSerialEnhanced(text) {
-            var patterns = [
-                /(?:номер|заводской|серийный|зав\.?\s*)?[№Nn]\s*[:=\-\s]*\s*(\d[\d\-\/]+)/i,
-                /(?:номер|заводской|серийный|зав)\s+(?:прибора|изделия|устройства)?\s*[:=\-\s]*\s*(\d[\d\-\/]+)/i,
-                /\b(\d{5,})\b/,
-                /\b(\d{2,}[\-\/]\d{2,})\b/,
-                /номер\s+(\d[\d\-\/]+)/i
-            ];
-            
-            for (var i = 0; i < patterns.length; i++) {
-                var match = text.match(patterns[i]);
-                if (match) {
-                    var serial = match[1].replace(/[^\d\-\/]/g, '');
-                    if (serial.length >= 4) {
-                        return serial;
-                    }
-                }
-            }
-            
-            return null;
-        }
-
-        function extractAddressEnhanced(text) {
-            var patterns = [
-                /(?:адрес|улица|ул\.?|проспект|пр\.?|переулок|пер\.?|проезд|бульвар|площадь|пл\.?|шоссе|набережная)\s*[:]?\s*(.+?)(?:$|\.|\,|\;)/i,
-                /(?:улица|ул\.?|проспект|пр\.?)\s+[а-яА-ЯёЁ\s]+\s*(?:дом|д\.?)?\s*\d+[\dа-яА-Я]*/i,
-                /адрес\s+(.+?)(?:номер|заводской|$)/i,
-                /[а-яА-ЯёЁ]+\s+(?:улица|проспект|переулок)\s*[,]?\s*(?:дом|д\.?)?\s*\d+/i
-            ];
-            
-            for (var i = 0; i < patterns.length; i++) {
-                var match = text.match(patterns[i]);
-                if (match) {
-                    var address = match[1] || match[0];
-                    address = address
-                        .replace(/^[:,\s]+/, '')
-                        .replace(/[,;]+$/, '')
-                        .trim();
-                    
-                    address = address.charAt(0).toUpperCase() + address.slice(1);
-                    
-                    if (address.length > 5) {
-                        return address;
-                    }
-                }
-            }
-            
-            return null;
-        }
-
-        function findEmptyDevice() {
-            var blocks = document.querySelectorAll('.device-block');
-            for (var i = blocks.length - 1; i >= 0; i--) {
-                var n = blocks[i].id.replace('device', '');
-                var nameVal = document.getElementById('nameField' + n)?.value.trim() || '';
-                var serialVal = document.getElementById('serialField' + n)?.value.trim() || '';
-                if (!nameVal && !serialVal) {
-                    return parseInt(n);
-                }
-            }
-            return null;
-        }
-
-        function fillDeviceFromVoice(data) {
-            if (!voiceTargetDevice) {
-                var emptyDevice = findEmptyDevice();
-                if (emptyDevice) {
-                    voiceTargetDevice = emptyDevice;
-                } else {
-                    addDevice();
-                    voiceTargetDevice = deviceCounter;
-                }
-            }
-            
-            if (data.name) {
-                document.getElementById('nameField' + voiceTargetDevice).value = data.name;
-                var ft = findTypeByName(data.name);
-                if (ft) {
-                    document.getElementById('typeField' + voiceTargetDevice).value = ft;
-                    checkType(voiceTargetDevice);
-                }
-            }
-            
-            if (data.serial) {
-                document.getElementById('serialField' + voiceTargetDevice).value = data.serial;
-                suggestSecondSerial(voiceTargetDevice);
-            }
-            
-            if (data.address) {
-                document.getElementById('addressField' + voiceTargetDevice).value = data.address;
-                addAddressToList(data.address);
-            }
-            
-            setStatus('✅ Данные заполнены голосом', 'success');
-        }
-
         function createDeviceBlock(num) {
             var b = document.createElement('div'); b.className = 'device-block'; b.id = 'device' + num;
             b.innerHTML = `<div class="device-title"><span class="device-number">${num}</span> Прибор</div>
-                <div class="field-group"><label>📷 Название:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${num})" onfocus="filterAutocomplete(${num})" onblur="hideAutocomplete(${num})"><ul class="autocomplete-list" id="autocompleteList${num}"></ul></div><button class="btn-camera" onclick="openCamera('name',${num})">📷</button></div><img id="previewName${num}" class="preview"></div>
+                <div class="field-group">
+                    <label>📷 Название:</label>
+                    <div class="field-row">
+                        <div class="autocomplete-wrap">
+                            <input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${num})" onfocus="filterAutocomplete(${num})" onblur="hideAutocomplete(${num})">
+                            <ul class="autocomplete-list" id="autocompleteList${num}"></ul>
+                        </div>
+                        <button class="btn-camera" onclick="openCamera('name',${num})">📷</button>
+                        <button class="btn-voice voice-btn-name-${num}" onclick="startVoiceInput(${num},'name')" title="Голосовой ввод названия">🎤</button>
+                    </div>
+                    <div class="voice-status" id="voiceStatus${num}"></div>
+                    <div class="voice-variants" id="voiceVariants${num}"></div>
+                    <img id="previewName${num}" class="preview">
+                </div>
                 <div class="field-group"><label>Тип:</label><input type="text" id="typeField${num}" placeholder="Авто или вручную" list="typeList" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;" oninput="checkType(${num})"></div>
                 <div class="field-group"><label>📷 Заводской номер:</label>
                     <div class="serial-row" id="serialRow${num}">
@@ -673,8 +506,11 @@
                         <span id="serialSlash${num}" style="display:none;">/</span>
                         <input type="text" id="serialField2_${num}" placeholder="Вторая часть" style="display:none;">
                         <button class="btn-camera" onclick="openCamera('serial',${num})" style="display:none;" id="serialBtn2_${num}">📷</button>
+                        <button class="btn-voice voice-btn-serial-${num}" onclick="startVoiceInput(${num},'serialField')" title="Голосовой ввод номера" style="display:none;" id="serialVoiceBtn2_${num}">🎤</button>
                     </div>
                     <button class="btn-camera" onclick="openCamera('serial',${num})" id="serialBtn${num}">📷</button>
+                    <button class="btn-voice voice-btn-serial-${num}" onclick="startVoiceInput(${num},'serialField')" title="Голосовой ввод номера" id="serialVoiceBtn${num}">🎤</button>
+                    <div class="voice-status" id="voiceStatusSerial${num}"></div>
                     <img id="previewSerial${num}" class="preview"></div>
                 <div class="field-group"><label>Адрес:</label><div class="field-row"><input type="text" id="addressField${num}" placeholder="Введите или выберите" list="addressList${num}" onchange="addAddressToList(this.value)"><datalist id="addressList${num}"></datalist></div></div>
                 <div class="checkbox-row" id="akbRow${num}" style="display:none;"><input type="checkbox" id="akbCheck${num}"><label for="akbCheck${num}">Замена АКБ</label></div>
@@ -714,17 +550,23 @@
             var slash = document.getElementById('serialSlash' + deviceNum);
             var field2 = document.getElementById('serialField2_' + deviceNum);
             var btn2 = document.getElementById('serialBtn2_' + deviceNum);
+            var voiceBtn2 = document.getElementById('serialVoiceBtn2_' + deviceNum);
             var btn1 = document.getElementById('serialBtn' + deviceNum);
+            var voiceBtn1 = document.getElementById('serialVoiceBtn' + deviceNum);
             if (isDual) {
                 if (slash) slash.style.display = 'inline';
                 if (field2) field2.style.display = 'block';
                 if (btn2) btn2.style.display = 'block';
+                if (voiceBtn2) voiceBtn2.style.display = 'block';
                 if (btn1) btn1.style.display = 'none';
+                if (voiceBtn1) voiceBtn1.style.display = 'none';
             } else {
                 if (slash) slash.style.display = 'none';
                 if (field2) field2.style.display = 'none';
                 if (btn2) btn2.style.display = 'none';
+                if (voiceBtn2) voiceBtn2.style.display = 'none';
                 if (btn1) btn1.style.display = 'block';
+                if (voiceBtn1) voiceBtn1.style.display = 'block';
             }
         }
 
