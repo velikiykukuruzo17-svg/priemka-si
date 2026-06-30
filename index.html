@@ -22,11 +22,18 @@
         .btn-new-act { background: #FF9800; color: #fff; border: none; border-radius: 8px; padding: 12px 16px; font-size: 15px; cursor: pointer; margin-right: 8px; }
         .btn-select-act { background: #9C27B0; color: #fff; border: none; border-radius: 8px; padding: 12px 16px; font-size: 15px; cursor: pointer; }
         .btn-add-device { width: 100%; background: #2196F3; color: #fff; border: none; border-radius: 8px; padding: 14px; font-size: 16px; cursor: pointer; margin: 10px 0; }
+        .btn-voice { background: #E91E63; color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 18px; cursor: pointer; min-width: 46px; flex: 0 0 auto; transition: all 0.3s; }
+        .btn-voice.listening { background: #FF5722; animation: pulse 1.5s infinite; }
+        .btn-voice.unsupported { background: #999; cursor: not-allowed; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         .btn-submit { width: 100%; background: #FF5722; color: #fff; border: none; border-radius: 8px; padding: 16px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn-submit:disabled { background: #ccc; }
         .device-block { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 12px; margin-bottom: 12px; position: relative; }
         .device-title { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 8px; }
         .device-number { background: #eee; border-radius: 50%; width: 24px; height: 24px; display: inline-block; text-align: center; line-height: 24px; font-size: 13px; margin-right: 6px; }
+        .voice-indicator { font-size: 12px; color: #E91E63; margin-top: 5px; display: none; }
+        .voice-indicator.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .preview { width: 100%; max-height: 150px; object-fit: contain; margin-top: 4px; border-radius: 8px; display: none; }
         .status { text-align: center; margin-top: 15px; font-size: 13px; color: #666; min-height: 20px; }
         .status.success { color: #4CAF50; } .status.error { color: #f44336; } .status.loading { color: #FF9800; }
@@ -63,6 +70,12 @@
         .serial-row { display: flex; gap: 6px; align-items: center; }
         .serial-row span { font-size: 20px; font-weight: bold; color: #888; padding: 0 4px; }
         .serial-row input { flex: 1; }
+        #voiceModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10000; text-align: center; }
+        #voiceModal .voice-modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; }
+        #voiceModal .voice-icon { font-size: 80px; animation: pulse 1.5s infinite; }
+        #voiceModal .voice-text { font-size: 18px; margin-top: 20px; }
+        #voiceModal .voice-hint { font-size: 13px; color: #aaa; margin-top: 10px; }
+        #voiceModal .btn-voice-close { background: #f44336; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 30px; }
     </style>
 </head>
 <body>
@@ -82,12 +95,27 @@
     </div>
     <div class="field-group"><label>Компания-сдатчик:</label><div class="field-row"><select id="companySelect"><option value="">-- Загрузка... --</option></select><button class="btn-camera" onclick="addCompany()" style="font-size:20px;">➕</button></div></div>
     <div class="field-group"><label>Кто принял:</label><select id="employeeSelect"><option value="">-- Загрузка... --</option></select></div>
-    <div class="section-title">Приборы:</div>
+    <div class="section-title">
+        Приборы:
+        <button id="globalVoiceBtn" class="btn-voice" onclick="startGlobalVoice()" title="Голосовой ввод прибора" style="float:right;margin-top:-6px;">🎤</button>
+    </div>
     <div id="devicesContainer"></div>
     <button class="btn-add-device" onclick="addDevice()">➕ Добавить прибор</button>
     <button class="btn-submit" id="submitBtn" onclick="submitAct()">📧 Сформировать акт и отправить</button>
     <div class="hint" id="emailHint">Письмо уйдёт на ms-tcentr@mail.ru</div>
     <div class="status" id="status"></div>
+    
+    <!-- Голосовой модал -->
+    <div id="voiceModal">
+        <div class="voice-modal-content">
+            <div class="voice-icon">🎤</div>
+            <div class="voice-text" id="voiceText">Говорите...</div>
+            <div class="voice-hint">Например: "Водосчётчик ВСХ-15 номер 1234567 адрес улица Ленина 5"</div>
+            <div id="voiceFields" style="margin-top:15px;font-size:14px;text-align:left;max-width:300px;margin-left:auto;margin-right:auto;"></div>
+            <button class="btn-voice-close" onclick="stopGlobalVoice()">Завершить</button>
+        </div>
+    </div>
+
     <div id="cameraOverlay">
         <video id="cameraVideo" autoplay playsinline></video>
         <div id="cameraFrame"><div id="cameraFrameLabel">Поместите текст в рамку</div></div>
@@ -118,13 +146,278 @@
         var settings = JSON.parse(localStorage.getItem('appSettings') || '{"email":"ms-tcentr@mail.ru"}');
         var usedAddresses = [];
 
+        // Голосовые переменные
+        var recognition = null;
+        var isVoiceSupported = false;
+        var isListening = false;
+        var voiceTargetDevice = null;
+        var collectedVoiceData = {};
+
         window.addEventListener('load', function() {
             document.getElementById('settingsEmail').value = settings.email;
             document.getElementById('emailHint').textContent = 'Письмо уйдёт на ' + settings.email;
             setStatus('Загрузка справочников...', 'loading');
-            loadDictionaries(); addDevice();
+            loadDictionaries(); 
+            addDevice();
+            initVoiceRecognition();
         });
 
+        function initVoiceRecognition() {
+            var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.lang = 'ru-RU';
+                recognition.interimResults = true;
+                recognition.continuous = true;
+                recognition.maxAlternatives = 1;
+
+                recognition.onresult = function(event) {
+                    var transcript = '';
+                    for (var i = event.resultIndex; i < event.results.length; i++) {
+                        transcript += event.results[i][0].transcript;
+                    }
+                    
+                    if (voiceTargetDevice !== null) {
+                        // Режим заполнения конкретного поля
+                        var fieldId = 'nameField' + voiceTargetDevice;
+                        var input = document.getElementById(fieldId);
+                        if (input && transcript) {
+                            input.value = transcript;
+                            var ft = findTypeByName(transcript);
+                            if (ft) {
+                                document.getElementById('typeField' + voiceTargetDevice).value = ft;
+                                checkType(voiceTargetDevice);
+                            }
+                        }
+                    } else {
+                        // Глобальный режим - парсим всю фразу
+                        parseGlobalVoice(transcript);
+                    }
+                };
+
+                recognition.onerror = function(event) {
+                    console.log('Voice error:', event.error);
+                    if (event.error === 'no-speech') {
+                        setStatus('🎤 Ничего не услышано, попробуйте снова', 'error');
+                    }
+                };
+
+                recognition.onend = function() {
+                    if (isListening) {
+                        try { recognition.start(); } catch(e) {}
+                    }
+                };
+
+                isVoiceSupported = true;
+                document.getElementById('globalVoiceBtn').style.display = 'inline-block';
+            } else {
+                document.getElementById('globalVoiceBtn').style.display = 'none';
+                console.log('Speech Recognition не поддерживается');
+            }
+        }
+
+        function startGlobalVoice() {
+            if (!isVoiceSupported) {
+                alert('Голосовой ввод не поддерживается вашим браузером. Используйте Chrome.');
+                return;
+            }
+            
+            if (isListening) {
+                stopGlobalVoice();
+                return;
+            }
+
+            // Находим последний пустой прибор или создаем новый
+            var lastDevice = findEmptyDevice();
+            if (!lastDevice) {
+                addDevice();
+                lastDevice = deviceCounter;
+            }
+            
+            voiceTargetDevice = null; // глобальный режим
+            collectedVoiceData = {};
+            isListening = true;
+            
+            document.getElementById('voiceModal').style.display = 'block';
+            document.getElementById('voiceText').textContent = '🎤 Говорите...';
+            document.getElementById('voiceFields').innerHTML = '';
+            document.getElementById('globalVoiceBtn').classList.add('listening');
+            
+            try { recognition.start(); } catch(e) {}
+            setStatus('🎤 Слушаю...', 'loading');
+        }
+
+        function stopGlobalVoice() {
+            isListening = false;
+            voiceTargetDevice = null;
+            document.getElementById('voiceModal').style.display = 'none';
+            document.getElementById('globalVoiceBtn').classList.remove('listening');
+            
+            try { recognition.stop(); } catch(e) {}
+            
+            if (Object.keys(collectedVoiceData).length > 0) {
+                fillDeviceFromVoice(collectedVoiceData);
+            }
+            setStatus('✅ Готов', 'success');
+        }
+
+        function startVoiceForField(target, deviceNum) {
+            if (!isVoiceSupported) {
+                alert('Голосовой ввод не поддерживается. Используйте Chrome.');
+                return;
+            }
+            
+            if (isListening) {
+                stopVoiceForField();
+                return;
+            }
+
+            voiceTargetDevice = deviceNum;
+            isListening = true;
+            
+            try { recognition.start(); } catch(e) {}
+            
+            var btn = document.querySelector('[onclick="startVoiceForField(\'' + target + '\',' + deviceNum + ')"]');
+            if (btn) btn.classList.add('listening');
+            
+            setStatus('🎤 Говорите название...', 'loading');
+        }
+
+        function stopVoiceForField() {
+            isListening = false;
+            voiceTargetDevice = null;
+            try { recognition.stop(); } catch(e) {}
+            
+            document.querySelectorAll('.btn-voice').forEach(function(b) { b.classList.remove('listening'); });
+            setStatus('✅ Готов', 'success');
+        }
+
+        function parseGlobalVoice(transcript) {
+            var text = transcript.toLowerCase();
+            
+            // Пытаемся распознать название прибора
+            var nameMatch = findTypeInVoice(text);
+            if (nameMatch && !collectedVoiceData.name) {
+                collectedVoiceData.name = nameMatch;
+                document.getElementById('voiceFields').innerHTML += '<div>📦 Название: <b>' + nameMatch + '</b></div>';
+            }
+            
+            // Ищем заводской номер (последовательность из 4+ цифр)
+            var serialMatch = text.match(/(?:номер|заводской|серийный|№|зав)\s*[:]?\s*(\d{4,})/i) || text.match(/\b(\d{5,})\b/);
+            if (serialMatch && !collectedVoiceData.serial) {
+                collectedVoiceData.serial = serialMatch[1];
+                document.getElementById('voiceFields').innerHTML += '<div>🔢 Номер: <b>' + serialMatch[1] + '</b></div>';
+            }
+            
+            // Ищем адрес
+            var addressMatch = text.match(/(?:адрес|улица|дом|квартира|ул\.?|д\.?|кв\.?)\s*[:]?\s*(.+?)(?:номер|заводской|$)/i);
+            if (!addressMatch) {
+                addressMatch = text.match(/(?:улица|проспект|переулок|проезд)\s+.+?(?:\d+)/i);
+            }
+            if (addressMatch && !collectedVoiceData.address) {
+                collectedVoiceData.address = addressMatch[1] || addressMatch[0];
+                document.getElementById('voiceFields').innerHTML += '<div>📍 Адрес: <b>' + (addressMatch[1] || addressMatch[0]) + '</b></div>';
+            }
+            
+            // Обновляем отображаемый текст
+            document.getElementById('voiceText').textContent = '🎤 ' + (text || 'Слушаю...');
+        }
+
+        function findTypeInVoice(text) {
+            var names = getTypeNames();
+            var best = '';
+            var bestScore = 0;
+            
+            names.forEach(function(name) {
+                var clean = name.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
+                if (clean.length < 3) return;
+                
+                if (text.includes(clean)) {
+                    if (clean.length > bestScore) {
+                        bestScore = clean.length;
+                        best = name;
+                    }
+                }
+            });
+            
+            return best;
+        }
+
+        function findEmptyDevice() {
+            var blocks = document.querySelectorAll('.device-block');
+            for (var i = blocks.length - 1; i >= 0; i--) {
+                var n = blocks[i].id.replace('device', '');
+                var nameVal = document.getElementById('nameField' + n)?.value.trim() || '';
+                var serialVal = document.getElementById('serialField' + n)?.value.trim() || '';
+                if (!nameVal && !serialVal) {
+                    return parseInt(n);
+                }
+            }
+            return null;
+        }
+
+        function fillDeviceFromVoice(data) {
+            var deviceNum = findEmptyDevice();
+            if (!deviceNum) {
+                addDevice();
+                deviceNum = deviceCounter;
+            }
+            
+            if (data.name) {
+                document.getElementById('nameField' + deviceNum).value = data.name;
+                var ft = findTypeByName(data.name);
+                if (ft) {
+                    document.getElementById('typeField' + deviceNum).value = ft;
+                    checkType(deviceNum);
+                }
+            }
+            
+            if (data.serial) {
+                document.getElementById('serialField' + deviceNum).value = data.serial;
+                suggestSecondSerial(deviceNum);
+            }
+            
+            if (data.address) {
+                document.getElementById('addressField' + deviceNum).value = data.address;
+                addAddressToList(data.address);
+            }
+            
+            setStatus('✅ Данные заполнены голосом', 'success');
+        }
+
+        // Модифицируем createDeviceBlock для добавления кнопок голосового ввода
+        function createDeviceBlock(num) {
+            var b = document.createElement('div'); b.className = 'device-block'; b.id = 'device' + num;
+            b.innerHTML = `<div class="device-title"><span class="device-number">${num}</span> Прибор</div>
+                <div class="field-group"><label>📷 Название:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${num})" onfocus="filterAutocomplete(${num})" onblur="hideAutocomplete(${num})"><ul class="autocomplete-list" id="autocompleteList${num}"></ul></div><button class="btn-camera" onclick="openCamera('name',${num})">📷</button><button class="btn-voice" onclick="startVoiceForField('name',${num})" title="Голосовой ввод">🎤</button></div><img id="previewName${num}" class="preview"></div>
+                <div class="field-group"><label>Тип:</label><input type="text" id="typeField${num}" placeholder="Авто или вручную" list="typeList" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;" oninput="checkType(${num})"></div>
+                <div class="field-group"><label>📷 Заводской номер:</label>
+                    <div class="serial-row" id="serialRow${num}">
+                        <input type="text" id="serialField${num}" placeholder="Номер" oninput="suggestSecondSerial(${num})">
+                        <span id="serialSlash${num}" style="display:none;">/</span>
+                        <input type="text" id="serialField2_${num}" placeholder="Вторая часть" style="display:none;">
+                        <button class="btn-camera" onclick="openCamera('serial',${num})" style="display:none;" id="serialBtn2_${num}">📷</button>
+                    </div>
+                    <button class="btn-camera" onclick="openCamera('serial',${num})" id="serialBtn${num}">📷</button>
+                    <img id="previewSerial${num}" class="preview"></div>
+                <div class="field-group"><label>Адрес:</label><div class="field-row"><input type="text" id="addressField${num}" placeholder="Введите или выберите" list="addressList${num}" onchange="addAddressToList(this.value)"><datalist id="addressList${num}"></datalist></div></div>
+                <div class="checkbox-row" id="akbRow${num}" style="display:none;"><input type="checkbox" id="akbCheck${num}"><label for="akbCheck${num}">Замена АКБ</label></div>
+                <div class="field-group"><label>Примечание:</label><input type="text" id="noteField${num}" placeholder="Состояние..." style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;"></div>`;
+            if (num > 1) {
+                var rb = document.createElement('button'); rb.className = 'btn-remove'; rb.textContent = '🗑️';
+                rb.style.cssText = 'position:absolute;top:8px;right:8px;'; rb.onclick = function() { removeDevice(b.id); };
+                b.appendChild(rb);
+            }
+            document.getElementById('devicesContainer').appendChild(b);
+            updateAddressDatalists();
+            renumberDevices();
+            return b;
+        }
+
+        // Остальные функции остаются без изменений
+        function addDevice() { deviceCounter++; createDeviceBlock(deviceCounter); }
+        function removeDevice(id) { var b = document.getElementById(id); if (b) b.remove(); renumberDevices(); updateAddressDatalists(); }
+        function renumberDevices() { document.querySelectorAll('.device-block').forEach(function(b,i){ b.id='device'+(i+1); var s=b.querySelector('.device-number'); if(s)s.textContent=i+1; }); deviceCounter=document.querySelectorAll('.device-block').length; }
         function toggleSettings() { var p = document.getElementById('settingsPanel'); p.style.display = p.style.display === 'none' ? 'block' : 'none'; }
         function saveSettings() { settings.email = document.getElementById('settingsEmail').value.trim() || 'ms-tcentr@mail.ru'; localStorage.setItem('appSettings', JSON.stringify(settings)); document.getElementById('emailHint').textContent = 'Письмо уйдёт на ' + settings.email; document.getElementById('settingsPanel').style.display = 'none'; setStatus('✅ Настройки сохранены', 'success'); }
 
@@ -226,38 +519,6 @@
                     setStatus('✅ Загружен акт №' + actNum, 'success');
                 });
         }
-
-        function createDeviceBlock(num) {
-            var b = document.createElement('div'); b.className = 'device-block'; b.id = 'device' + num;
-            b.innerHTML = `<div class="device-title"><span class="device-number">${num}</span> Прибор</div>
-                <div class="field-group"><label>📷 Название:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${num})" onfocus="filterAutocomplete(${num})" onblur="hideAutocomplete(${num})"><ul class="autocomplete-list" id="autocompleteList${num}"></ul></div><button class="btn-camera" onclick="openCamera('name',${num})">📷</button></div><img id="previewName${num}" class="preview"></div>
-                <div class="field-group"><label>Тип:</label><input type="text" id="typeField${num}" placeholder="Авто или вручную" list="typeList" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;" oninput="checkType(${num})"></div>
-                <div class="field-group"><label>📷 Заводской номер:</label>
-                    <div class="serial-row" id="serialRow${num}">
-                        <input type="text" id="serialField${num}" placeholder="Номер" oninput="suggestSecondSerial(${num})">
-                        <span id="serialSlash${num}" style="display:none;">/</span>
-                        <input type="text" id="serialField2_${num}" placeholder="Вторая часть" style="display:none;">
-                        <button class="btn-camera" onclick="openCamera('serial',${num})" style="display:none;" id="serialBtn2_${num}">📷</button>
-                    </div>
-                    <button class="btn-camera" onclick="openCamera('serial',${num})" id="serialBtn${num}">📷</button>
-                    <img id="previewSerial${num}" class="preview"></div>
-                <div class="field-group"><label>Адрес:</label><div class="field-row"><input type="text" id="addressField${num}" placeholder="Введите или выберите" list="addressList${num}" onchange="addAddressToList(this.value)"><datalist id="addressList${num}"></datalist></div></div>
-                <div class="checkbox-row" id="akbRow${num}" style="display:none;"><input type="checkbox" id="akbCheck${num}"><label for="akbCheck${num}">Замена АКБ</label></div>
-                <div class="field-group"><label>Примечание:</label><input type="text" id="noteField${num}" placeholder="Состояние..." style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;"></div>`;
-            if (num > 1) {
-                var rb = document.createElement('button'); rb.className = 'btn-remove'; rb.textContent = '🗑️';
-                rb.style.cssText = 'position:absolute;top:8px;right:8px;'; rb.onclick = function() { removeDevice(b.id); };
-                b.appendChild(rb);
-            }
-            document.getElementById('devicesContainer').appendChild(b);
-            updateAddressDatalists();
-            renumberDevices();
-            return b;
-        }
-
-        function addDevice() { deviceCounter++; createDeviceBlock(deviceCounter); }
-        function removeDevice(id) { var b = document.getElementById(id); if (b) b.remove(); renumberDevices(); updateAddressDatalists(); }
-        function renumberDevices() { document.querySelectorAll('.device-block').forEach(function(b,i){ b.id='device'+(i+1); var s=b.querySelector('.device-number'); if(s)s.textContent=i+1; }); deviceCounter=document.querySelectorAll('.device-block').length; }
 
         function checkType(deviceNum) {
             var typeVal = (document.getElementById('typeField' + deviceNum)?.value || '').toLowerCase();
