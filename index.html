@@ -24,16 +24,12 @@
         .btn-add-device { width: 100%; background: #2196F3; color: #fff; border: none; border-radius: 8px; padding: 14px; font-size: 16px; cursor: pointer; margin: 10px 0; }
         .btn-voice { background: #E91E63; color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 18px; cursor: pointer; min-width: 46px; flex: 0 0 auto; transition: all 0.3s; }
         .btn-voice.listening { background: #FF5722; animation: pulse 1.5s infinite; }
-        .btn-voice.unsupported { background: #999; cursor: not-allowed; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         .btn-submit { width: 100%; background: #FF5722; color: #fff; border: none; border-radius: 8px; padding: 16px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn-submit:disabled { background: #ccc; }
         .device-block { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 12px; margin-bottom: 12px; position: relative; }
         .device-title { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 8px; }
         .device-number { background: #eee; border-radius: 50%; width: 24px; height: 24px; display: inline-block; text-align: center; line-height: 24px; font-size: 13px; margin-right: 6px; }
-        .voice-indicator { font-size: 12px; color: #E91E63; margin-top: 5px; display: none; }
-        .voice-indicator.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .preview { width: 100%; max-height: 150px; object-fit: contain; margin-top: 4px; border-radius: 8px; display: none; }
         .status { text-align: center; margin-top: 15px; font-size: 13px; color: #666; min-height: 20px; }
         .status.success { color: #4CAF50; } .status.error { color: #f44336; } .status.loading { color: #FF9800; }
@@ -146,7 +142,6 @@
     <iframe name="hiddenFrame" style="display:none;"></iframe>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
-        // ... (предыдущие переменные остаются без изменений)
         var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwb_jTGauowbZxvua3sJrBy4PxfCuELT4z1hz6rDlyTl6p7FcGKINMv2oBuHhbYu2Q4/exec';
         var CSV_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJLJVjVpDuLsNRjFg9j7X2NHcDtOgmo4lhiC_CTx2S0ox97Hne91SXQ7XtJJxb9OberlzYUrSXijw6/pub?output=csv&gid=';
         var GID_TYPES = '441822937', GID_COMPANIES = '883764981', GID_EMPLOYEES = '1294860374';
@@ -156,24 +151,61 @@
         var settings = JSON.parse(localStorage.getItem('appSettings') || '{"email":"ms-tcentr@mail.ru"}');
         var usedAddresses = [];
 
-        // Голосовые переменные
         var recognition = null;
         var isVoiceSupported = false;
         var isListening = false;
         var voiceTargetDevice = null;
         var collectedVoiceData = {};
-        var voiceStep = 0; // 0=название, 1=номер, 2=адрес
+        var voiceStep = 0;
         var lastInterimResult = '';
-        var finalTranscript = '';
+        var allTypesFromSheet = []; // Все типы из Google таблицы
 
         window.addEventListener('load', function() {
             document.getElementById('settingsEmail').value = settings.email;
             document.getElementById('emailHint').textContent = 'Письмо уйдёт на ' + settings.email;
             setStatus('Загрузка справочников...', 'loading');
-            loadDictionaries(); 
+            loadDictionaries();
+            loadAllTypesFromSheet(); // Загружаем все типы
             addDevice();
             initVoiceRecognition();
         });
+
+        function toggleSettings() { var p = document.getElementById('settingsPanel'); p.style.display = p.style.display === 'none' ? 'block' : 'none'; }
+        function saveSettings() { settings.email = document.getElementById('settingsEmail').value.trim() || 'ms-tcentr@mail.ru'; localStorage.setItem('appSettings', JSON.stringify(settings)); document.getElementById('emailHint').textContent = 'Письмо уйдёт на ' + settings.email; document.getElementById('settingsPanel').style.display = 'none'; setStatus('✅ Настройки сохранены', 'success'); }
+
+        function loadDictionaries() {
+            Promise.all([fetch(CSV_BASE+GID_TYPES).then(r=>r.text()), fetch(CSV_BASE+GID_COMPANIES).then(r=>r.text()), fetch(CSV_BASE+GID_EMPLOYEES).then(r=>r.text())])
+            .then(function(r){ typesData=parseCSV(r[0]); updateSelect('companySelect',parseCSV(r[1]),0); updateSelect('employeeSelect',parseCSV(r[2]),1); setStatus('✅ Готов к работе','success'); })
+            .catch(function(){ setStatus('⚠️ Справочники не загружены','error'); });
+        }
+
+        function loadAllTypesFromSheet() {
+            fetch(CSV_BASE + GID_TYPES)
+                .then(function(response) {
+                    if (!response.ok) throw new Error('Ошибка загрузки');
+                    return response.text();
+                })
+                .then(function(csv) {
+                    var data = parseCSV(csv);
+                    allTypesFromSheet = [];
+                    data.forEach(function(row) {
+                        for (var i = 0; i < row.length; i++) {
+                            var value = (row[i] || '').trim();
+                            if (value && value.length > 2 && allTypesFromSheet.indexOf(value) === -1) {
+                                allTypesFromSheet.push(value);
+                            }
+                        }
+                    });
+                    console.log('📋 Загружено типов приборов из таблицы: ' + allTypesFromSheet.length);
+                })
+                .catch(function(error) {
+                    console.error('Ошибка загрузки типов:', error);
+                });
+        }
+
+        function parseCSV(csv) { var lines=csv.trim().split('\n'), result=[]; for(var i=1;i<lines.length;i++){ var cells=[],cur='',q=false; for(var j=0;j<lines[i].length;j++){ var c=lines[i][j]; if(c=='"')q=!q; else if(c===','&&!q){cells.push(cur.trim());cur='';} else cur+=c; } cells.push(cur.trim()); if(cells.some(function(c){return c.length>0;})) result.push(cells); } return result; }
+        function updateSelect(id,data,col){ var sel=document.getElementById(id); sel.innerHTML='<option value="">-- Выберите --</option>'; var names=[]; data.forEach(function(r){ var v=r[col]||r[0]||''; if(v&&names.indexOf(v)===-1){names.push(v); sel.innerHTML+='<option value="'+esc(v)+'">'+esc(v)+'</option>'; } }); }
+        function getTypeNames(){ var names=[]; typesData.forEach(function(r){ var n=r[1]||r[0]||''; if(n&&names.indexOf(n)===-1) names.push(n); }); return names; }
 
         function initVoiceRecognition() {
             var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -182,7 +214,7 @@
                 recognition.lang = 'ru-RU';
                 recognition.interimResults = true;
                 recognition.continuous = true;
-                recognition.maxAlternatives = 3; // Увеличиваем для лучшего выбора
+                recognition.maxAlternatives = 3;
 
                 recognition.onresult = function(event) {
                     var allAlternatives = [];
@@ -190,7 +222,6 @@
                     
                     for (var i = event.resultIndex; i < event.results.length; i++) {
                         if (event.results[i].isFinal) {
-                            // Собираем все альтернативы для финального результата
                             for (var j = 0; j < event.results[i].length; j++) {
                                 allAlternatives.push(event.results[i][j].transcript.trim());
                             }
@@ -199,11 +230,9 @@
                         }
                     }
                     
-                    // Выбираем лучший вариант из альтернатив
                     var bestTranscript = selectBestTranscript(allAlternatives, interimTranscript);
                     
                     if (bestTranscript) {
-                        finalTranscript = bestTranscript;
                         processVoiceInput(bestTranscript, false);
                     } else if (interimTranscript) {
                         processVoiceInput(interimTranscript, true);
@@ -221,11 +250,7 @@
 
                 recognition.onend = function() {
                     if (isListening) {
-                        try { 
-                            recognition.start(); 
-                        } catch(e) {
-                            // Уже запущено
-                        }
+                        try { recognition.start(); } catch(e) {}
                     }
                 };
 
@@ -237,24 +262,19 @@
             }
         }
 
-        // Функция выбора лучшего варианта из альтернатив
         function selectBestTranscript(alternatives, interim) {
             if (alternatives.length === 0) return interim || '';
             
-            // Оцениваем каждый вариант
             var scored = alternatives.map(function(alt) {
                 var score = 0;
                 var lower = alt.toLowerCase();
                 
-                // Бонус за ключевые слова
                 if (/\bномер\b|\bзаводской\b|\b№\b/i.test(lower)) score += 10;
                 if (/\bадрес\b|\bулица\b|\bдом\b/i.test(lower)) score += 10;
-                if (/\d{4,}/.test(lower)) score += 15; // Есть цифры (похоже на номер)
+                if (/\d{4,}/.test(lower)) score += 15;
                 
-                // Бонус за длину (более полные фразы)
                 score += alt.length / 10;
                 
-                // Штраф за повторяющиеся слова
                 var words = lower.split(/\s+/);
                 var uniqueWords = {};
                 words.forEach(function(w) { uniqueWords[w] = true; });
@@ -263,9 +283,7 @@
                 return { text: alt, score: score };
             });
             
-            // Сортируем по убыванию скора
             scored.sort(function(a, b) { return b.score - a.score; });
-            
             return scored[0].text;
         }
 
@@ -280,7 +298,6 @@
                 return;
             }
 
-            // Находим последний пустой прибор или создаем новый
             var lastDevice = findEmptyDevice();
             if (!lastDevice) {
                 addDevice();
@@ -290,7 +307,6 @@
             voiceTargetDevice = lastDevice;
             collectedVoiceData = {};
             voiceStep = 0;
-            finalTranscript = '';
             lastInterimResult = '';
             isListening = true;
             
@@ -322,7 +338,6 @@
             if (!transcript || transcript === lastInterimResult) return;
             lastInterimResult = transcript;
             
-            // Нормализуем текст
             var text = transcript.toLowerCase()
                 .replace(/запятая/gi, ',')
                 .replace(/точка/gi, '.')
@@ -335,7 +350,7 @@
             
             document.getElementById('voiceText').textContent = '🎤 ' + transcript;
             
-            // Пытаемся распознать название прибора
+            // Шаг 1: Название прибора
             if (voiceStep === 0) {
                 var nameMatch = findTypeInVoiceEnhanced(text);
                 if (nameMatch && !collectedVoiceData.name) {
@@ -350,12 +365,11 @@
                 }
             }
             
-            // Ищем заводской номер
-            if (voiceStep === 1 || voiceStep === 0) {
+            // Шаг 2: Заводской номер
+            if (voiceStep === 1) {
                 var serialMatch = extractSerialEnhanced(text);
                 if (serialMatch && !collectedVoiceData.serial) {
                     collectedVoiceData.serial = serialMatch;
-                    if (voiceStep === 0) voiceStep = 1;
                     voiceStep = 2;
                     document.getElementById('voiceStep').textContent = 'Шаг 3/3: Назовите адрес установки';
                     document.getElementById('voiceFields').innerHTML += '<div>✅ Номер: <b>' + serialMatch + '</b></div>';
@@ -366,8 +380,8 @@
                 }
             }
             
-            // Ищем адрес
-            if (voiceStep === 2 || voiceStep === 0) {
+            // Шаг 3: Адрес
+            if (voiceStep === 2) {
                 var addressMatch = extractAddressEnhanced(text);
                 if (addressMatch && !collectedVoiceData.address) {
                     collectedVoiceData.address = addressMatch;
@@ -382,80 +396,199 @@
         }
 
         function findTypeInVoiceEnhanced(text) {
-            var names = getTypeNames();
-            var best = '';
-            var bestScore = 0;
+            if (!text) return null;
             
-            // Расширенный список ключевых слов для приборов
-            var prefixes = [
-                'водосчётчик', 'водосчетчик', 'счётчик', 'счетчик', 'тепловычислитель',
-                'манометр', 'термометр', 'датчик', 'преобразователь', 'расходомер',
-                'корректор', 'вычислитель', 'контроллер', 'измеритель', 'сигнализатор',
-                'анализатор', 'уровнемер', 'регистратор', 'плотномер', 'вискозиметр',
-                'влагомер', 'газоанализатор', 'дефектоскоп', 'калибратор', 'мультиметр',
-                'осциллограф', 'пирометр', 'тахометр', 'термостат', 'толщиномер',
-                'вольтметр', 'амперметр', 'ваттметр', 'частотомер', 'шумомер'
-            ];
+            var cleanText = text.toLowerCase().replace(/[^a-zа-я0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
             
-            // Сначала пробуем найти полное совпадение из справочника
-            names.forEach(function(name) {
-                var clean = name.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
-                if (clean.length < 3) return;
+            // Используем данные из таблицы если загружены, иначе getTypeNames()
+            var typesToSearch = allTypesFromSheet.length > 0 ? allTypesFromSheet : getTypeNames();
+            
+            var words = cleanText.split(/\s+/);
+            var bestMatch = null;
+            var bestScore = -1;
+            var results = [];
+            
+            typesToSearch.forEach(function(sheetType) {
+                var typeClean = sheetType.toLowerCase().replace(/[^a-zа-я0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+                if (typeClean.length < 2) return;
                 
-                // Точное совпадение (название полностью в тексте)
-                if (text.indexOf(clean) !== -1) {
-                    if (clean.length > bestScore) {
-                        bestScore = clean.length;
-                        best = name;
+                var score = calculateMatchScore(cleanText, words, typeClean);
+                if (score > 0) {
+                    results.push({ type: sheetType, score: score, clean: typeClean });
+                }
+            });
+            
+            results.sort(function(a, b) { return b.score - a.score; });
+            
+            if (results.length > 0) {
+                console.log('📊 Топ-3 совпадений:');
+                results.slice(0, 3).forEach(function(r, i) {
+                    console.log('  ' + (i+1) + '. ' + r.type + ' (скор: ' + r.score + ')');
+                });
+                
+                bestMatch = results[0];
+                
+                if (bestMatch.score < 20) {
+                    var abbrMatch = findAbbreviation(cleanText, typesToSearch);
+                    if (abbrMatch) {
+                        console.log('✅ Найдено по аббревиатуре: ' + abbrMatch);
+                        return abbrMatch;
                     }
                 }
                 
-                // Совпадение по частям (первые слова названия)
-                var parts = name.toLowerCase().split(/[\s\-]+/);
-                if (parts.length > 0 && text.indexOf(parts[0]) !== -1) {
-                    var score = parts[0].length * 2;
-                    if (score > bestScore) {
-                        bestScore = score;
-                        best = name;
+                console.log('✅ Лучшее совпадение: ' + bestMatch.type);
+                return bestMatch.type;
+            }
+            
+            return null;
+        }
+
+        function calculateMatchScore(text, textWords, typeName) {
+            var score = 0;
+            var typeWords = typeName.split(/\s+/);
+            
+            if (text.indexOf(typeName) !== -1) {
+                score += 100;
+            }
+            
+            var matchedWords = 0;
+            typeWords.forEach(function(typeWord) {
+                if (typeWord.length < 2) return;
+                
+                for (var i = 0; i < textWords.length; i++) {
+                    var textWord = textWords[i];
+                    
+                    if (textWord === typeWord) {
+                        score += 30;
+                        matchedWords++;
+                        continue;
+                    }
+                    
+                    if (typeWord.startsWith(textWord) && textWord.length >= 2) {
+                        score += 20;
+                        matchedWords++;
+                        continue;
+                    }
+                    
+                    if (textWord.startsWith(typeWord) && typeWord.length >= 2) {
+                        score += 15;
+                        matchedWords++;
+                        continue;
+                    }
+                    
+                    var similarity = stringSimilarity(textWord, typeWord);
+                    if (similarity > 0.7 && typeWord.length >= 3) {
+                        score += Math.floor(similarity * 25);
+                        matchedWords++;
                     }
                 }
             });
             
-            // Если не нашли в справочнике, ищем в тексте
-            if (!best) {
-                for (var i = 0; i < prefixes.length; i++) {
-                    var idx = text.indexOf(prefixes[i]);
-                    if (idx !== -1) {
-                        // Берем 3 слова начиная с найденного префикса
-                        var words = text.substring(idx).split(/\s+/);
-                        best = words.slice(0, 3).join(' ');
-                        break;
-                    }
-                }
+            if (matchedWords >= typeWords.length) {
+                score += 50;
+            } else if (matchedWords > 0) {
+                score += matchedWords * 10;
             }
             
-            return best;
+            var abbr = typeName.replace(/[^a-zа-я]/g, '');
+            if (abbr.length >= 2 && text.indexOf(abbr) !== -1) {
+                score += 40;
+            }
+            
+            score += Math.min(typeName.length, 20);
+            
+            return score;
+        }
+
+        function findAbbreviation(text, typesToSearch) {
+            if (!typesToSearch) typesToSearch = allTypesFromSheet.length > 0 ? allTypesFromSheet : getTypeNames();
+            
+            var words = text.split(/\s+/);
+            var potentialAbbr = words.filter(function(w) {
+                return w.length >= 2 && w.length <= 5 && /^[a-zа-я]+$/i.test(w);
+            });
+            
+            var bestMatch = null;
+            var bestScore = 0;
+            
+            typesToSearch.forEach(function(sheetType) {
+                var typeClean = sheetType.toLowerCase().replace(/[^a-zа-я0-9]/g, '');
+                
+                potentialAbbr.forEach(function(abbr) {
+                    var abbrClean = abbr.toLowerCase().replace(/[^a-zа-я]/g, '');
+                    
+                    if (typeClean.indexOf(abbrClean) !== -1) {
+                        var score = abbrClean.length * 20;
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestMatch = sheetType;
+                        }
+                    }
+                    
+                    var typeWords = sheetType.toLowerCase().split(/[\s\-]+/);
+                    var initials = typeWords.map(function(w) { return w[0] || ''; }).join('');
+                    if (initials.length >= 2 && abbrClean === initials) {
+                        var score2 = abbrClean.length * 25;
+                        if (score2 > bestScore) {
+                            bestScore = score2;
+                            bestMatch = sheetType;
+                        }
+                    }
+                });
+            });
+            
+            return bestMatch;
+        }
+
+        function stringSimilarity(s1, s2) {
+            if (!s1 || !s2) return 0;
+            if (s1 === s2) return 1.0;
+            
+            var longer = s1.length > s2.length ? s1 : s2;
+            var shorter = s1.length > s2.length ? s2 : s1;
+            var longerLength = longer.length;
+            
+            if (longerLength === 0) return 1.0;
+            
+            return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
+        }
+
+        function editDistance(s1, s2) {
+            s1 = s1.toLowerCase();
+            s2 = s2.toLowerCase();
+            
+            var costs = [];
+            for (var i = 0; i <= s1.length; i++) {
+                var lastValue = i;
+                for (var j = 0; j <= s2.length; j++) {
+                    if (i === 0) {
+                        costs[j] = j;
+                    } else if (j > 0) {
+                        var newValue = costs[j - 1];
+                        if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
+                            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                        }
+                        costs[j - 1] = lastValue;
+                        lastValue = newValue;
+                    }
+                }
+                if (i > 0) costs[s2.length] = lastValue;
+            }
+            return costs[s2.length];
         }
 
         function extractSerialEnhanced(text) {
-            // Множество паттернов для поиска номера
             var patterns = [
-                // Явное указание номера
                 /(?:номер|заводской|серийный|зав\.?\s*)?[№Nn]\s*[:=\-\s]*\s*(\d[\d\-\/]+)/i,
-                // Номер после ключевых слов
                 /(?:номер|заводской|серийный|зав)\s+(?:прибора|изделия|устройства)?\s*[:=\-\s]*\s*(\d[\d\-\/]+)/i,
-                // Просто длинное число (5+ цифр)
                 /\b(\d{5,})\b/,
-                // Число с дефисом или слешем (для составных номеров)
                 /\b(\d{2,}[\-\/]\d{2,})\b/,
-                // Число после слова "номер" даже без знака №
                 /номер\s+(\d[\d\-\/]+)/i
             ];
             
             for (var i = 0; i < patterns.length; i++) {
                 var match = text.match(patterns[i]);
                 if (match) {
-                    // Очищаем номер от лишних символов, но сохраняем структуру
                     var serial = match[1].replace(/[^\d\-\/]/g, '');
                     if (serial.length >= 4) {
                         return serial;
@@ -468,13 +601,9 @@
 
         function extractAddressEnhanced(text) {
             var patterns = [
-                // Адрес с ключевыми словами
                 /(?:адрес|улица|ул\.?|проспект|пр\.?|переулок|пер\.?|проезд|бульвар|площадь|пл\.?|шоссе|набережная)\s*[:]?\s*(.+?)(?:$|\.|\,|\;)/i,
-                // Улица с номером дома
                 /(?:улица|ул\.?|проспект|пр\.?)\s+[а-яА-ЯёЁ\s]+\s*(?:дом|д\.?)?\s*\d+[\dа-яА-Я]*/i,
-                // Просто длинная фраза после "адрес"
                 /адрес\s+(.+?)(?:номер|заводской|$)/i,
-                // Улица и дом
                 /[а-яА-ЯёЁ]+\s+(?:улица|проспект|переулок)\s*[,]?\s*(?:дом|д\.?)?\s*\d+/i
             ];
             
@@ -482,13 +611,11 @@
                 var match = text.match(patterns[i]);
                 if (match) {
                     var address = match[1] || match[0];
-                    // Очищаем и форматируем адрес
                     address = address
                         .replace(/^[:,\s]+/, '')
                         .replace(/[,;]+$/, '')
                         .trim();
                     
-                    // Делаем первую букву заглавной
                     address = address.charAt(0).toUpperCase() + address.slice(1);
                     
                     if (address.length > 5) {
@@ -546,8 +673,6 @@
             setStatus('✅ Данные заполнены голосом', 'success');
         }
 
-        // ... (остальные функции как в предыдущей версии)
-        
         function createDeviceBlock(num) {
             var b = document.createElement('div'); b.className = 'device-block'; b.id = 'device' + num;
             b.innerHTML = `<div class="device-title"><span class="device-number">${num}</span> Прибор</div>
@@ -579,113 +704,7 @@
         function addDevice() { deviceCounter++; createDeviceBlock(deviceCounter); }
         function removeDevice(id) { var b = document.getElementById(id); if (b) b.remove(); renumberDevices(); updateAddressDatalists(); }
         function renumberDevices() { document.querySelectorAll('.device-block').forEach(function(b,i){ b.id='device'+(i+1); var s=b.querySelector('.device-number'); if(s)s.textContent=i+1; }); deviceCounter=document.querySelectorAll('.device-block').length; }
-        function toggleSettings() { var p = document.getElementById('settingsPanel'); p.style.display = p.style.display === 'none' ? 'block' : 'none'; }
-        function saveSettings() { settings.email = document.getElementById('settingsEmail').value.trim() || 'ms-tcentr@mail.ru'; localStorage.setItem('appSettings', JSON.stringify(settings)); document.getElementById('emailHint').textContent = 'Письмо уйдёт на ' + settings.email; document.getElementById('settingsPanel').style.display = 'none'; setStatus('✅ Настройки сохранены', 'success'); }
 
-        function loadDictionaries() {
-            Promise.all([fetch(CSV_BASE+GID_TYPES).then(r=>r.text()), fetch(CSV_BASE+GID_COMPANIES).then(r=>r.text()), fetch(CSV_BASE+GID_EMPLOYEES).then(r=>r.text())])
-            .then(function(r){ typesData=parseCSV(r[0]); updateSelect('companySelect',parseCSV(r[1]),0); updateSelect('employeeSelect',parseCSV(r[2]),1); setStatus('✅ Готов к работе','success'); })
-            .catch(function(){ setStatus('⚠️ Справочники не загружены','error'); });
-        }
-
-        function parseCSV(csv) { var lines=csv.trim().split('\n'), result=[]; for(var i=1;i<lines.length;i++){ var cells=[],cur='',q=false; for(var j=0;j<lines[i].length;j++){ var c=lines[i][j]; if(c=='"')q=!q; else if(c===','&&!q){cells.push(cur.trim());cur='';} else cur+=c; } cells.push(cur.trim()); if(cells.some(function(c){return c.length>0;})) result.push(cells); } return result; }
-        function updateSelect(id,data,col){ var sel=document.getElementById(id); sel.innerHTML='<option value="">-- Выберите --</option>'; var names=[]; data.forEach(function(r){ var v=r[col]||r[0]||''; if(v&&names.indexOf(v)===-1){names.push(v); sel.innerHTML+='<option value="'+esc(v)+'">'+esc(v)+'</option>'; } }); }
-        function getTypeNames(){ var names=[]; typesData.forEach(function(r){ var n=r[1]||r[0]||''; if(n&&names.indexOf(n)===-1) names.push(n); }); return names; }
-
-        // ... (все остальные функции без изменений: newAct, openActsList, closeActsList, loadAct, checkType, checkDualSerial, suggestSecondSerial, addAddressToList, updateAddressDatalists, filterAutocomplete, selectAutocomplete, hideAutocomplete, changeFrameSize, openCamera, captureFromCamera, closeCamera, fallbackToFileInput, findTypeByName, recognizeText, cleanText, extractName, extractSerial, addCompany, submitAct, setStatus, esc)
-
-        function newAct() {
-            if (confirm('Очистить все поля и начать новый акт?')) {
-                document.getElementById('devicesContainer').innerHTML = '';
-                deviceCounter = 0;
-                usedAddresses = [];
-                addDevice();
-                setStatus('✅ Новый акт', 'success');
-            }
-        }
-
-        function openActsList() {
-            document.getElementById('actsModal').style.display = 'block';
-            document.getElementById('actsList').innerHTML = 'Загрузка...';
-            fetch(SCRIPT_URL + '?action=getActs')
-                .then(r => r.json())
-                .then(function(acts) {
-                    var html = '';
-                    var keys = Object.keys(acts).sort().reverse();
-                    keys.forEach(function(actNum) {
-                        var act = acts[actNum];
-                        html += '<div class="act-item" onclick="loadAct(\'' + actNum + '\')">';
-                        html += '<b>Акт №' + actNum + '</b> от ' + act.date + '<br>';
-                        html += 'Компания: ' + act.company + ' | Приборов: ' + act.devices.length;
-                        html += '</div>';
-                    });
-                    if (keys.length === 0) html = 'Нет сохранённых актов.';
-                    document.getElementById('actsList').innerHTML = html;
-                })
-                .catch(function() { document.getElementById('actsList').innerHTML = 'Ошибка загрузки.'; });
-        }
-
-        function closeActsList() { document.getElementById('actsModal').style.display = 'none'; }
-
-        function loadAct(actNum) {
-            fetch(SCRIPT_URL + '?action=getActs')
-                .then(r => r.json())
-                .then(function(acts) {
-                    var act = acts[actNum];
-                    if (!act) {
-                        Object.keys(acts).forEach(function(key) {
-                            if (key === actNum || key.replace(/\./g, '\\.') === actNum) {
-                                act = acts[key];
-                            }
-                        });
-                    }
-                    if (!act) { alert('Акт не найден'); return; }
-                    
-                    document.getElementById('devicesContainer').innerHTML = '';
-                    deviceCounter = 0;
-                    usedAddresses = [];
-                    
-                    act.devices.forEach(function(dev) {
-                        deviceCounter++;
-                        createDeviceBlock(deviceCounter);
-                        document.getElementById('nameField' + deviceCounter).value = dev.name || '';
-                        document.getElementById('typeField' + deviceCounter).value = dev.type || '';
-                        document.getElementById('noteField' + deviceCounter).value = dev.note || '';
-                        
-                        if (dev.serial && String(dev.serial).includes('/')) {
-                            var parts = String(dev.serial).split('/');
-                            document.getElementById('serialField' + deviceCounter).value = parts[0] || '';
-                            var s2 = document.getElementById('serialField2_' + deviceCounter);
-                            if (s2) s2.value = parts[1] || '';
-                            checkDualSerial(deviceCounter);
-                        } else {
-                            document.getElementById('serialField' + deviceCounter).value = dev.serial || '';
-                        }
-                        
-                        if (dev.address) {
-                            document.getElementById('addressField' + deviceCounter).value = dev.address;
-                            if (usedAddresses.indexOf(dev.address) === -1) usedAddresses.push(dev.address);
-                        }
-                        
-                        var typeVal = (dev.type || '').toLowerCase();
-                        if (typeVal.includes('тепловычислитель') || typeVal.includes('тепловыч')) {
-                            checkType(deviceCounter);
-                            if (dev.akb) {
-                                var akbCheck = document.getElementById('akbCheck' + deviceCounter);
-                                if (akbCheck) akbCheck.checked = true;
-                            }
-                        }
-                    });
-                    
-                    if (deviceCounter === 0) addDevice();
-                    closeActsList();
-                    setStatus('✅ Загружен акт №' + actNum, 'success');
-                });
-        }
-
-        // Остальные функции (checkType, checkDualSerial, suggestSecondSerial и т.д.) 
-        // остаются такими же как в предыдущей версии
-        
         function checkType(deviceNum) {
             var typeVal = (document.getElementById('typeField' + deviceNum)?.value || '').toLowerCase();
             var akbRow = document.getElementById('akbRow' + deviceNum);
@@ -802,6 +821,93 @@
         function extractName(text){ var noSerial=text.replace(/зав\.?\s*[№Nn]\s*\d+/gi,'').replace(/[№Nn]\s*\d+/gi,''); var tc=noSerial.toLowerCase().replace(/[^a-zа-я0-9]/g,''),best='',bestScore=0; typesData.forEach(function(r){var ref=(r[1]||r[0]||'').trim();if(!ref)return;var fw=ref.split(/[\s\-]+/)[0].toLowerCase().replace(/[^a-zа-я0-9]/g,'');if(fw.length>=3&&tc.indexOf(fw)!==-1&&ref.length>bestScore){bestScore=ref.length;best=ref;}});return best||noSerial.replace(/\s+/g,' ').trim(); }
         function extractSerial(text){ var m=text.match(/(?:зав\.?\s*)?[№Nn]\s*[:=\-\s]*\s*(\d{3,})/i)||text.match(/\b(\d{4,})\b/); return m?m[1].replace(/[^\d]/g,''):''; }
         function addCompany(){ var name=prompt('Введите название компании:'); if(name&&name.trim()){document.getElementById('companySelect').innerHTML+='<option value="'+esc(name.trim())+'" selected>'+esc(name.trim())+'</option>';setStatus('Компания добавлена','success');} }
+
+        function newAct() {
+            if (confirm('Очистить все поля и начать новый акт?')) {
+                document.getElementById('devicesContainer').innerHTML = '';
+                deviceCounter = 0;
+                usedAddresses = [];
+                addDevice();
+                setStatus('✅ Новый акт', 'success');
+            }
+        }
+
+        function openActsList() {
+            document.getElementById('actsModal').style.display = 'block';
+            document.getElementById('actsList').innerHTML = 'Загрузка...';
+            fetch(SCRIPT_URL + '?action=getActs')
+                .then(r => r.json())
+                .then(function(acts) {
+                    var html = '';
+                    var keys = Object.keys(acts).sort().reverse();
+                    keys.forEach(function(actNum) {
+                        var act = acts[actNum];
+                        html += '<div class="act-item" onclick="loadAct(\'' + actNum + '\')">';
+                        html += '<b>Акт №' + actNum + '</b> от ' + act.date + '<br>';
+                        html += 'Компания: ' + act.company + ' | Приборов: ' + act.devices.length;
+                        html += '</div>';
+                    });
+                    if (keys.length === 0) html = 'Нет сохранённых актов.';
+                    document.getElementById('actsList').innerHTML = html;
+                })
+                .catch(function() { document.getElementById('actsList').innerHTML = 'Ошибка загрузки.'; });
+        }
+
+        function closeActsList() { document.getElementById('actsModal').style.display = 'none'; }
+
+        function loadAct(actNum) {
+            fetch(SCRIPT_URL + '?action=getActs')
+                .then(r => r.json())
+                .then(function(acts) {
+                    var act = acts[actNum];
+                    if (!act) {
+                        Object.keys(acts).forEach(function(key) {
+                            if (key === actNum || key.replace(/\./g, '\\.') === actNum) act = acts[key];
+                        });
+                    }
+                    if (!act) { alert('Акт не найден'); return; }
+                    
+                    document.getElementById('devicesContainer').innerHTML = '';
+                    deviceCounter = 0;
+                    usedAddresses = [];
+                    
+                    act.devices.forEach(function(dev) {
+                        deviceCounter++;
+                        createDeviceBlock(deviceCounter);
+                        document.getElementById('nameField' + deviceCounter).value = dev.name || '';
+                        document.getElementById('typeField' + deviceCounter).value = dev.type || '';
+                        document.getElementById('noteField' + deviceCounter).value = dev.note || '';
+                        
+                        if (dev.serial && String(dev.serial).includes('/')) {
+                            var parts = String(dev.serial).split('/');
+                            document.getElementById('serialField' + deviceCounter).value = parts[0] || '';
+                            var s2 = document.getElementById('serialField2_' + deviceCounter);
+                            if (s2) s2.value = parts[1] || '';
+                            checkDualSerial(deviceCounter);
+                        } else {
+                            document.getElementById('serialField' + deviceCounter).value = dev.serial || '';
+                        }
+                        
+                        if (dev.address) {
+                            document.getElementById('addressField' + deviceCounter).value = dev.address;
+                            if (usedAddresses.indexOf(dev.address) === -1) usedAddresses.push(dev.address);
+                        }
+                        
+                        var typeVal = (dev.type || '').toLowerCase();
+                        if (typeVal.includes('тепловычислитель') || typeVal.includes('тепловыч')) {
+                            checkType(deviceCounter);
+                            if (dev.akb) {
+                                var akbCheck = document.getElementById('akbCheck' + deviceCounter);
+                                if (akbCheck) akbCheck.checked = true;
+                            }
+                        }
+                    });
+                    
+                    if (deviceCounter === 0) addDevice();
+                    closeActsList();
+                    setStatus('✅ Загружен акт №' + actNum, 'success');
+                });
+        }
 
         function submitAct(){
             var company=document.getElementById('companySelect').value,employee=document.getElementById('employeeSelect').value;
