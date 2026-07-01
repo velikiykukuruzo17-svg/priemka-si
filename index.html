@@ -46,10 +46,8 @@
         .autocomplete-list li:last-child { border-bottom: none; }
         #settingsPanel { display: none; background: #fff; border: 1px solid #ddd; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
         #settingsPanel h3 { margin-bottom: 12px; }
-        #settingsPanel label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 4px; }
-        #settingsPanel input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; margin-bottom: 12px; }
-        #settingsPanel .btn-save { width: 100%; background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 12px; font-size: 15px; cursor: pointer; }
-        #settingsPanel .email-status { font-size: 12px; margin-top: 5px; }
+        #settingsPanel input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; margin-bottom: 8px; }
+        #settingsPanel .btn-save { width: 100%; background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 10px; font-size: 15px; cursor: pointer; }
         #cameraOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; }
         #cameraVideo { width: 100%; height: 100%; object-fit: cover; }
         #cameraFrame { position: absolute; border: 3px solid #4CAF50; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.55); }
@@ -91,7 +89,6 @@
         <h3>⚙️ Настройки</h3>
         <label>📧 Email для отправки актов:</label>
         <input type="email" id="settingsEmail" placeholder="ms-tcentr@mail.ru">
-        <div class="email-status" id="emailStatus"></div>
         <button class="btn-save" onclick="saveSettings()">💾 Сохранить настройки</button>
     </div>
     <div class="act-toolbar">
@@ -144,7 +141,6 @@
         var currentVoiceField = null;
         var voiceResults = [];
         var allTypesFromSheet = [];
-        var dualSerialStep = 0;
 
         window.addEventListener('load', function() {
             document.getElementById('settingsEmail').value = settings.email || '';
@@ -159,9 +155,6 @@
         function toggleSettings() { 
             var p = document.getElementById('settingsPanel'); 
             p.style.display = p.style.display === 'none' ? 'block' : 'none'; 
-            if (p.style.display === 'block') {
-                document.getElementById('settingsEmail').value = settings.email || '';
-            }
         }
         
         function saveSettings() { 
@@ -170,25 +163,12 @@
             localStorage.setItem('appSettings', JSON.stringify(settings));
             updateEmailHint();
             document.getElementById('settingsPanel').style.display = 'none';
-            
-            if (newEmail) {
-                setStatus('✅ Настройки сохранены. Письма будут уходить на ' + newEmail, 'success');
-            } else {
-                setStatus('⚠️ Email не указан. Письма не будут отправляться.', 'error');
-            }
+            setStatus('✅ Настройки сохранены', 'success');
         }
         
         function updateEmailHint() {
             var email = settings.email || '';
-            if (email) {
-                document.getElementById('emailHint').textContent = '📧 Письмо уйдёт на ' + email;
-                document.getElementById('emailStatus').textContent = '✅ Текущий email: ' + email;
-                document.getElementById('emailStatus').style.color = '#4CAF50';
-            } else {
-                document.getElementById('emailHint').textContent = '⚠️ Укажите email в настройках (⚙️)';
-                document.getElementById('emailStatus').textContent = 'Email не указан';
-                document.getElementById('emailStatus').style.color = '#f44336';
-            }
+            document.getElementById('emailHint').textContent = email ? '📧 Письмо уйдёт на ' + email : '⚠️ Укажите email в настройках (⚙️)';
         }
 
         function loadDictionaries() {
@@ -199,10 +179,7 @@
 
         function loadAllTypesFromSheet() {
             fetch(CSV_BASE + GID_TYPES)
-                .then(function(response) {
-                    if (!response.ok) throw new Error('Ошибка загрузки');
-                    return response.text();
-                })
+                .then(function(response) { return response.text(); })
                 .then(function(csv) {
                     var data = parseCSV(csv);
                     allTypesFromSheet = [];
@@ -214,10 +191,7 @@
                             }
                         }
                     });
-                })
-                .catch(function(error) {
-                    console.error('Ошибка загрузки типов:', error);
-                });
+                }).catch(function(){});
         }
 
         function parseCSV(csv) { var lines=csv.trim().split('\n'), result=[]; for(var i=1;i<lines.length;i++){ var cells=[],cur='',q=false; for(var j=0;j<lines[i].length;j++){ var c=lines[i][j]; if(c=='"')q=!q; else if(c===','&&!q){cells.push(cur.trim());cur='';} else cur+=c; } cells.push(cur.trim()); if(cells.some(function(c){return c.length>0;})) result.push(cells); } return result; }
@@ -249,70 +223,30 @@
                     if (voiceResults.length > 0 && currentVoiceDevice) {
                         if (currentVoiceField === 'name') {
                             showVoiceVariants(voiceResults);
-                        } else if (currentVoiceField === 'serial_dual_1') {
-                            var serial = extractSerialEnhanced(voiceResults[0]);
-                            var field = document.getElementById('serialDual1_' + currentVoiceDevice);
-                            if (field && serial) {
-                                field.value = serial;
-                                dualSerialStep = 1;
-                                var statusEl = document.getElementById('voiceStatusSerial' + currentVoiceDevice);
-                                if (statusEl) {
-                                    statusEl.textContent = '✅ Первый: ' + serial + '. Скажите второй...';
-                                    statusEl.classList.add('active');
-                                }
-                                stopVoiceInput();
-                                setTimeout(function() {
-                                    startVoiceInput(currentVoiceDevice, 'serial_dual_2');
-                                }, 800);
-                            }
-                        } else if (currentVoiceField === 'serial_dual_2') {
-                            var serial = extractSerialEnhanced(voiceResults[0]);
-                            var field = document.getElementById('serialDual2_' + currentVoiceDevice);
-                            if (field && serial) {
-                                field.value = serial;
-                                var statusEl = document.getElementById('voiceStatusSerial' + currentVoiceDevice);
-                                if (statusEl) {
-                                    statusEl.textContent = '✅ Второй: ' + serial;
-                                    statusEl.classList.add('active');
-                                }
-                            }
-                            stopVoiceInput();
                         } else {
-                            var processedValue = extractSerialEnhanced(voiceResults[0]);
                             var field = document.getElementById(currentVoiceField + currentVoiceDevice);
-                            if (field && processedValue) field.value = processedValue;
+                            if (field) {
+                                if (currentVoiceField === 'serialField') {
+                                    field.value = extractSerialEnhanced(voiceResults[0]);
+                                    suggestSecondSerial(currentVoiceDevice);
+                                } else {
+                                    field.value = voiceResults[0];
+                                }
+                            }
                             stopVoiceInput();
                         }
                     }
                 };
 
-                recognition.onerror = function(event) {
-                    stopVoiceInput();
-                };
-
-                recognition.onend = function() {
-                    if (isListening && currentVoiceField === 'serial_dual_2' && dualSerialStep === 1) {
-                        try { recognition.start(); } catch(e) {}
-                        return;
-                    }
-                    stopVoiceInput();
-                };
-
+                recognition.onerror = function() { stopVoiceInput(); };
+                recognition.onend = function() { if (isListening) stopVoiceInput(); };
                 isVoiceSupported = true;
             }
         }
 
         function startVoiceInput(deviceNum, field) {
-            if (!isVoiceSupported) {
-                alert('Голосовой ввод не поддерживается. Используйте Chrome.');
-                return;
-            }
-            
-            if (isListening && currentVoiceField !== field) {
-                stopVoiceInput();
-                setTimeout(function() { startVoiceInput(deviceNum, field); }, 300);
-                return;
-            }
+            if (!isVoiceSupported) { alert('Голосовой ввод не поддерживается. Используйте Chrome.'); return; }
+            if (isListening) { stopVoiceInput(); return; }
             
             currentVoiceDevice = deviceNum;
             currentVoiceField = field;
@@ -321,14 +255,14 @@
             
             document.querySelectorAll('.btn-voice').forEach(function(b) { b.classList.remove('listening'); });
             
-            var btnClass = '';
-            if (field === 'name') btnClass = 'voice-btn-name-' + deviceNum;
-            else if (field === 'serial_dual_1') btnClass = 'voice-btn-dual1-' + deviceNum;
-            else if (field === 'serial_dual_2') btnClass = 'voice-btn-dual2-' + deviceNum;
-            else btnClass = 'voice-btn-serial-' + deviceNum;
-            
+            var btnClass = 'voice-btn-' + field + '-' + deviceNum;
             var btn = document.querySelector('.' + btnClass);
             if (btn) btn.classList.add('listening');
+            
+            if (field === 'name') {
+                var variantsEl = document.getElementById('voiceVariants' + deviceNum);
+                if (variantsEl) { variantsEl.classList.remove('active'); variantsEl.innerHTML = ''; }
+            }
             
             try { recognition.start(); } catch(e) {}
             setStatus('🎤 Слушаю...', 'loading');
@@ -336,7 +270,6 @@
 
         function stopVoiceInput() {
             isListening = false;
-            dualSerialStep = 0;
             document.querySelectorAll('.btn-voice').forEach(function(b) { b.classList.remove('listening'); });
             try { recognition.stop(); } catch(e) {}
             setStatus('✅ Готов', 'success');
@@ -344,24 +277,21 @@
 
         function showVoiceVariants(results) {
             if (!currentVoiceDevice) return;
-            
             var variantsEl = document.getElementById('voiceVariants' + currentVoiceDevice);
-            var statusEl = document.getElementById('voiceStatus' + currentVoiceDevice);
             if (!variantsEl) return;
             
             var allVariants = [];
             results.forEach(function(text) {
                 var matches = findTypeMatches(text);
                 matches.forEach(function(match) {
-                    var exists = allVariants.some(function(v) { return v.name === match.name; });
-                    if (!exists) allVariants.push(match);
+                    if (!allVariants.some(function(v) { return v.name === match.name; })) {
+                        allVariants.push(match);
+                    }
                 });
             });
             
             if (allVariants.length === 0) {
-                results.forEach(function(text) {
-                    if (text.length > 3) allVariants.push({ name: text, score: 0 });
-                });
+                results.forEach(function(text) { if (text.length > 3) allVariants.push({ name: text, score: 0 }); });
             }
             
             allVariants.sort(function(a, b) { return b.score - a.score; });
@@ -377,15 +307,12 @@
                     variantsEl.appendChild(item);
                 });
                 variantsEl.classList.add('active');
-                if (statusEl) { statusEl.textContent = '✅ Выберите вариант'; statusEl.classList.add('active'); }
             }
-            
             stopVoiceInput();
         }
 
         function selectVoiceVariant(name) {
             if (!currentVoiceDevice) return;
-            
             var nameField = document.getElementById('nameField' + currentVoiceDevice);
             if (nameField) nameField.value = name;
             
@@ -491,13 +418,13 @@
             }
             
             var allNumbers = text.match(/\d+/g);
-            if (!allNumbers || allNumbers.length === 0) return null;
-            if (allNumbers.length === 1) return allNumbers[0].length >= 4 ? allNumbers[0] : null;
+            if (!allNumbers || allNumbers.length === 0) return text.trim();
+            if (allNumbers.length === 1) return allNumbers[0].length >= 4 ? allNumbers[0] : text.trim();
             return smartCombineNumbers(allNumbers, text);
         }
 
         function smartProcessSerial(rawSerial) {
-            if (!rawSerial) return null;
+            if (!rawSerial) return '';
             if (/[\/\-]/.test(rawSerial)) return rawSerial.replace(/[^\d\-\/]/g, '');
             var parts = rawSerial.split(/\s+/);
             if (parts.length <= 1) return rawSerial.replace(/[^\d]/g, '');
@@ -505,8 +432,8 @@
         }
 
         function smartCombineNumbers(numbers, originalText) {
-            if (numbers.length === 0) return null;
-            if (numbers.length === 1) return String(numbers[0]).length >= 4 ? String(numbers[0]) : null;
+            if (numbers.length === 0) return '';
+            if (numbers.length === 1) return String(numbers[0]);
             
             var positions = [];
             var searchPos = 0;
@@ -529,28 +456,9 @@
             
             var result = groups.map(function(g) { return g.map(function(i) { return i.number; }).join(''); }).filter(function(n) { return n.length > 0; });
             
-            if (result.length === 1) {
-                var num = result[0].replace(/[^\d]/g, '');
-                if (num.length > 7) { var parts = num.match(/^(\d{4,6})(\d{4,})$/); if (parts) return parts[1] + '/' + parts[2]; }
-                return num.length >= 4 ? num : null;
-            } else if (result.length === 2) return result[0] + '/' + result[1];
+            if (result.length === 1) return result[0].length >= 4 ? result[0] : '';
+            else if (result.length === 2) return result[0] + '/' + result[1];
             else return result.join('/');
-        }
-
-        function addSerialInputHandler(deviceNum) {
-            var serialField = document.getElementById('serialField' + deviceNum);
-            if (!serialField) return;
-            serialField.addEventListener('blur', function() {
-                var value = this.value.trim();
-                if (!value) return;
-                var cleaned = value.replace(/[^\d\s\-\/]/g, '').replace(/\s+/g, ' ').trim();
-                if (cleaned.includes(' ')) {
-                    var parts = cleaned.split(/\s+/);
-                    var numbers = parts.filter(function(p) { return p.length > 0; });
-                    if (numbers.length === 2) this.value = numbers[0] + '/' + numbers[1];
-                    else this.value = smartCombineNumbers(numbers, cleaned) || cleaned.replace(/\s/g, '');
-                } else this.value = cleaned;
-            });
         }
 
         function createDeviceBlock(num) {
@@ -566,7 +474,6 @@
                         <button class="btn-camera" onclick="openCamera('name',${num})">📷</button>
                         <button class="btn-voice voice-btn-name-${num}" onclick="startVoiceInput(${num},'name')" title="Голосовой ввод названия">🎤</button>
                     </div>
-                    <div class="voice-status" id="voiceStatus${num}"></div>
                     <div class="voice-variants" id="voiceVariants${num}"></div>
                     <img id="previewName${num}" class="preview">
                 </div>
@@ -576,35 +483,45 @@
                     <div class="field-row">
                         <input type="text" id="serialField${num}" placeholder="Номер" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;">
                         <button class="btn-camera" onclick="openCamera('serial',${num})" id="serialBtn${num}">📷</button>
-                        <button class="btn-voice voice-btn-serial-${num}" onclick="startVoiceInput(${num},'serialField')" title="Голосовой ввод номера" id="serialVoiceBtn${num}">🎤</button>
+                        <button class="btn-voice voice-btn-serialField-${num}" onclick="startVoiceInput(${num},'serialField')" title="Голосовой ввод номера" id="serialVoiceBtn${num}">🎤</button>
                     </div>
                     <div class="serial-dual-block" id="serialDualBlock${num}">
                         <div class="serial-dual-row">
                             <label>Ном. 1:</label>
                             <input type="text" id="serialDual1_${num}" placeholder="Первый номер">
-                            <button class="btn-voice voice-btn-dual1-${num}" onclick="startVoiceInput(${num},'serial_dual_1')" title="Голосовой ввод первого номера" style="font-size:14px;padding:6px 10px;">🎤</button>
+                            <button class="btn-voice voice-btn-serialField-${num}" onclick="startVoiceInput(${num},'serialField')" title="Голосовой ввод">🎤</button>
                         </div>
                         <div class="serial-dual-row">
                             <label>Ном. 2:</label>
                             <input type="text" id="serialDual2_${num}" placeholder="Второй номер">
-                            <button class="btn-voice voice-btn-dual2-${num}" onclick="startVoiceInput(${num},'serial_dual_2')" title="Голосовой ввод второго номера" style="font-size:14px;padding:6px 10px;">🎤</button>
+                            <button class="btn-voice voice-btn-serialField-${num}" onclick="startVoiceInput(${num},'serialField')" title="Голосовой ввод">🎤</button>
                         </div>
-                        <div class="dual-voice-hint">💡 Нажмите 🎤 у Ном.1 и назовите оба номера подряд</div>
                     </div>
-                    <div class="voice-status" id="voiceStatusSerial${num}"></div>
                     <div class="serial-hint" id="serialHint${num}">💡 Номер с пробелом: "865 451" → 865451, "45678 10" → 45678/10</div>
                     <img id="previewSerial${num}" class="preview">
                 </div>
-                <div class="field-group"><label>Адрес:</label><div class="field-row"><input type="text" id="addressField${num}" placeholder="Введите или выберите" list="addressList${num}" onchange="addAddressToList(this.value)"><datalist id="addressList${num}"></datalist></div></div>
+                <div class="field-group">
+                    <label>Адрес:</label>
+                    <div class="field-row">
+                        <input type="text" id="addressField${num}" placeholder="Введите или выберите" list="addressList${num}" onchange="addAddressToList(this.value)" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;">
+                        <datalist id="addressList${num}"></datalist>
+                        <button class="btn-voice voice-btn-addressField-${num}" onclick="startVoiceInput(${num},'addressField')" title="Голосовой ввод адреса">🎤</button>
+                    </div>
+                </div>
                 <div class="checkbox-row" id="akbRow${num}" style="display:none;"><input type="checkbox" id="akbCheck${num}"><label for="akbCheck${num}">Замена АКБ</label></div>
-                <div class="field-group"><label>Примечание:</label><input type="text" id="noteField${num}" placeholder="Состояние..." style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;"></div>`;
+                <div class="field-group">
+                    <label>Примечание:</label>
+                    <div class="field-row">
+                        <input type="text" id="noteField${num}" placeholder="Состояние..." style="flex:1;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;">
+                        <button class="btn-voice voice-btn-noteField-${num}" onclick="startVoiceInput(${num},'noteField')" title="Голосовой ввод примечания">🎤</button>
+                    </div>
+                </div>`;
             if (num > 1) {
                 var rb = document.createElement('button'); rb.className = 'btn-remove'; rb.textContent = '🗑️';
                 rb.style.cssText = 'position:absolute;top:8px;right:8px;'; rb.onclick = function() { removeDevice(b.id); };
                 b.appendChild(rb);
             }
             document.getElementById('devicesContainer').appendChild(b);
-            setTimeout(function() { addSerialInputHandler(num); }, 100);
             updateAddressDatalists();
             renumberDevices();
             return b;
@@ -628,42 +545,21 @@
             if (!typeVal) typeVal = (document.getElementById('typeField' + deviceNum)?.value || '').toLowerCase();
             var isDual = isDualSerialType(deviceNum);
             var dualBlock = document.getElementById('serialDualBlock' + deviceNum);
-            var serialField = document.getElementById('serialField' + deviceNum);
-            var serialBtn = document.getElementById('serialBtn' + deviceNum);
-            var serialVoiceBtn = document.getElementById('serialVoiceBtn' + deviceNum);
             var serialHint = document.getElementById('serialHint' + deviceNum);
             
             if (isDual) {
                 if (dualBlock) dualBlock.classList.add('active');
-                if (serialField) serialField.style.display = 'none';
-                if (serialBtn) serialBtn.style.display = 'none';
-                if (serialVoiceBtn) serialVoiceBtn.style.display = 'none';
                 if (serialHint) serialHint.style.display = 'none';
-                var dual1 = document.getElementById('serialDual1_' + deviceNum);
-                if (dual1) dual1.addEventListener('input', function() { autoSuggestDualSerial(deviceNum); });
             } else {
                 if (dualBlock) dualBlock.classList.remove('active');
-                if (serialField) serialField.style.display = 'block';
-                if (serialBtn) serialBtn.style.display = 'block';
-                if (serialVoiceBtn) serialVoiceBtn.style.display = 'block';
                 if (serialHint) serialHint.style.display = 'block';
             }
         }
 
-        function autoSuggestDualSerial(deviceNum) {
-            var dual1 = document.getElementById('serialDual1_' + deviceNum);
-            var dual2 = document.getElementById('serialDual2_' + deviceNum);
-            if (!dual1 || !dual2) return;
-            var s1 = dual1.value.trim();
-            if (s1.length < 4) return;
-            var lastChar = s1.slice(-1).toUpperCase();
-            if (lastChar === 'Х' || lastChar === 'X') { var sug = s1.slice(0, -1) + 'Г'; if (dual2.value === '' || dual2.value === sug) dual2.value = sug; }
-            else if (lastChar === 'Г' || lastChar === 'G') { var sug = s1.slice(0, -1) + 'Х'; if (dual2.value === '' || dual2.value === sug) dual2.value = sug; }
-        }
-
-        function suggestSecondSerial(deviceNum) { autoSuggestDualSerial(deviceNum); }
+        function suggestSecondSerial(deviceNum) {}
 
         function addAddressToList(address) { if (address && usedAddresses.indexOf(address) === -1) { usedAddresses.push(address); updateAddressDatalists(); } }
+        
         function updateAddressDatalists() {
             document.querySelectorAll('.device-block').forEach(function(b) {
                 var n = b.id.replace('device', '');
@@ -682,6 +578,7 @@
             matches.slice(0,20).forEach(function(n){ list.innerHTML+='<li data-name="'+esc(n)+'" onmousedown="selectAutocomplete('+deviceNum+',\''+esc(n)+'\')">'+esc(n)+'</li>'; });
             list.style.display='block';
         }
+        
         function selectAutocomplete(deviceNum,name){ document.getElementById('nameField'+deviceNum).value=name; document.getElementById('autocompleteList'+deviceNum).style.display='none'; var ft=findTypeByName(name); if(ft){document.getElementById('typeField'+deviceNum).value=ft; checkType(deviceNum);} }
         function hideAutocomplete(deviceNum){ setTimeout(function(){ document.getElementById('autocompleteList'+deviceNum).style.display='none'; },200); }
 
@@ -709,11 +606,13 @@
         function fallbackToFileInput(target,deviceNum){ closeCamera(); var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.capture='environment'; inp.onchange=function(){ if(!inp.files||!inp.files[0])return; var reader=new FileReader(); reader.onload=function(e){ var img=new Image(); img.onload=function(){ var c=document.createElement('canvas');c.width=img.width;c.height=img.height*0.25; c.getContext('2d').drawImage(img,0,img.height*0.375,img.width,img.height*0.25,0,0,img.width,img.height*0.25); var url=c.toDataURL('image/jpeg',0.85); document.getElementById('preview'+(target==='name'?'Name':'Serial')+deviceNum).src=url; document.getElementById('preview'+(target==='name'?'Name':'Serial')+deviceNum).style.display='block'; recognizeText(url,target,deviceNum); };img.src=e.target.result; };reader.readAsDataURL(inp.files[0]); };inp.click(); }
 
         function findTypeByName(name){ if(!name)return''; var nc=name.toLowerCase().replace(/[^a-zа-я0-9]/g,''),best='',bestScore=0; typesData.forEach(function(r){var ref=(r[1]||r[0]||'').toLowerCase().replace(/[^a-zа-я0-9]/g,'');if(ref&&nc.includes(ref)&&ref.length>bestScore){bestScore=ref.length;best=r[2]||r[1]||'';}});return best; }
-        function recognizeText(dataUrl,target,deviceNum){ setStatus('Распознавание...','loading'); Tesseract.recognize(dataUrl,'rus+eng',{tessedit_char_whitelist:'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюяABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789№/-. ',logger:function(m){if(m.status==='recognizing text')setStatus('Распознавание: '+Math.round(m.progress*100)+'%','loading');}}).then(function(result){var text=cleanText(result.data.text);if(target==='name'){var nt=extractName(text);document.getElementById('nameField'+deviceNum).value=nt;var ft=findTypeByName(nt);if(ft){document.getElementById('typeField'+deviceNum).value=ft;checkType(deviceNum);setStatus('✅ '+nt,'success');}else setStatus('⚠️ Проверьте. Распознано: '+text.substring(0,40),'error');}else{var serial=extractSerial(text);document.getElementById('serialField'+deviceNum).value=serial;suggestSecondSerial(deviceNum);setStatus(serial?'✅ Номер: '+serial:'⚠️ Проверьте номер',serial?'success':'error');}}).catch(function(){setStatus('❌ Ошибка распознавания','error');}); }
-        function cleanText(text){ var c=text.replace(/(\d)\.(\d)/g,'$1-$2').replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g,' ').replace(/\s+/g,' ').trim(); var fixes={'Ду':'ДУ','ду':'ДУ','Ne':'№','Nе':'№','No':'№','зав':'зав','Зав':'зав','KAPAT':'КАРАТ','Kapat':'КАРАТ','карат':'КАРАТ','Карат':'КАРАТ'}; return c.split(' ').map(function(w){return fixes[w]||w;}).join(' '); }
+        
+        function recognizeText(dataUrl,target,deviceNum){ setStatus('Распознавание...','loading'); Tesseract.recognize(dataUrl,'rus+eng',{logger:function(m){if(m.status==='recognizing text')setStatus('Распознавание: '+Math.round(m.progress*100)+'%','loading');}}).then(function(result){var text=cleanText(result.data.text);if(target==='name'){var nt=extractName(text);document.getElementById('nameField'+deviceNum).value=nt;var ft=findTypeByName(nt);if(ft){document.getElementById('typeField'+deviceNum).value=ft;checkType(deviceNum);}}else{document.getElementById('serialField'+deviceNum).value=extractSerial(text);}}).catch(function(){setStatus('❌ Ошибка','error');}); }
+        
+        function cleanText(text){ var c=text.replace(/(\d)\.(\d)/g,'$1-$2').replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g,' ').replace(/\s+/g,' ').trim(); return c; }
         function extractName(text){ var noSerial=text.replace(/зав\.?\s*[№Nn]\s*\d+/gi,'').replace(/[№Nn]\s*\d+/gi,''); var tc=noSerial.toLowerCase().replace(/[^a-zа-я0-9]/g,''),best='',bestScore=0; typesData.forEach(function(r){var ref=(r[1]||r[0]||'').trim();if(!ref)return;var fw=ref.split(/[\s\-]+/)[0].toLowerCase().replace(/[^a-zа-я0-9]/g,'');if(fw.length>=3&&tc.indexOf(fw)!==-1&&ref.length>bestScore){bestScore=ref.length;best=ref;}});return best||noSerial.replace(/\s+/g,' ').trim(); }
         function extractSerial(text){ var m=text.match(/(?:зав\.?\s*)?[№Nn]\s*[:=\-\s]*\s*(\d{3,})/i)||text.match(/\b(\d{4,})\b/); return m?m[1].replace(/[^\d]/g,''):''; }
-        function addCompany(){ var name=prompt('Введите название компании:'); if(name&&name.trim()){document.getElementById('companySelect').innerHTML+='<option value="'+esc(name.trim())+'" selected>'+esc(name.trim())+'</option>';setStatus('Компания добавлена','success');} }
+        function addCompany(){ var name=prompt('Введите название компании:'); if(name&&name.trim()){document.getElementById('companySelect').innerHTML+='<option value="'+esc(name.trim())+'" selected>'+esc(name.trim())+'</option>';} }
 
         function newAct() {
             if (confirm('Очистить все поля и начать новый акт?')) {
@@ -736,7 +635,7 @@
                         var act = acts[actNum];
                         html += '<div class="act-item" onclick="loadAct(\'' + actNum + '\')">';
                         html += '<b>Акт №' + actNum + '</b> от ' + act.date + '<br>';
-                        html += 'Компания: ' + act.company + ' | Приборов: ' + act.devices.length;
+                        html += 'Компания: ' + act.company + ' | Приборов: ' + act.devicesCount;
                         html += '</div>';
                     });
                     if (keys.length === 0) html = 'Нет сохранённых актов.';
@@ -764,10 +663,8 @@
                         if (isDualSerialType(deviceCounter)) {
                             if (dev.serial && String(dev.serial).includes('/')) {
                                 var parts = String(dev.serial).split('/');
-                                var dual1 = document.getElementById('serialDual1_' + deviceCounter);
-                                var dual2 = document.getElementById('serialDual2_' + deviceCounter);
-                                if (dual1) dual1.value = parts[0] || '';
-                                if (dual2) dual2.value = parts[1] || '';
+                                document.getElementById('serialDual1_' + deviceCounter).value = parts[0] || '';
+                                document.getElementById('serialDual2_' + deviceCounter).value = parts[1] || '';
                             }
                         } else {
                             document.getElementById('serialField' + deviceCounter).value = dev.serial || '';
@@ -809,18 +706,16 @@
             if(!allValid||!devices.length){alert('Заполните обязательные поля (Название, Тип, Заводской номер)');return;}
             
             var email = settings.email || '';
-            if (!email) {
-                alert('Укажите email в настройках (⚙️) для отправки акта!');
-                return;
-            }
+            if (!email) { alert('Укажите email в настройках (⚙️)!'); return; }
             
-            var btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='Отправка...';setStatus('Формирование и отправка на ' + email + '...','loading');
+            var btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='Отправка...';setStatus('Отправка на ' + email + '...','loading');
             var now=new Date(),ds=('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear();
             var form=document.createElement('form');form.method='POST';form.action=SCRIPT_URL;form.target='hiddenFrame';form.style.display='none';
             [{n:'date',v:ds},{n:'company',v:company},{n:'employee',v:employee},{n:'devices',v:JSON.stringify(devices)},{n:'email',v:email}].forEach(function(f){var i=document.createElement('input');i.type='hidden';i.name=f.n;i.value=f.v;form.appendChild(i);});
             document.body.appendChild(form);form.submit();document.body.removeChild(form);
-            setTimeout(function(){ setStatus('✅ Акт отправлен на ' + email,'success'); btn.textContent='📧 Сформировать акт и отправить'; btn.style.background='#FF5722'; btn.disabled=false; },2000);
+            setTimeout(function(){ setStatus('✅ Акт отправлен на '+email,'success'); btn.textContent='📧 Сформировать акт и отправить'; btn.style.background='#FF5722'; btn.disabled=false; },2000);
         }
+        
         function setStatus(msg,cls){var el=document.getElementById('status');el.textContent=msg;el.className='status';if(cls)el.classList.add(cls);}
         function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
     </script>
