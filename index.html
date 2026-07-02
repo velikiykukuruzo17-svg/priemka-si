@@ -155,7 +155,6 @@
         function getTypeNames(){ var names=[]; typesData.forEach(function(r){ var n=r[1]||r[0]||''; if(n&&names.indexOf(n)===-1)names.push(n); }); return names; }
         function isDualSerialType(deviceNum){ var t=(document.getElementById('typeField'+deviceNum)?.value||'').toLowerCase(); return t.includes('термометр сопротивления')||t.includes('ктсп')||t.includes('ктптр')||t.includes('тспа'); }
 
-        // ============ АВТОЗАПОЛНЕНИЕ ВТОРОГО НОМЕРА ============
         function fixSerialLetter(deviceNum, fieldNum) {
             var fieldId = 'serialDual' + fieldNum + '_' + deviceNum;
             var field = document.getElementById(fieldId);
@@ -194,7 +193,6 @@
             saveFormData();
         }
 
-        // ============ ГОЛОСОВОЙ ВВОД ============
         function initVoiceRecognition() {
             var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SR) { recognition = new SR(); recognition.lang = 'ru-RU'; recognition.interimResults = false; recognition.continuous = false; recognition.maxAlternatives = 5;
@@ -235,25 +233,29 @@
         function findTypeMatches(text){ if(!text)return[]; var ct=text.toLowerCase().replace(/[^a-zа-я0-9\s]/g,' ').replace(/\s+/g,' ').trim(); var types=allTypesFromSheet.length>0?allTypesFromSheet:getTypeNames(); var words=ct.split(/\s+/); var results=[]; types.forEach(function(st){ var tc=st.toLowerCase().replace(/[^a-zа-я0-9\s]/g,' ').replace(/\s+/g,' ').trim(); if(tc.length<2)return; var s=calculateMatchScore(ct,words,tc); if(s>10)results.push({name:st,score:s}); }); results.sort(function(a,b){return b.score-a.score;}); return results.slice(0,5); }
         function calculateMatchScore(text,words,typeName){ var s=0; if(text.indexOf(typeName)!==-1)s+=100; var tw=typeName.split(/\s+/),mw=0; tw.forEach(function(w){ if(w.length<2)return; for(var i=0;i<words.length;i++){ if(words[i]===w){s+=30;mw++;}else if(w.startsWith(words[i])&&words[i].length>=2){s+=20;mw++;}else if(words[i].startsWith(w)&&w.length>=2){s+=15;mw++;} } }); if(mw>=tw.length)s+=50; else if(mw>0)s+=mw*8; s+=Math.min(typeName.length,15); return s; }
 
-        // ============ РАСПОЗНАВАНИЕ НОМЕРОВ (ИСПРАВЛЕНО) ============
+        // ============ РАСПОЗНАВАНИЕ НОМЕРОВ ============
         function extractSerialEnhanced(text) {
             var cleaned = text.replace(/[^а-яА-ЯёЁa-zA-Z0-9\s\/№\-]/g, ' ').replace(/\s+/g, ' ').trim();
             
-            // Ищем номер с буквой в конце (например "1312Г")
+            // Ищем "дробь" или "слеш" — все числа до слова склеиваем
+            var slashIdx = cleaned.search(/\s*(?:дробь|слеш|слэш|\/)\s*/i);
+            if (slashIdx > 0) {
+                var beforeSlash = cleaned.substring(0, slashIdx).replace(/\s+/g, '');
+                var afterSlash = cleaned.substring(slashIdx).replace(/[^\d]/g, '');
+                if (beforeSlash && afterSlash) return beforeSlash + '/' + afterSlash;
+            }
+            
+            // Ищем номер с буквой в конце
             var withLetter = cleaned.match(/(\d[\d\s]*?)\s*([А-ЯХГABEKMHOPTXCа-яхгabekmhoptyxc]+)\s*$/i);
             if (withLetter) {
                 var num = withLetter[1].replace(/\s+/g, '');
                 var letter = withLetter[2].toUpperCase();
-                if (letter === 'ИКС' || letter === 'Х' || letter === 'X') letter = 'Х';
-                if (letter === 'ГЭ' || letter === 'Г' || letter === 'G') letter = 'Г';
-                if (letter === 'А' || letter === 'A') letter = 'А';
-                if (letter === 'ВЭ' || letter === 'В' || letter === 'B') letter = 'В';
+                if (/^(ИКС|Х|X)$/i.test(letter)) letter = 'Х';
+                else if (/^(ГЭ|Г|G)$/i.test(letter)) letter = 'Г';
+                else if (/^(А|A)$/i.test(letter)) letter = 'А';
+                else if (/^(ВЭ|В|B)$/i.test(letter)) letter = 'В';
                 return num + letter;
             }
-            
-            // Ищем дробь (например "12345/1")
-            var withSlash = cleaned.match(/(\d+)\s*(?:дробь|слеш|слэш|\/)\s*(\d+)/i);
-            if (withSlash) return withSlash[1] + '/' + withSlash[2];
             
             // Обычный номер
             var nums = cleaned.match(/\d+/g);
@@ -279,9 +281,9 @@
                 <div class="serial-dual-block" id="serialDualBlock${num}">
                     <div class="serial-dual-row"><label>Ном. 1:</label><input type="text" id="serialDual1_${num}" placeholder="Первый номер" oninput="fixSerialLetter(${num},1);" style="flex:1;"><button class="btn-ios-icon pink voice-btn-serialDual1_-${num}" onclick="startVoiceInput(${num},'serialDual1_')">🎤</button></div>
                     <div class="serial-dual-row"><label>Ном. 2:</label><input type="text" id="serialDual2_${num}" placeholder="Второй номер (авто)" oninput="onDual2Change(${num});" style="flex:1;"><button class="btn-ios-icon pink voice-btn-serialDual2_-${num}" onclick="startVoiceInput(${num},'serialDual2_')">🎤</button></div>
-                    <div class="serial-hint">🔤 Х↔Г авто | А = без буквы | 1↔2 авто | Буква всегда заглавная</div>
+                    <div class="serial-hint">🔤 Х↔Г авто | А = без буквы | 1↔2 авто</div>
                 </div>
-                <div class="serial-hint">💡 "1312 г" → 1312Г, "12345 дробь 1" → 12345/1</div></div>
+                <div class="serial-hint">💡 "4540 дробь 1" → 4540/1, "1312 г" → 1312Г</div></div>
                 <div class="field-group"><label>Адрес:</label><div class="field-row"><input type="text" id="addressField${num}" placeholder="Введите" style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" onchange="addAddressToList(this.value); saveFormData();"><button class="btn-ios-icon pink voice-btn-addressField-${num}" onclick="startVoiceInput(${num},'addressField')">🎤</button></div></div>
                 <div class="checkbox-row" id="akbRow${num}" style="display:none;"><input type="checkbox" id="akbCheck${num}" onchange="saveFormData();"><label>Замена АКБ</label></div>
                 <div class="field-group"><label>Примечание:</label><div class="field-row"><input type="text" id="noteField${num}" placeholder="Состояние..." style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="saveFormData();"><button class="btn-ios-icon pink voice-btn-noteField-${num}" onclick="startVoiceInput(${num},'noteField')">🎤</button></div></div>`;
