@@ -276,7 +276,6 @@
                 updateSelect('companySelect',parseCSV(r[1]),0); 
                 updateSelect('employeeSelect',parseCSV(r[2]),1); 
                 setStatus('✅ Готов к работе','success'); 
-                // Загружаем сохранённые данные
                 setTimeout(loadFormData, 500);
             })
             .catch(function(){ setStatus('⚠️ Справочники не загружены','error'); });
@@ -725,7 +724,24 @@
         function cleanText(text){ var c=text.replace(/(\d)\.(\d)/g,'$1-$2').replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g,' ').replace(/\s+/g,' ').trim(); return c; }
         function extractName(text){ var noSerial=text.replace(/зав\.?\s*[№Nn]\s*\d+/gi,'').replace(/[№Nn]\s*\d+/gi,''); var tc=noSerial.toLowerCase().replace(/[^a-zа-я0-9]/g,''),best='',bestScore=0; typesData.forEach(function(r){var ref=(r[1]||r[0]||'').trim();if(!ref)return;var fw=ref.split(/[\s\-]+/)[0].toLowerCase().replace(/[^a-zа-я0-9]/g,'');if(fw.length>=3&&tc.indexOf(fw)!==-1&&ref.length>bestScore){bestScore=ref.length;best=ref;}});return best||noSerial.replace(/\s+/g,' ').trim(); }
         function extractSerial(text){ var m=text.match(/(?:зав\.?\s*)?[№Nn]\s*[:=\-\s]*\s*(\d{3,})/i)||text.match(/\b(\d{4,})\b/); return m?m[1].replace(/[^\d]/g,''):''; }
-        function addCompany(){ var name=prompt('Введите название компании:'); if(name&&name.trim()){ var sel = document.getElementById('companySelect'); sel.innerHTML+='<option value="'+esc(name.trim())+'" selected>'+esc(name.trim())+'</option>'; saveFormData(); } }
+        
+        function addCompany() { 
+            var name = prompt('Введите название компании:'); 
+            if (name && name.trim()) { 
+                var sel = document.getElementById('companySelect'); 
+                sel.innerHTML += '<option value="' + esc(name.trim()) + '" selected>' + esc(name.trim()) + '</option>'; 
+                saveFormData(); 
+                
+                fetch(SCRIPT_URL + '?action=addCompany&name=' + encodeURIComponent(name.trim()))
+                    .then(r => r.json())
+                    .then(function(res) {
+                        if (res.status === 'success') {
+                            setStatus('✅ Компания сохранена в таблице', 'success');
+                        }
+                    })
+                    .catch(function() {});
+            } 
+        }
 
         function newAct() {
             if (confirm('Очистить все поля и начать новый акт?')) {
