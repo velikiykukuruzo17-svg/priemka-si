@@ -6,79 +6,113 @@
     <title>Приёмка СИ</title>
     <link rel="icon" type="image/png" href="https://drive.google.com/uc?export=view&id=1iygIPf19buf7dI3O0lR3i-u5gZblkPjH">
     <link rel="apple-touch-icon" href="https://drive.google.com/uc?export=view&id=1iygIPf19buf7dI3O0lR3i-u5gZblkPjH">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 15px; max-width: 500px; margin: 0 auto; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #F2F2F7; padding: 15px; max-width: 500px; margin: 0 auto; }
+        
+        /* iOS-style header */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .header h1 { font-size: 20px; color: #333; }
-        .header p { font-size: 12px; color: #888; margin-top: 5px; }
-        .btn-settings { background: none; border: none; font-size: 24px; cursor: pointer; }
-        .field-group { margin-bottom: 10px; }
-        .field-group label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 4px; }
-        .field-row { display: flex; gap: 6px; align-items: center; }
-        .field-row input, .field-row select { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; background: #fff; }
-        .btn-camera { background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 18px; cursor: pointer; min-width: 46px; flex: 0 0 auto; }
-        .btn-voice { background: #E91E63; color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 18px; cursor: pointer; min-width: 46px; flex: 0 0 auto; transition: all 0.3s; }
-        .btn-voice.listening { background: #FF5722; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        .btn-remove { background: #f44336; color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-size: 16px; cursor: pointer; min-width: 46px; flex: 0 0 auto; }
-        .btn-new-act { background: #FF9800; color: #fff; border: none; border-radius: 8px; padding: 12px 16px; font-size: 15px; cursor: pointer; margin-right: 8px; }
-        .btn-select-act { background: #9C27B0; color: #fff; border: none; border-radius: 8px; padding: 12px 16px; font-size: 15px; cursor: pointer; }
-        .btn-add-device { width: 100%; background: #2196F3; color: #fff; border: none; border-radius: 8px; padding: 14px; font-size: 16px; cursor: pointer; margin: 10px 0; }
-        .btn-submit { width: 100%; background: #FF5722; color: #fff; border: none; border-radius: 8px; padding: 16px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-submit:disabled { background: #ccc; }
-        .device-block { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 12px; margin-bottom: 12px; position: relative; }
-        .device-title { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 8px; }
-        .device-number { background: #eee; border-radius: 50%; width: 24px; height: 24px; display: inline-block; text-align: center; line-height: 24px; font-size: 13px; margin-right: 6px; }
-        .preview { width: 100%; max-height: 150px; object-fit: contain; margin-top: 4px; border-radius: 8px; display: none; }
-        .status { text-align: center; margin-top: 15px; font-size: 13px; color: #666; min-height: 20px; }
-        .status.success { color: #4CAF50; } .status.error { color: #f44336; } .status.loading { color: #FF9800; }
-        .hint { font-size: 11px; color: #999; margin-top: 3px; text-align: center; }
-        .section-title { font-size: 14px; color: #888; margin: 15px 0 8px; border-top: 1px solid #ddd; padding-top: 12px; }
+        .header h1 { font-size: 22px; font-weight: 700; color: #000; letter-spacing: -0.3px; }
+        .header p { font-size: 12px; color: #8E8E93; margin-top: 2px; }
+        
+        /* iOS кнопка настроек */
+        .btn-settings { background: none; border: none; font-size: 24px; cursor: pointer; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 0.15s ease; }
+        .btn-settings:active { background: #E5E5EA; }
+        
+        /* iOS кнопки */
+        .btn-ios { background: #007AFF; color: white; border: none; border-radius: 12px; padding: 14px 20px; font-size: 16px; font-weight: 500; letter-spacing: -0.2px; transition: all 0.15s ease; cursor: pointer; user-select: none; }
+        .btn-ios:active { transform: scale(0.96); opacity: 0.8; }
+        .btn-ios-gray { background: #8E8E93; color: white; border: none; border-radius: 12px; padding: 14px 20px; font-size: 16px; font-weight: 500; letter-spacing: -0.2px; transition: all 0.15s ease; cursor: pointer; user-select: none; }
+        .btn-ios-gray:active { transform: scale(0.96); opacity: 0.8; }
+        .btn-ios-green { background: #34C759; color: white; border: none; border-radius: 12px; padding: 16px 20px; font-size: 17px; font-weight: 600; letter-spacing: -0.2px; transition: all 0.15s ease; cursor: pointer; user-select: none; width: 100%; }
+        .btn-ios-green:active { transform: scale(0.97); opacity: 0.8; }
+        .btn-ios-green:disabled { background: #AEAEB2; }
+        
+        /* iOS иконка-кнопка */
+        .btn-ios-icon { width: 44px; height: 44px; min-width: 44px; border-radius: 50%; background: #F2F2F7; border: none; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; cursor: pointer; user-select: none; flex: 0 0 auto; }
+        .btn-ios-icon:active { background: #E5E5EA; transform: scale(0.92); }
+        .btn-ios-icon.green { background: #34C759; color: white; }
+        .btn-ios-icon.green:active { background: #30B350; }
+        .btn-ios-icon.red { background: #FF3B30; color: white; }
+        .btn-ios-icon.red:active { background: #E0352B; }
+        .btn-ios-icon.pink { background: #FF2D55; color: white; }
+        .btn-ios-icon.pink:active { background: #E0284D; }
+        
+        /* Поля ввода */
+        .field-group { margin-bottom: 12px; }
+        .field-group label { display: block; font-size: 13px; font-weight: 600; color: #3C3C43; margin-bottom: 4px; letter-spacing: -0.1px; }
+        .field-row { display: flex; gap: 8px; align-items: center; }
+        .field-row input, .field-row select { flex: 1; padding: 12px; border: 1px solid #E5E5EA; border-radius: 10px; font-size: 16px; background: #FFFFFF; color: #000; transition: border-color 0.2s ease; }
+        .field-row input:focus, .field-row select:focus { outline: none; border-color: #007AFF; }
+        
+        /* Карточка прибора */
+        .device-block { background: #FFFFFF; border-radius: 16px; padding: 16px; margin-bottom: 12px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.06); animation: fadeInUp 0.3s ease-out; }
+        .device-title { font-size: 15px; font-weight: 600; color: #000; margin-bottom: 10px; letter-spacing: -0.2px; }
+        .device-number { background: #F2F2F7; border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; margin-right: 8px; color: #007AFF; }
+        
+        /* Анимации */
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+        
+        /* Скелетон */
+        .skeleton { background: linear-gradient(90deg, #E5E5EA 25%, #F2F2F7 50%, #E5E5EA 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 10px; }
+        .skeleton-text { height: 14px; margin: 8px 0; }
+        .skeleton-block { height: 50px; margin: 10px 0; border-radius: 14px; }
+        
+        /* Спиннер */
+        .spinner { display: inline-block; width: 18px; height: 18px; border: 2.5px solid rgba(0,0,0,0.1); border-top-color: #007AFF; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+        .spinner-white { border-color: rgba(255,255,255,0.3); border-top-color: white; }
+        
+        /* Статус */
+        .status { text-align: center; margin-top: 12px; font-size: 13px; color: #8E8E93; min-height: 20px; }
+        .status.success { color: #34C759; } .status.error { color: #FF3B30; } .status.loading { color: #007AFF; }
+        
+        /* Прочее */
+        .hint { font-size: 11px; color: #AEAEB2; margin-top: 4px; text-align: center; }
+        .section-title { font-size: 13px; color: #8E8E93; margin: 16px 0 8px; padding-top: 12px; font-weight: 600; letter-spacing: -0.1px; }
+        .preview { width: 100%; max-height: 120px; object-fit: contain; margin-top: 6px; border-radius: 10px; display: none; }
         input[type="file"] { display: none; }
-        .act-toolbar { display: flex; gap: 8px; margin-bottom: 12px; }
-        .checkbox-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 14px; }
-        .checkbox-row input { width: 18px; height: 18px; }
-        .autocomplete-wrap { position: relative; flex: 1; }
-        .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: #fff; border: 1px solid #ddd; border-radius: 0 0 8px 8px; z-index: 100; display: none; list-style: none; }
-        .autocomplete-list li { padding: 10px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #eee; }
-        .autocomplete-list li:hover, .autocomplete-list li.active { background: #E3F2FD; }
-        .autocomplete-list li:last-child { border-bottom: none; }
-        #settingsPanel { display: none; background: #fff; border: 1px solid #ddd; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        #settingsPanel h3 { margin-bottom: 12px; }
-        #settingsPanel input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; margin-bottom: 8px; }
-        #settingsPanel .btn-save { width: 100%; background: #4CAF50; color: #fff; border: none; border-radius: 8px; padding: 10px; font-size: 15px; cursor: pointer; }
+        .act-toolbar { display: flex; gap: 8px; margin-bottom: 16px; }
+        .checkbox-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 15px; }
+        .checkbox-row input { width: 20px; height: 20px; accent-color: #007AFF; }
+        
+        /* Модалки */
+        #settingsPanel { display: none; background: #FFFFFF; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+        #settingsPanel h3 { margin-bottom: 12px; font-size: 17px; }
+        #settingsPanel input { width: 100%; padding: 12px; border: 1px solid #E5E5EA; border-radius: 10px; font-size: 16px; margin-bottom: 10px; }
         #cameraOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; }
         #cameraVideo { width: 100%; height: 100%; object-fit: cover; }
-        #cameraFrame { position: absolute; border: 3px solid #4CAF50; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.55); }
-        #cameraFrameLabel { position: absolute; top: -28px; left: 0; width: 100%; text-align: center; color: #fff; font-size: 13px; font-weight: bold; }
-        #cameraControls { position: absolute; bottom: 130px; left: 0; width: 100%; display: flex; justify-content: center; gap: 10px; z-index: 10001; flex-wrap: wrap; }
-        #cameraControls button { width: 42px; height: 42px; border-radius: 50%; border: 2px solid #fff; background: rgba(0,0,0,0.6); color: #fff; font-size: 18px; cursor: pointer; }
-        #cameraCaptureBtn { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 70px; height: 70px; background: #fff; border: 4px solid #4CAF50; border-radius: 50%; cursor: pointer; z-index: 10001; }
-        #cameraCloseBtn { position: absolute; top: 20px; right: 20px; background: none; border: none; color: #fff; font-size: 30px; cursor: pointer; z-index: 10001; }
-        .control-label { color: #fff; font-size: 10px; text-align: center; margin: 2px 0; }
-        #actsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; }
-        #actsModal .modal-content { background: #fff; margin: 40px auto; padding: 20px; border-radius: 12px; max-width: 450px; max-height: 80%; overflow-y: auto; }
-        #actsModal h3 { margin-bottom: 15px; }
-        #actsModal .act-item { padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 8px; cursor: pointer; }
-        #actsModal .act-item:hover { background: #f0f0f0; }
-        #actsModal .btn-close { background: #f44336; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-top: 10px; }
-        .serial-dual-block { display: none; margin-top: 8px; padding: 8px; background: #f9f9f9; border-radius: 8px; border: 1px dashed #ddd; }
+        #cameraFrame { position: absolute; border: 3px solid #34C759; border-radius: 16px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.55); }
+        #cameraFrameLabel { position: absolute; top: -30px; left: 0; width: 100%; text-align: center; color: #fff; font-size: 14px; font-weight: 600; }
+        #cameraCaptureBtn { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); width: 72px; height: 72px; background: #fff; border: 4px solid #34C759; border-radius: 50%; cursor: pointer; z-index: 10001; }
+        #cameraCloseBtn { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 28px; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; z-index: 10001; display: flex; align-items: center; justify-content: center; }
+        #actsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+        #actsModal .modal-content { background: #FFFFFF; margin: 60px auto; padding: 20px; border-radius: 20px; max-width: 420px; max-height: 75%; overflow-y: auto; }
+        #actsModal h3 { margin-bottom: 16px; font-size: 18px; }
+        #actsModal .act-item { padding: 14px; background: #F2F2F7; border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s ease; }
+        #actsModal .act-item:active { transform: scale(0.98); background: #E5E5EA; }
+        
+        /* Сохранение */
+        .saved-indicator { font-size: 11px; color: #34C759; text-align: right; margin-top: 4px; display: none; animation: fadeInUp 0.3s ease-out; }
+        
+        /* Доп. элементы */
+        .serial-dual-block { display: none; margin-top: 8px; padding: 10px; background: #F2F2F7; border-radius: 12px; }
         .serial-dual-block.active { display: block; }
-        .serial-dual-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+        .serial-dual-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
         .serial-dual-row:last-child { margin-bottom: 0; }
-        .serial-dual-row label { font-size: 11px; font-weight: bold; color: #888; min-width: 35px; }
-        .serial-dual-row input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .serial-dual-row label { font-size: 12px; font-weight: 600; color: #8E8E93; min-width: 40px; }
+        .serial-dual-row input { flex: 1; padding: 10px; border: 1px solid #E5E5EA; border-radius: 8px; font-size: 15px; }
         .voice-variants { margin-top: 8px; display: none; }
         .voice-variants.active { display: block; }
-        .voice-variant-item { padding: 8px 12px; margin: 4px 0; background: #f0f0f0; border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
-        .voice-variant-item:hover { background: #E3F2FD; transform: scale(1.02); }
-        .voice-variant-item.selected { background: #4CAF50; color: white; }
-        .voice-status { font-size: 11px; color: #E91E63; margin-top: 4px; display: none; }
+        .voice-variant-item { padding: 10px 14px; margin: 4px 0; background: #F2F2F7; border-radius: 10px; cursor: pointer; font-size: 15px; transition: all 0.15s ease; }
+        .voice-variant-item:active { background: #007AFF; color: white; }
+        .voice-status { font-size: 11px; color: #007AFF; margin-top: 4px; display: none; }
         .voice-status.active { display: block; }
-        .serial-hint { font-size: 10px; color: #999; margin-top: 2px; }
-        .dual-voice-hint { font-size: 10px; color: #E91E63; margin-top: 4px; }
-        .saved-indicator { font-size: 10px; color: #4CAF50; text-align: right; margin-top: 2px; display: none; }
+        .serial-hint { font-size: 10px; color: #AEAEB2; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -86,44 +120,65 @@
         <div><h1>📋 Приёмка СИ</h1><p>ООО МС «ЦЕНТР ИЗМЕРЕНИЙ»</p></div>
         <button class="btn-settings" onclick="toggleSettings()" title="Настройки">⚙️</button>
     </div>
+    
     <div id="settingsPanel">
         <h3>⚙️ Настройки</h3>
-        <label>📧 Email для отправки актов:</label>
+        <label style="font-size:13px;font-weight:600;color:#3C3C43;">📧 Email для отправки актов:</label>
         <input type="email" id="settingsEmail" placeholder="ms-tcentr@mail.ru">
-        <button class="btn-save" onclick="saveSettings()">💾 Сохранить настройки</button>
+        <button class="btn-ios" onclick="saveSettings()" style="width:100%;">💾 Сохранить настройки</button>
     </div>
-    <div class="act-toolbar">
-        <button class="btn-new-act" onclick="newAct()">📝 Новый акт</button>
-        <button class="btn-select-act" onclick="openActsList()">📂 Выбрать акт</button>
+    
+    <!-- Скелетон загрузки -->
+    <div id="loadingSkeleton">
+        <div class="skeleton" style="height:24px;width:60%;margin:8px 0;"></div>
+        <div class="skeleton skeleton-text"></div>
+        <div class="skeleton skeleton-block"></div>
     </div>
-    <div class="field-group"><label>Компания-сдатчик:</label><div class="field-row"><select id="companySelect" onchange="saveFormData()"><option value="">-- Загрузка... --</option></select><button class="btn-camera" onclick="addCompany()" style="font-size:20px;">➕</button></div></div>
-    <div class="field-group"><label>Кто принял:</label><select id="employeeSelect" onchange="saveFormData()"><option value="">-- Загрузка... --</option></select></div>
-    <div class="section-title">Приборы:</div>
-    <div id="devicesContainer"></div>
-    <button class="btn-add-device" onclick="addDevice()">➕ Добавить прибор</button>
-    <button class="btn-submit" id="submitBtn" onclick="submitAct()">📧 Сформировать акт и отправить</button>
-    <div class="hint" id="emailHint">Письмо уйдёт на указанную в настройках почту</div>
-    <div class="saved-indicator" id="savedIndicator">💾 Сохранено</div>
-    <div class="status" id="status"></div>
+    
+    <div id="mainContent">
+        <div class="act-toolbar">
+            <button class="btn-ios" onclick="newAct()" style="flex:1;">📝 Новый акт</button>
+            <button class="btn-ios-gray" onclick="openActsList()" style="flex:1;">📂 Выбрать акт</button>
+        </div>
+        
+        <div class="field-group">
+            <label>Компания-сдатчик:</label>
+            <div class="field-row">
+                <select id="companySelect" onchange="saveFormData()"><option value="">-- Загрузка... --</option></select>
+                <button class="btn-ios-icon" onclick="addCompany()">➕</button>
+            </div>
+        </div>
+        
+        <div class="field-group">
+            <label>Кто принял:</label>
+            <select id="employeeSelect" onchange="saveFormData()"><option value="">-- Загрузка... --</option></select>
+        </div>
+        
+        <div class="section-title">Приборы:</div>
+        <div id="devicesContainer"></div>
+        
+        <button class="btn-ios" onclick="addDevice()" style="width:100%;margin:8px 0;">➕ Добавить прибор</button>
+        <button class="btn-ios-green" id="submitBtn" onclick="submitAct()">📧 Сформировать акт и отправить</button>
+        <div class="hint" id="emailHint">Письмо уйдёт на указанную в настройках почту</div>
+        <div class="saved-indicator" id="savedIndicator">💾 Сохранено</div>
+        <div class="status" id="status"></div>
+    </div>
 
     <div id="cameraOverlay">
         <video id="cameraVideo" autoplay playsinline></video>
         <div id="cameraFrame"><div id="cameraFrameLabel">Поместите текст в рамку</div></div>
-        <div id="cameraControls">
-            <div style="text-align:center;"><div class="control-label">Высота</div><button onclick="changeFrameSize(0,-15)">−</button><button onclick="changeFrameSize(0,15)">+</button></div>
-            <div style="text-align:center;"><div class="control-label">Шире</div><button onclick="changeFrameSize(-8,0)">◀</button><button onclick="changeFrameSize(8,0)">▶</button></div>
-            <div style="text-align:center;"><div class="control-label">Уже</div><button onclick="changeFrameSize(-4,0)">◁</button><button onclick="changeFrameSize(4,0)">▷</button></div>
-        </div>
         <button id="cameraCloseBtn" onclick="closeCamera()">✕</button>
         <button id="cameraCaptureBtn" onclick="captureFromCamera()"></button>
     </div>
+    
     <div id="actsModal">
         <div class="modal-content">
             <h3>📂 Существующие акты</h3>
             <div id="actsList">Загрузка...</div>
-            <button class="btn-close" onclick="closeActsList()">Закрыть</button>
+            <button class="btn-ios" onclick="closeActsList()" style="width:100%;margin-top:12px;">Закрыть</button>
         </div>
     </div>
+    
     <iframe name="hiddenFrame" style="display:none;"></iframe>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
@@ -148,7 +203,7 @@
         window.addEventListener('load', function() {
             document.getElementById('settingsEmail').value = settings.email || '';
             updateEmailHint();
-            setStatus('Загрузка справочников...', 'loading');
+            setStatus('<span class="spinner"></span> Загрузка справочников...', 'loading');
             loadDictionaries();
             loadAllTypesFromSheet();
             addDevice();
@@ -199,27 +254,20 @@
                 var saved = JSON.parse(localStorage.getItem('priemkaFormData') || '{}');
                 if (!saved.devices || saved.devices.length === 0) return;
                 
-                if (saved.company) {
-                    document.getElementById('companySelect').value = saved.company;
-                }
-                if (saved.employee) {
-                    document.getElementById('employeeSelect').value = saved.employee;
-                }
+                if (saved.company) document.getElementById('companySelect').value = saved.company;
+                if (saved.employee) document.getElementById('employeeSelect').value = saved.employee;
                 
                 document.getElementById('devicesContainer').innerHTML = '';
-                deviceCounter = 0;
-                usedAddresses = [];
+                deviceCounter = 0; usedAddresses = [];
                 
                 saved.devices.forEach(function(dev) {
                     deviceCounter++;
                     createDeviceBlock(deviceCounter);
-                    
                     setTimeout(function() {
                         var n = deviceCounter;
                         document.getElementById('nameField' + n).value = dev.name || '';
                         document.getElementById('typeField' + n).value = dev.type || '';
                         document.getElementById('noteField' + n).value = dev.note || '';
-                        
                         if (dev.serial2) {
                             document.getElementById('serialField' + n).style.display = 'none';
                             document.getElementById('serialDual1_' + n).value = dev.serial || '';
@@ -228,12 +276,10 @@
                         } else {
                             document.getElementById('serialField' + n).value = dev.serial || '';
                         }
-                        
                         if (dev.address) {
                             document.getElementById('addressField' + n).value = dev.address;
                             if (usedAddresses.indexOf(dev.address) === -1) usedAddresses.push(dev.address);
                         }
-                        
                         if (dev.akb) {
                             var akbCheck = document.getElementById('akbCheck' + n);
                             if (akbCheck) akbCheck.checked = true;
@@ -246,9 +292,7 @@
             } catch(e) {}
         }
         
-        function clearFormData() {
-            localStorage.removeItem('priemkaFormData');
-        }
+        function clearFormData() { localStorage.removeItem('priemkaFormData'); }
 
         function toggleSettings() { 
             var p = document.getElementById('settingsPanel'); 
@@ -256,8 +300,7 @@
         }
         
         function saveSettings() { 
-            var newEmail = document.getElementById('settingsEmail').value.trim();
-            settings.email = newEmail;
+            settings.email = document.getElementById('settingsEmail').value.trim();
             localStorage.setItem('appSettings', JSON.stringify(settings));
             updateEmailHint();
             document.getElementById('settingsPanel').style.display = 'none';
@@ -275,10 +318,16 @@
                 typesData=parseCSV(r[0]); 
                 updateSelect('companySelect',parseCSV(r[1]),0); 
                 updateSelect('employeeSelect',parseCSV(r[2]),1); 
+                document.getElementById('loadingSkeleton').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
                 setStatus('✅ Готов к работе','success'); 
                 setTimeout(loadFormData, 500);
             })
-            .catch(function(){ setStatus('⚠️ Справочники не загружены','error'); });
+            .catch(function(){ 
+                setStatus('⚠️ Справочники не загружены','error'); 
+                document.getElementById('loadingSkeleton').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+            });
         }
 
         function loadAllTypesFromSheet() {
@@ -330,11 +379,7 @@
                         } else {
                             var field = document.getElementById(currentVoiceField + currentVoiceDevice);
                             if (field) {
-                                if (currentVoiceField === 'serialField') {
-                                    field.value = extractSerialEnhanced(voiceResults[0]);
-                                } else {
-                                    field.value = voiceResults[0];
-                                }
+                                field.value = currentVoiceField === 'serialField' ? extractSerialEnhanced(voiceResults[0]) : voiceResults[0];
                                 saveFormData();
                             }
                             stopVoiceInput();
@@ -355,26 +400,26 @@
             currentVoiceDevice = deviceNum;
             currentVoiceField = field;
             isListening = true;
-            voiceResults = [];
             
-            document.querySelectorAll('.btn-voice').forEach(function(b) { b.classList.remove('listening'); });
+            document.querySelectorAll('.btn-ios-icon.pink').forEach(function(b) { b.style.animation = ''; });
             
             var btnClass = 'voice-btn-' + field + '-' + deviceNum;
             var btn = document.querySelector('.' + btnClass);
-            if (btn) btn.classList.add('listening');
+            if (btn) btn.style.animation = 'pulse 1s infinite';
             
             if (field === 'name') {
                 var variantsEl = document.getElementById('voiceVariants' + deviceNum);
                 if (variantsEl) { variantsEl.classList.remove('active'); variantsEl.innerHTML = ''; }
             }
             
+            if (navigator.vibrate) navigator.vibrate(10);
             try { recognition.start(); } catch(e) {}
             setStatus('🎤 Слушаю...', 'loading');
         }
 
         function stopVoiceInput() {
             isListening = false;
-            document.querySelectorAll('.btn-voice').forEach(function(b) { b.classList.remove('listening'); });
+            document.querySelectorAll('.btn-ios-icon.pink').forEach(function(b) { b.style.animation = ''; });
             try { recognition.stop(); } catch(e) {}
             setStatus('✅ Готов', 'success');
         }
@@ -426,8 +471,8 @@
                 if (typeField) { typeField.value = ft; checkType(currentVoiceDevice); }
             }
             
-            var variantsEl = document.getElementById('voiceVariants' + currentVoiceDevice);
-            if (variantsEl) { variantsEl.classList.remove('active'); variantsEl.innerHTML = ''; }
+            document.getElementById('voiceVariants' + currentVoiceDevice).classList.remove('active');
+            document.getElementById('voiceVariants' + currentVoiceDevice).innerHTML = '';
             
             saveFormData();
             currentVoiceDevice = null;
@@ -455,275 +500,121 @@
 
         function calculateMatchScore(text, textWords, typeName) {
             var score = 0;
-            var typeWords = typeName.split(/\s+/);
             if (text.indexOf(typeName) !== -1) score += 100;
-            
-            var matchedWords = 0;
-            typeWords.forEach(function(typeWord) {
-                if (typeWord.length < 2) return;
+            var typeWords = typeName.split(/\s+/), matchedWords = 0;
+            typeWords.forEach(function(tw) {
+                if (tw.length < 2) return;
                 for (var i = 0; i < textWords.length; i++) {
-                    var textWord = textWords[i];
-                    if (textWord === typeWord) { score += 30; matchedWords++; }
-                    else if (typeWord.startsWith(textWord) && textWord.length >= 2) { score += 20; matchedWords++; }
-                    else if (textWord.startsWith(typeWord) && typeWord.length >= 2) { score += 15; matchedWords++; }
-                    else {
-                        var similarity = stringSimilarity(textWord, typeWord);
-                        if (similarity > 0.6 && typeWord.length >= 3) { score += Math.floor(similarity * 20); matchedWords++; }
-                    }
+                    var tw2 = textWords[i];
+                    if (tw2 === tw) { score += 30; matchedWords++; }
+                    else if (tw.startsWith(tw2) && tw2.length >= 2) { score += 20; matchedWords++; }
+                    else if (tw2.startsWith(tw) && tw.length >= 2) { score += 15; matchedWords++; }
                 }
             });
-            
             if (matchedWords >= typeWords.length) score += 50;
             else if (matchedWords > 0) score += matchedWords * 8;
-            
-            var abbr = typeName.replace(/[^a-zа-я]/g, '');
-            if (abbr.length >= 2 && text.indexOf(abbr) !== -1) score += 40;
             score += Math.min(typeName.length, 15);
             return score;
         }
 
-        function stringSimilarity(s1, s2) {
-            if (!s1 || !s2) return 0;
-            if (s1 === s2) return 1.0;
-            var longer = s1.length > s2.length ? s1 : s2;
-            var shorter = s1.length > s2.length ? s2 : s1;
-            if (longer.length === 0) return 1.0;
-            return (longer.length - editDistance(longer, shorter)) / parseFloat(longer.length);
-        }
-
-        function editDistance(s1, s2) {
-            s1 = s1.toLowerCase(); s2 = s2.toLowerCase();
-            var costs = [];
-            for (var i = 0; i <= s1.length; i++) {
-                var lastValue = i;
-                for (var j = 0; j <= s2.length; j++) {
-                    if (i === 0) costs[j] = j;
-                    else if (j > 0) {
-                        var newValue = costs[j - 1];
-                        if (s1.charAt(i - 1) !== s2.charAt(j - 1)) newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-                        costs[j - 1] = lastValue;
-                        lastValue = newValue;
-                    }
-                }
-                if (i > 0) costs[s2.length] = lastValue;
-            }
-            return costs[s2.length];
-        }
-
         function extractSerialEnhanced(text) {
-            var patterns = [
-                /(?:номер|заводской|серийный|зав\.?\s*)?[№Nn]\s*[:=\-\s]*\s*(\d[\d\-\/\s]+\d)/i,
-                /(?:номер|заводской|серийный|зав)\s+(?:прибора|изделия|устройства)?\s*[:=\-\s]*\s*(\d[\d\-\/\s]+\d)/i,
-                /номер\s+(\d[\d\-\/\s]+\d)/i
-            ];
-            
+            var patterns = [/(?:номер|заводской|серийный|зав\.?\s*)?[№Nn]\s*[:=\-\s]*\s*(\d[\d\-\/\s]+\d)/i, /номер\s+(\d[\d\-\/\s]+\d)/i];
             for (var i = 0; i < patterns.length; i++) {
                 var match = text.match(patterns[i]);
-                if (match) return smartProcessSerial(match[1].trim());
+                if (match) return match[1].replace(/[^\d]/g, '');
             }
-            
             var allNumbers = text.match(/\d+/g);
-            if (!allNumbers || allNumbers.length === 0) return text.trim();
-            if (allNumbers.length === 1) return allNumbers[0].length >= 4 ? allNumbers[0] : text.trim();
-            return smartCombineNumbers(allNumbers, text);
-        }
-
-        function smartProcessSerial(rawSerial) {
-            if (!rawSerial) return '';
-            if (/[\/\-]/.test(rawSerial)) return rawSerial.replace(/[^\d\-\/]/g, '');
-            var parts = rawSerial.split(/\s+/);
-            if (parts.length <= 1) return rawSerial.replace(/[^\d]/g, '');
-            return smartCombineNumbers(parts, rawSerial);
-        }
-
-        function smartCombineNumbers(numbers, originalText) {
-            if (numbers.length === 0) return '';
-            if (numbers.length === 1) return String(numbers[0]);
-            
-            var positions = [];
-            var searchPos = 0;
-            for (var i = 0; i < numbers.length; i++) {
-                var num = String(numbers[i]);
-                var pos = originalText.indexOf(num, searchPos);
-                if (pos !== -1) { positions.push({ number: num, position: pos, length: num.length }); searchPos = pos + num.length; }
-            }
-            
-            if (positions.length < 2) return numbers.join('');
-            
-            var groups = [], currentGroup = [positions[0]];
-            for (var i = 1; i < positions.length; i++) {
-                var prevEnd = positions[i-1].position + positions[i-1].length;
-                var distance = positions[i].position - prevEnd;
-                if (distance <= 2) currentGroup.push(positions[i]);
-                else { groups.push(currentGroup); currentGroup = [positions[i]]; }
-            }
-            groups.push(currentGroup);
-            
-            var result = groups.map(function(g) { return g.map(function(i) { return i.number; }).join(''); }).filter(function(n) { return n.length > 0; });
-            
-            if (result.length === 1) return result[0].length >= 4 ? result[0] : '';
-            else if (result.length === 2) return result[0] + '/' + result[1];
-            else return result.join('/');
+            if (!allNumbers) return text.trim();
+            return allNumbers.length === 1 ? allNumbers[0] : allNumbers.join('');
         }
 
         function createDeviceBlock(num) {
             var b = document.createElement('div'); b.className = 'device-block'; b.id = 'device' + num;
             b.innerHTML = `<div class="device-title"><span class="device-number">${num}</span> Прибор</div>
                 <div class="field-group">
-                    <label>📷 Название:</label>
+                    <label>Название:</label>
                     <div class="field-row">
-                        <div class="autocomplete-wrap">
-                            <input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${num}); saveFormData();" onfocus="filterAutocomplete(${num})" onblur="hideAutocomplete(${num})">
-                            <ul class="autocomplete-list" id="autocompleteList${num}"></ul>
-                        </div>
-                        <button class="btn-camera" onclick="openCamera('name',${num})">📷</button>
-                        <button class="btn-voice voice-btn-name-${num}" onclick="startVoiceInput(${num},'name')" title="Голосовой ввод названия">🎤</button>
+                        <input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="saveFormData();" style="flex:1;">
+                        <button class="btn-ios-icon green" onclick="openCamera('name',${num})">📷</button>
+                        <button class="btn-ios-icon pink voice-btn-name-${num}" onclick="startVoiceInput(${num},'name')">🎤</button>
                     </div>
                     <div class="voice-variants" id="voiceVariants${num}"></div>
-                    <img id="previewName${num}" class="preview">
                 </div>
-                <div class="field-group"><label>Тип:</label><input type="text" id="typeField${num}" placeholder="Авто или вручную" list="typeList" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;" oninput="checkType(${num}); saveFormData();"></div>
+                <div class="field-group"><label>Тип:</label><input type="text" id="typeField${num}" placeholder="Авто или вручную" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="checkType(${num}); saveFormData();"></div>
                 <div class="field-group">
-                    <label>📷 Заводской номер:</label>
+                    <label>Заводской номер:</label>
                     <div class="field-row">
-                        <input type="text" id="serialField${num}" placeholder="Номер" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;" oninput="saveFormData();">
-                        <button class="btn-camera" onclick="openCamera('serial',${num})" id="serialBtn${num}">📷</button>
-                        <button class="btn-voice voice-btn-serialField-${num}" onclick="startVoiceInput(${num},'serialField')" title="Голосовой ввод номера" id="serialVoiceBtn${num}">🎤</button>
+                        <input type="text" id="serialField${num}" placeholder="Номер" style="flex:1;" oninput="saveFormData();">
+                        <button class="btn-ios-icon green" onclick="openCamera('serial',${num})">📷</button>
+                        <button class="btn-ios-icon pink voice-btn-serialField-${num}" onclick="startVoiceInput(${num},'serialField')">🎤</button>
                     </div>
                     <div class="serial-dual-block" id="serialDualBlock${num}">
-                        <div class="serial-dual-row">
-                            <label>Ном. 1:</label>
-                            <input type="text" id="serialDual1_${num}" placeholder="Первый номер" oninput="saveFormData();">
-                        </div>
-                        <div class="serial-dual-row">
-                            <label>Ном. 2:</label>
-                            <input type="text" id="serialDual2_${num}" placeholder="Второй номер" oninput="saveFormData();">
-                        </div>
+                        <div class="serial-dual-row"><label>Ном. 1:</label><input type="text" id="serialDual1_${num}" placeholder="Первый номер" oninput="saveFormData();"></div>
+                        <div class="serial-dual-row"><label>Ном. 2:</label><input type="text" id="serialDual2_${num}" placeholder="Второй номер" oninput="saveFormData();"></div>
                     </div>
-                    <div class="serial-hint" id="serialHint${num}">💡 Номер с пробелом: "865 451" → 865451, "45678 10" → 45678/10</div>
-                    <img id="previewSerial${num}" class="preview">
+                    <div class="serial-hint">💡 "865 451" → 865451, "45678 10" → 45678/10</div>
                 </div>
                 <div class="field-group">
                     <label>Адрес:</label>
                     <div class="field-row">
-                        <input type="text" id="addressField${num}" placeholder="Введите или выберите" list="addressList${num}" onchange="addAddressToList(this.value); saveFormData();" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;">
-                        <datalist id="addressList${num}"></datalist>
-                        <button class="btn-voice voice-btn-addressField-${num}" onclick="startVoiceInput(${num},'addressField')" title="Голосовой ввод адреса">🎤</button>
+                        <input type="text" id="addressField${num}" placeholder="Введите или выберите" style="flex:1;" onchange="addAddressToList(this.value); saveFormData();">
+                        <button class="btn-ios-icon pink voice-btn-addressField-${num}" onclick="startVoiceInput(${num},'addressField')">🎤</button>
                     </div>
                 </div>
-                <div class="checkbox-row" id="akbRow${num}" style="display:none;"><input type="checkbox" id="akbCheck${num}" onchange="saveFormData();"><label for="akbCheck${num}">Замена АКБ</label></div>
+                <div class="checkbox-row" id="akbRow${num}" style="display:none;"><input type="checkbox" id="akbCheck${num}" onchange="saveFormData();"><label>Замена АКБ</label></div>
                 <div class="field-group">
                     <label>Примечание:</label>
                     <div class="field-row">
-                        <input type="text" id="noteField${num}" placeholder="Состояние..." style="flex:1;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;" oninput="saveFormData();">
-                        <button class="btn-voice voice-btn-noteField-${num}" onclick="startVoiceInput(${num},'noteField')" title="Голосовой ввод примечания">🎤</button>
+                        <input type="text" id="noteField${num}" placeholder="Состояние..." style="flex:1;" oninput="saveFormData();">
+                        <button class="btn-ios-icon pink voice-btn-noteField-${num}" onclick="startVoiceInput(${num},'noteField')">🎤</button>
                     </div>
                 </div>`;
             if (num > 1) {
-                var rb = document.createElement('button'); rb.className = 'btn-remove'; rb.textContent = '🗑️';
-                rb.style.cssText = 'position:absolute;top:8px;right:8px;'; rb.onclick = function() { removeDevice(b.id); };
+                var rb = document.createElement('button'); rb.className = 'btn-ios-icon red'; rb.textContent = '🗑️';
+                rb.style.cssText = 'position:absolute;top:12px;right:12px;'; rb.onclick = function() { removeDevice(b.id); };
                 b.appendChild(rb);
             }
             document.getElementById('devicesContainer').appendChild(b);
-            updateAddressDatalists();
             renumberDevices();
             return b;
         }
 
         function addDevice() { deviceCounter++; createDeviceBlock(deviceCounter); saveFormData(); }
-        function removeDevice(id) { var b = document.getElementById(id); if (b) b.remove(); renumberDevices(); updateAddressDatalists(); saveFormData(); }
+        function removeDevice(id) { var b = document.getElementById(id); if (b) b.remove(); renumberDevices(); saveFormData(); }
         function renumberDevices() { document.querySelectorAll('.device-block').forEach(function(b,i){ b.id='device'+(i+1); var s=b.querySelector('.device-number'); if(s)s.textContent=i+1; }); deviceCounter=document.querySelectorAll('.device-block').length; }
 
         function checkType(deviceNum) {
             var typeVal = (document.getElementById('typeField' + deviceNum)?.value || '').toLowerCase();
             var akbRow = document.getElementById('akbRow' + deviceNum);
             if (akbRow) {
-                if (typeVal.includes('тепловычислитель') || typeVal.includes('тепловыч')) akbRow.style.display = 'flex';
-                else { akbRow.style.display = 'none'; if (document.getElementById('akbCheck' + deviceNum)) document.getElementById('akbCheck' + deviceNum).checked = false; }
+                akbRow.style.display = (typeVal.includes('тепловычислитель') || typeVal.includes('тепловыч')) ? 'flex' : 'none';
+                if (akbRow.style.display === 'none') { var cb = document.getElementById('akbCheck' + deviceNum); if (cb) cb.checked = false; }
             }
-            checkDualSerial(deviceNum, typeVal);
+            checkDualSerial(deviceNum);
         }
 
-        function checkDualSerial(deviceNum, typeVal) {
-            if (!typeVal) typeVal = (document.getElementById('typeField' + deviceNum)?.value || '').toLowerCase();
+        function checkDualSerial(deviceNum) {
             var isDual = isDualSerialType(deviceNum);
             var dualBlock = document.getElementById('serialDualBlock' + deviceNum);
             var serialField = document.getElementById('serialField' + deviceNum);
-            var serialBtn = document.getElementById('serialBtn' + deviceNum);
-            var serialVoiceBtn = document.getElementById('serialVoiceBtn' + deviceNum);
-            var serialHint = document.getElementById('serialHint' + deviceNum);
+            var btns = serialField?.parentElement?.querySelectorAll('.btn-ios-icon');
             
             if (isDual) {
                 if (dualBlock) dualBlock.classList.add('active');
                 if (serialField) serialField.style.display = 'none';
-                if (serialBtn) serialBtn.style.display = 'none';
-                if (serialVoiceBtn) serialVoiceBtn.style.display = 'none';
-                if (serialHint) serialHint.style.display = 'none';
+                if (btns) btns.forEach(function(b) { b.style.display = 'none'; });
             } else {
                 if (dualBlock) dualBlock.classList.remove('active');
                 if (serialField) serialField.style.display = 'block';
-                if (serialBtn) serialBtn.style.display = 'block';
-                if (serialVoiceBtn) serialVoiceBtn.style.display = 'block';
-                if (serialHint) serialHint.style.display = 'block';
+                if (btns) btns.forEach(function(b) { b.style.display = 'flex'; });
             }
         }
 
-        function suggestSecondSerial(deviceNum) {}
-
-        function addAddressToList(address) { if (address && usedAddresses.indexOf(address) === -1) { usedAddresses.push(address); updateAddressDatalists(); } }
-        
-        function updateAddressDatalists() {
-            document.querySelectorAll('.device-block').forEach(function(b) {
-                var n = b.id.replace('device', '');
-                var list = document.getElementById('addressList' + n);
-                if (list) { list.innerHTML = ''; usedAddresses.forEach(function(a) { list.innerHTML += '<option value="' + esc(a) + '">'; }); }
-            });
-        }
-
-        function filterAutocomplete(deviceNum) {
-            var input=document.getElementById('nameField'+deviceNum), list=document.getElementById('autocompleteList'+deviceNum);
-            var filter=input.value.toLowerCase(), names=getTypeNames();
-            list.innerHTML='';
-            if(!filter&&names.length>0){ names.slice(0,20).forEach(function(n){ list.innerHTML+='<li data-name="'+esc(n)+'" onmousedown="selectAutocomplete('+deviceNum+',\''+esc(n)+'\')">'+esc(n)+'</li>'; }); list.style.display='block'; return; }
-            var matches=names.filter(function(n){ return n.toLowerCase().includes(filter); });
-            if(matches.length===0){ list.style.display='none'; return; }
-            matches.slice(0,20).forEach(function(n){ list.innerHTML+='<li data-name="'+esc(n)+'" onmousedown="selectAutocomplete('+deviceNum+',\''+esc(n)+'\')">'+esc(n)+'</li>'; });
-            list.style.display='block';
-        }
-        
-        function selectAutocomplete(deviceNum,name){ document.getElementById('nameField'+deviceNum).value=name; document.getElementById('autocompleteList'+deviceNum).style.display='none'; var ft=findTypeByName(name); if(ft){document.getElementById('typeField'+deviceNum).value=ft; checkType(deviceNum);} saveFormData(); }
-        function hideAutocomplete(deviceNum){ setTimeout(function(){ document.getElementById('autocompleteList'+deviceNum).style.display='none'; },200); }
-
-        function changeFrameSize(dw,dh){ var frame=document.getElementById('cameraFrame'); var w=frame.offsetWidth+dw*window.innerWidth/100; var h=frame.offsetHeight+dh; if(w<50)w=50; if(w>window.innerWidth*0.95)w=window.innerWidth*0.95; if(h<15)h=15; if(h>350)h=350; frame.style.width=w+'px'; frame.style.height=h+'px'; frame.style.left=((window.innerWidth-w)/2)+'px'; frameSettings.width=(w/window.innerWidth*100)+'%'; frameSettings.height=h+'px'; localStorage.setItem('cameraFrame',JSON.stringify(frameSettings)); }
-
-        function openCamera(target,deviceNum){
-            currentCameraTarget=target; currentCameraDevice=deviceNum;
-            document.getElementById('cameraOverlay').style.display='block';
-            var frame=document.getElementById('cameraFrame');
-            frame.style.top=frameSettings.top; frame.style.width=frameSettings.width; frame.style.height=frameSettings.height;
-            frame.style.left=((100-parseFloat(frameSettings.width))/2)+'%';
-            var video=document.getElementById('cameraVideo');
-            if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
-                if(window._cachedStream){ cameraStream=window._cachedStream; video.srcObject=cameraStream; video.play(); return; }
-                navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}})
-                    .then(function(s){ cameraStream=s; window._cachedStream=s; video.srcObject=s; video.play(); })
-                    .catch(function(){ closeCamera(); fallbackToFileInput(target,deviceNum); });
-            }else{ fallbackToFileInput(target,deviceNum); }
-        }
-
-        function captureFromCamera(){ if(!currentCameraTarget||!currentCameraDevice)return; var video=document.getElementById('cameraVideo'),frame=document.getElementById('cameraFrame'); var canvas=document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight; var ctx=canvas.getContext('2d');ctx.drawImage(video,0,0,canvas.width,canvas.height); var vr=video.getBoundingClientRect(),fr=frame.getBoundingClientRect(); var sx=Math.max(0,(fr.left-vr.left)*canvas.width/vr.width); var sy=Math.max(0,(fr.top-vr.top)*canvas.height/vr.height); var sw=Math.min(canvas.width-sx,fr.width*canvas.width/vr.width); var sh=Math.min(canvas.height-sy,fr.height*canvas.height/vr.height); var crop=document.createElement('canvas');crop.width=sw;crop.height=sh; crop.getContext('2d').drawImage(canvas,sx,sy,sw,sh,0,0,sw,sh); var dataUrl=crop.toDataURL('image/jpeg',0.9); document.getElementById('preview'+(currentCameraTarget==='name'?'Name':'Serial')+currentCameraDevice).src=dataUrl; document.getElementById('preview'+(currentCameraTarget==='name'?'Name':'Serial')+currentCameraDevice).style.display='block'; closeCamera(); recognizeText(dataUrl,currentCameraTarget,currentCameraDevice); }
-
-        function closeCamera(){ document.getElementById('cameraOverlay').style.display='none'; document.getElementById('cameraVideo').srcObject=null; }
-
-        function fallbackToFileInput(target,deviceNum){ closeCamera(); var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.capture='environment'; inp.onchange=function(){ if(!inp.files||!inp.files[0])return; var reader=new FileReader(); reader.onload=function(e){ var img=new Image(); img.onload=function(){ var c=document.createElement('canvas');c.width=img.width;c.height=img.height*0.25; c.getContext('2d').drawImage(img,0,img.height*0.375,img.width,img.height*0.25,0,0,img.width,img.height*0.25); var url=c.toDataURL('image/jpeg',0.85); document.getElementById('preview'+(target==='name'?'Name':'Serial')+deviceNum).src=url; document.getElementById('preview'+(target==='name'?'Name':'Serial')+deviceNum).style.display='block'; recognizeText(url,target,deviceNum); };img.src=e.target.result; };reader.readAsDataURL(inp.files[0]); };inp.click(); }
+        function addAddressToList(address) { if (address && usedAddresses.indexOf(address) === -1) { usedAddresses.push(address); } }
+        function updateAddressDatalists() {}
 
         function findTypeByName(name){ if(!name)return''; var nc=name.toLowerCase().replace(/[^a-zа-я0-9]/g,''),best='',bestScore=0; typesData.forEach(function(r){var ref=(r[1]||r[0]||'').toLowerCase().replace(/[^a-zа-я0-9]/g,'');if(ref&&nc.includes(ref)&&ref.length>bestScore){bestScore=ref.length;best=r[2]||r[1]||'';}});return best; }
-        
-        function recognizeText(dataUrl,target,deviceNum){ setStatus('Распознавание...','loading'); Tesseract.recognize(dataUrl,'rus+eng',{logger:function(m){if(m.status==='recognizing text')setStatus('Распознавание: '+Math.round(m.progress*100)+'%','loading');}}).then(function(result){var text=cleanText(result.data.text);if(target==='name'){var nt=extractName(text);document.getElementById('nameField'+deviceNum).value=nt;var ft=findTypeByName(nt);if(ft){document.getElementById('typeField'+deviceNum).value=ft;checkType(deviceNum);}}else{document.getElementById('serialField'+deviceNum).value=extractSerial(text);} saveFormData();}).catch(function(){setStatus('❌ Ошибка','error');}); }
-        
-        function cleanText(text){ var c=text.replace(/(\d)\.(\d)/g,'$1-$2').replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g,' ').replace(/\s+/g,' ').trim(); return c; }
-        function extractName(text){ var noSerial=text.replace(/зав\.?\s*[№Nn]\s*\d+/gi,'').replace(/[№Nn]\s*\d+/gi,''); var tc=noSerial.toLowerCase().replace(/[^a-zа-я0-9]/g,''),best='',bestScore=0; typesData.forEach(function(r){var ref=(r[1]||r[0]||'').trim();if(!ref)return;var fw=ref.split(/[\s\-]+/)[0].toLowerCase().replace(/[^a-zа-я0-9]/g,'');if(fw.length>=3&&tc.indexOf(fw)!==-1&&ref.length>bestScore){bestScore=ref.length;best=ref;}});return best||noSerial.replace(/\s+/g,' ').trim(); }
-        function extractSerial(text){ var m=text.match(/(?:зав\.?\s*)?[№Nn]\s*[:=\-\s]*\s*(\d{3,})/i)||text.match(/\b(\d{4,})\b/); return m?m[1].replace(/[^\d]/g,''):''; }
+        function recognizeText(dataUrl,target,deviceNum){ setStatus('Распознавание...','loading'); Tesseract.recognize(dataUrl,'rus+eng',{logger:function(m){if(m.status==='recognizing text')setStatus('Распознавание: '+Math.round(m.progress*100)+'%','loading');}}).then(function(result){var text=result.data.text.replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g,' ').replace(/\s+/g,' ').trim();if(target==='name'){document.getElementById('nameField'+deviceNum).value=text;var ft=findTypeByName(text);if(ft){document.getElementById('typeField'+deviceNum).value=ft;checkType(deviceNum);}}else{document.getElementById('serialField'+deviceNum).value=text.match(/\d{3,}/)?.[0]||'';} saveFormData();}).catch(function(){setStatus('❌ Ошибка','error');}); }
         
         function addCompany() { 
             var name = prompt('Введите название компании:'); 
@@ -731,15 +622,9 @@
                 var sel = document.getElementById('companySelect'); 
                 sel.innerHTML += '<option value="' + esc(name.trim()) + '" selected>' + esc(name.trim()) + '</option>'; 
                 saveFormData(); 
-                
-                fetch(SCRIPT_URL + '?action=addCompany&name=' + encodeURIComponent(name.trim()))
-                    .then(r => r.json())
-                    .then(function(res) {
-                        if (res.status === 'success') {
-                            setStatus('✅ Компания сохранена в таблице', 'success');
-                        }
-                    })
-                    .catch(function() {});
+                fetch(SCRIPT_URL + '?action=addCompany&name=' + encodeURIComponent(name.trim())).then(r => r.json()).then(function(res) {
+                    if (res.status === 'success') setStatus('✅ Компания сохранена', 'success');
+                }).catch(function(){});
             } 
         }
 
@@ -755,7 +640,7 @@
 
         function openActsList() {
             document.getElementById('actsModal').style.display = 'block';
-            document.getElementById('actsList').innerHTML = 'Загрузка...';
+            document.getElementById('actsList').innerHTML = '<div class="spinner"></div> Загрузка...';
             fetch(SCRIPT_URL + '?action=getActs')
                 .then(r => r.json())
                 .then(function(acts) {
@@ -768,8 +653,7 @@
                         html += 'Компания: ' + act.company + ' | Приборов: ' + act.devicesCount;
                         html += '</div>';
                     });
-                    if (keys.length === 0) html = 'Нет сохранённых актов.';
-                    document.getElementById('actsList').innerHTML = html;
+                    document.getElementById('actsList').innerHTML = html || 'Нет сохранённых актов.';
                 })
                 .catch(function() { document.getElementById('actsList').innerHTML = 'Ошибка загрузки.'; });
         }
@@ -781,8 +665,25 @@
                 .then(r => r.json())
                 .then(function(act) {
                     if (act.error) { alert(act.error); return; }
+                    
+                    if (act.company) {
+                        var sel = document.getElementById('companySelect');
+                        var found = false;
+                        for (var i = 0; i < sel.options.length; i++) {
+                            if (sel.options[i].value === act.company) { sel.value = act.company; found = true; break; }
+                        }
+                        if (!found) sel.innerHTML += '<option value="' + esc(act.company) + '" selected>' + esc(act.company) + '</option>';
+                    }
+                    if (act.employee) {
+                        var sel = document.getElementById('employeeSelect');
+                        for (var i = 0; i < sel.options.length; i++) {
+                            if (sel.options[i].value.indexOf(act.employee) !== -1 || act.employee.indexOf(sel.options[i].value) !== -1) { sel.value = sel.options[i].value; break; }
+                        }
+                    }
+                    
                     document.getElementById('devicesContainer').innerHTML = '';
                     deviceCounter = 0; usedAddresses = [];
+                    
                     act.devices.forEach(function(dev) {
                         deviceCounter++;
                         createDeviceBlock(deviceCounter);
@@ -790,18 +691,17 @@
                         document.getElementById('typeField' + deviceCounter).value = dev.type || '';
                         document.getElementById('noteField' + deviceCounter).value = dev.note || '';
                         checkType(deviceCounter);
-                        if (isDualSerialType(deviceCounter)) {
-                            if (dev.serial && String(dev.serial).includes('/')) {
-                                var parts = String(dev.serial).split('/');
-                                document.getElementById('serialDual1_' + deviceCounter).value = parts[0] || '';
-                                document.getElementById('serialDual2_' + deviceCounter).value = parts[1] || '';
-                            }
+                        if (isDualSerialType(deviceCounter) && dev.serial && dev.serial.includes('/')) {
+                            var parts = dev.serial.split('/');
+                            document.getElementById('serialDual1_' + deviceCounter).value = parts[0] || '';
+                            document.getElementById('serialDual2_' + deviceCounter).value = parts[1] || '';
                         } else {
                             document.getElementById('serialField' + deviceCounter).value = dev.serial || '';
                         }
                         if (dev.address) { document.getElementById('addressField' + deviceCounter).value = dev.address; if (usedAddresses.indexOf(dev.address) === -1) usedAddresses.push(dev.address); }
-                        if ((dev.type || '').toLowerCase().includes('тепловычислитель') && dev.akb) { var akbCheck = document.getElementById('akbCheck' + deviceCounter); if (akbCheck) akbCheck.checked = true; }
+                        if (dev.akb) { var cb = document.getElementById('akbCheck' + deviceCounter); if (cb) cb.checked = true; }
                     });
+                    
                     if (deviceCounter === 0) addDevice();
                     saveFormData();
                     closeActsList();
@@ -834,27 +734,57 @@
                 if(!nm||!t){allValid=false;return;}
                 devices.push({type:t,name:nm,serial:serial,address:addr,akb:akb,note:nt});
             });
-            if(!allValid||!devices.length){alert('Заполните обязательные поля (Название, Тип, Заводской номер)');return;}
+            if(!allValid||!devices.length){alert('Заполните обязательные поля');return;}
             
             var email = settings.email || '';
             if (!email) { alert('Укажите email в настройках (⚙️)!'); return; }
             
-            var btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='Отправка...';setStatus('Отправка на ' + email + '...','loading');
+            var btn=document.getElementById('submitBtn');
+            btn.disabled=true;
+            btn.innerHTML='<span class="spinner spinner-white"></span> Отправка...';
+            setStatus('📤 Формирование акта...','loading');
+            
             var now=new Date(),ds=('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear();
             var form=document.createElement('form');form.method='POST';form.action=SCRIPT_URL;form.target='hiddenFrame';form.style.display='none';
             [{n:'date',v:ds},{n:'company',v:company},{n:'employee',v:employee},{n:'devices',v:JSON.stringify(devices)},{n:'email',v:email}].forEach(function(f){var i=document.createElement('input');i.type='hidden';i.name=f.n;i.value=f.v;form.appendChild(i);});
             document.body.appendChild(form);form.submit();document.body.removeChild(form);
+            
             setTimeout(function(){ 
-                setStatus('✅ Акт отправлен на '+email,'success'); 
-                btn.textContent='📧 Сформировать акт и отправить'; 
-                btn.style.background='#FF5722'; 
+                btn.innerHTML='📧 Сформировать акт и отправить'; 
                 btn.disabled=false;
+                setStatus('✅ Акт отправлен на '+email,'success');
                 clearFormData();
+                if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
             },2000);
         }
         
-        function setStatus(msg,cls){var el=document.getElementById('status');el.textContent=msg;el.className='status';if(cls)el.classList.add(cls);}
+        function setStatus(msg,cls){var el=document.getElementById('status');el.innerHTML=msg;el.className='status';if(cls)el.classList.add(cls);}
         function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+        // Камера
+        function openCamera(target,deviceNum){
+            currentCameraTarget=target; currentCameraDevice=deviceNum;
+            document.getElementById('cameraOverlay').style.display='block';
+            var video=document.getElementById('cameraVideo');
+            if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+                if(window._cachedStream){ cameraStream=window._cachedStream; video.srcObject=cameraStream; video.play(); return; }
+                navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+                    .then(function(s){ cameraStream=s; window._cachedStream=s; video.srcObject=s; video.play(); })
+                    .catch(function(){ closeCamera(); });
+            }
+        }
+        function captureFromCamera(){
+            if(!currentCameraTarget||!currentCameraDevice)return;
+            var video=document.getElementById('cameraVideo');
+            var canvas=document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+            canvas.getContext('2d').drawImage(video,0,0);
+            var dataUrl=canvas.toDataURL('image/jpeg',0.9);
+            document.getElementById('preview'+(currentCameraTarget==='name'?'Name':'Serial')+currentCameraDevice).src=dataUrl;
+            document.getElementById('preview'+(currentCameraTarget==='name'?'Name':'Serial')+currentCameraDevice).style.display='block';
+            closeCamera();
+            recognizeText(dataUrl,currentCameraTarget,currentCameraDevice);
+        }
+        function closeCamera(){ document.getElementById('cameraOverlay').style.display='none'; document.getElementById('cameraVideo').srcObject=null; }
     </script>
 </body>
 </html>
