@@ -233,19 +233,14 @@
         function findTypeMatches(text){ if(!text)return[]; var ct=text.toLowerCase().replace(/[^a-zа-я0-9\s]/g,' ').replace(/\s+/g,' ').trim(); var types=allTypesFromSheet.length>0?allTypesFromSheet:getTypeNames(); var words=ct.split(/\s+/); var results=[]; types.forEach(function(st){ var tc=st.toLowerCase().replace(/[^a-zа-я0-9\s]/g,' ').replace(/\s+/g,' ').trim(); if(tc.length<2)return; var s=calculateMatchScore(ct,words,tc); if(s>10)results.push({name:st,score:s}); }); results.sort(function(a,b){return b.score-a.score;}); return results.slice(0,5); }
         function calculateMatchScore(text,words,typeName){ var s=0; if(text.indexOf(typeName)!==-1)s+=100; var tw=typeName.split(/\s+/),mw=0; tw.forEach(function(w){ if(w.length<2)return; for(var i=0;i<words.length;i++){ if(words[i]===w){s+=30;mw++;}else if(w.startsWith(words[i])&&words[i].length>=2){s+=20;mw++;}else if(words[i].startsWith(w)&&w.length>=2){s+=15;mw++;} } }); if(mw>=tw.length)s+=50; else if(mw>0)s+=mw*8; s+=Math.min(typeName.length,15); return s; }
 
-        // ============ РАСПОЗНАВАНИЕ НОМЕРОВ ============
         function extractSerialEnhanced(text) {
             var cleaned = text.replace(/[^а-яА-ЯёЁa-zA-Z0-9\s\/№\-]/g, ' ').replace(/\s+/g, ' ').trim();
-            
-            // Ищем "дробь" или "слеш" — все числа до слова склеиваем
             var slashIdx = cleaned.search(/\s*(?:дробь|слеш|слэш|\/)\s*/i);
             if (slashIdx > 0) {
                 var beforeSlash = cleaned.substring(0, slashIdx).replace(/\s+/g, '');
                 var afterSlash = cleaned.substring(slashIdx).replace(/[^\d]/g, '');
                 if (beforeSlash && afterSlash) return beforeSlash + '/' + afterSlash;
             }
-            
-            // Ищем номер с буквой в конце
             var withLetter = cleaned.match(/(\d[\d\s]*?)\s*([А-ЯХГABEKMHOPTXCа-яхгabekmhoptyxc]+)\s*$/i);
             if (withLetter) {
                 var num = withLetter[1].replace(/\s+/g, '');
@@ -256,8 +251,6 @@
                 else if (/^(ВЭ|В|B)$/i.test(letter)) letter = 'В';
                 return num + letter;
             }
-            
-            // Обычный номер
             var nums = cleaned.match(/\d+/g);
             if (!nums) return cleaned;
             if (nums.length === 1) return nums[0];
@@ -307,7 +300,33 @@
         function openActsList() { document.getElementById('actsModal').style.display = 'block'; document.getElementById('actsList').innerHTML = '<div class="spinner"></div> Загрузка...'; fetch(SCRIPT_URL + '?action=getActs').then(r => r.json()).then(function(acts) { var html = ''; Object.keys(acts).sort().reverse().forEach(function(n) { var a = acts[n]; html += '<div class="act-item" onclick="loadAct(\'' + n + '\')"><b>Акт №' + n + '</b> от ' + a.date + '<br>Компания: ' + a.company + ' | Приборов: ' + a.devicesCount + '</div>'; }); document.getElementById('actsList').innerHTML = html || 'Нет актов.'; }).catch(function() { document.getElementById('actsList').innerHTML = 'Ошибка.'; }); }
         function closeActsList() { document.getElementById('actsModal').style.display = 'none'; }
         function loadAct(actNum) { fetch(SCRIPT_URL + '?action=getAct&number=' + encodeURIComponent(actNum)).then(r => r.json()).then(function(act) { if (act.error) { alert(act.error); return; } if (act.company) { var s = document.getElementById('companySelect'); var f = false; for (var i = 0; i < s.options.length; i++) { if (s.options[i].value === act.company) { s.value = act.company; f = true; break; } } if (!f) s.innerHTML += '<option value="' + esc(act.company) + '" selected>' + esc(act.company) + '</option>'; } if (act.employee) { var s = document.getElementById('employeeSelect'); for (var i = 0; i < s.options.length; i++) { if (s.options[i].value.indexOf(act.employee) !== -1) { s.value = s.options[i].value; break; } } } document.getElementById('devicesContainer').innerHTML = ''; deviceCounter = 0; usedAddresses = []; act.devices.forEach(function(dev) { deviceCounter++; createDeviceBlock(deviceCounter); document.getElementById('nameField'+deviceCounter).value = dev.name || ''; document.getElementById('typeField'+deviceCounter).value = dev.type || ''; document.getElementById('noteField'+deviceCounter).value = dev.note || ''; checkType(deviceCounter); if (isDualSerialType(deviceCounter) && dev.serial && dev.serial.includes('/')) { var p = dev.serial.split('/'); document.getElementById('serialDual1_'+deviceCounter).value = p[0] || ''; document.getElementById('serialDual2_'+deviceCounter).value = p[1] || ''; fixSerialLetter(deviceCounter, 1); } else document.getElementById('serialField'+deviceCounter).value = dev.serial || ''; if (dev.address) { document.getElementById('addressField'+deviceCounter).value = dev.address; if (usedAddresses.indexOf(dev.address) === -1) usedAddresses.push(dev.address); } if (dev.akb) { var cb = document.getElementById('akbCheck'+deviceCounter); if (cb) cb.checked = true; } }); if (deviceCounter === 0) addDevice(); saveFormData(); closeActsList(); setStatus('✅ Загружен акт №' + actNum, 'success'); }); }
-        function submitAct(){ var company=document.getElementById('companySelect').value,employee=document.getElementById('employeeSelect').value; if(!company||!employee){alert('Выберите компанию и принявшего');return;} var devices=[],allValid=true; document.querySelectorAll('.device-block').forEach(function(b){ if(b.offsetParent===null)return; var n=b.id.replace('device',''); var t=document.getElementById('typeField'+n)?.value.trim()||'', nm=document.getElementById('nameField'+n)?.value.trim()||'', addr=document.getElementById('addressField'+n)?.value.trim()||'', akb=document.getElementById('akbCheck'+n)?.checked||false, nt=document.getElementById('noteField'+n)?.value.trim()||''; var serial=''; if(isDualSerialType(parseInt(n))){var s1=document.getElementById('serialDual1_'+n)?.value.trim()||'',s2=document.getElementById('serialDual2_'+n)?.value.trim()||''; serial=s1+(s2?'/'+s2:''); if(!s1){allValid=false;return;}}else{serial=document.getElementById('serialField'+n)?.value.trim()||''; if(!serial){allValid=false;return;}} if(!nm||!t){allValid=false;return;} devices.push({type:t,name:nm,serial:serial,address:addr,akb:akb,note:nt}); }); if(!allValid||!devices.length){alert('Заполните обязательные поля');return;} var email=settings.email||''; if(!email){alert('Укажите email в настройках (⚙️)!');return;} var btn=document.getElementById('submitBtn'); btn.disabled=true; btn.innerHTML='<span class="spinner spinner-white"></span> Отправка...'; setStatus('📤 Формирование акта...','loading'); var now=new Date(),ds=('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear(); var form=document.createElement('form');form.method='POST';form.action=SCRIPT_URL;form.target='hiddenFrame';form.style.display='none'; [{n:'date',v:ds},{n:'company',v:company},{n:'employee',v:employee},{n:'devices',v:JSON.stringify(devices)},{n:'email',v:email}].forEach(function(f){var i=document.createElement('input');i.type='hidden';i.name=f.n;i.value=f.v;form.appendChild(i);}); document.body.appendChild(form);form.submit();document.body.removeChild(form); setTimeout(function(){btn.innerHTML='📧 Сформировать акт и отправить';btn.disabled=false;setStatus('✅ Акт отправлен на '+email,'success');clearFormData();if(navigator.vibrate)navigator.vibrate([30,50,30]);},2000); }
+        
+        function submitAct(){
+            var company=document.getElementById('companySelect').value,employee=document.getElementById('employeeSelect').value;
+            if(!company||!employee){alert('Выберите компанию и принявшего');return;}
+            var devices=[],allValid=true;
+            document.querySelectorAll('.device-block').forEach(function(b){ if(b.offsetParent===null)return; var n=b.id.replace('device',''); var t=document.getElementById('typeField'+n)?.value.trim()||'', nm=document.getElementById('nameField'+n)?.value.trim()||'', addr=document.getElementById('addressField'+n)?.value.trim()||'', akb=document.getElementById('akbCheck'+n)?.checked||false, nt=document.getElementById('noteField'+n)?.value.trim()||''; var serial=''; if(isDualSerialType(parseInt(n))){var s1=document.getElementById('serialDual1_'+n)?.value.trim()||'',s2=document.getElementById('serialDual2_'+n)?.value.trim()||''; serial=s1+(s2?'/'+s2:''); if(!s1){allValid=false;return;}}else{serial=document.getElementById('serialField'+n)?.value.trim()||''; if(!serial){allValid=false;return;}} if(!nm||!t){allValid=false;return;} devices.push({type:t,name:nm,serial:serial,address:addr,akb:akb,note:nt}); });
+            if(!allValid||!devices.length){alert('Заполните обязательные поля');return;}
+            var email=settings.email||''; if(!email){alert('Укажите email в настройках (⚙️)!');return;}
+            var btn=document.getElementById('submitBtn'); btn.disabled=true; btn.innerHTML='<span class="spinner spinner-white"></span> Отправка...'; setStatus('📤 Формирование акта...','loading');
+            var now=new Date(),ds=('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear();
+            var form=document.createElement('form');form.method='POST';form.action=SCRIPT_URL;form.target='hiddenFrame';form.style.display='none';
+            [{n:'date',v:ds},{n:'company',v:company},{n:'employee',v:employee},{n:'devices',v:JSON.stringify(devices)},{n:'email',v:email}].forEach(function(f){var i=document.createElement('input');i.type='hidden';i.name=f.n;i.value=f.v;form.appendChild(i);});
+            document.body.appendChild(form);form.submit();document.body.removeChild(form);
+            setTimeout(function(){
+                btn.innerHTML='📧 Сформировать акт и отправить';btn.disabled=false;
+                setStatus('✅ Акт отправлен на '+email,'success');clearFormData();
+                if(navigator.vibrate)navigator.vibrate([30,50,30]);
+                // Голосовое подтверждение
+                if ('speechSynthesis' in window) {
+                    var utter = new SpeechSynthesisUtterance('Акт отправлен');
+                    utter.lang = 'ru-RU';
+                    utter.rate = 1;
+                    window.speechSynthesis.speak(utter);
+                }
+            },2000);
+        }
+        
         function setStatus(msg,cls){var el=document.getElementById('status');el.innerHTML=msg;el.className='status';if(cls)el.classList.add(cls);}
         function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
         function openCamera(target,deviceNum){ currentCameraTarget=target; currentCameraDevice=deviceNum; document.getElementById('cameraOverlay').style.display='block'; var video=document.getElementById('cameraVideo'); if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){ if(window._cachedStream){cameraStream=window._cachedStream;video.srcObject=cameraStream;video.play();return;} navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(function(s){cameraStream=s;window._cachedStream=s;video.srcObject=s;video.play();}).catch(function(){closeCamera();}); } }
