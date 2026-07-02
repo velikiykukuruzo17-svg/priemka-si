@@ -78,6 +78,7 @@
         .voice-status.active { display: block; }
         .serial-hint { font-size: 10px; color: #999; margin-top: 2px; }
         .dual-voice-hint { font-size: 10px; color: #E91E63; margin-top: 4px; }
+        .saved-indicator { font-size: 10px; color: #4CAF50; text-align: right; margin-top: 2px; display: none; }
     </style>
 </head>
 <body>
@@ -95,13 +96,14 @@
         <button class="btn-new-act" onclick="newAct()">📝 Новый акт</button>
         <button class="btn-select-act" onclick="openActsList()">📂 Выбрать акт</button>
     </div>
-    <div class="field-group"><label>Компания-сдатчик:</label><div class="field-row"><select id="companySelect"><option value="">-- Загрузка... --</option></select><button class="btn-camera" onclick="addCompany()" style="font-size:20px;">➕</button></div></div>
-    <div class="field-group"><label>Кто принял:</label><select id="employeeSelect"><option value="">-- Загрузка... --</option></select></div>
+    <div class="field-group"><label>Компания-сдатчик:</label><div class="field-row"><select id="companySelect" onchange="saveFormData()"><option value="">-- Загрузка... --</option></select><button class="btn-camera" onclick="addCompany()" style="font-size:20px;">➕</button></div></div>
+    <div class="field-group"><label>Кто принял:</label><select id="employeeSelect" onchange="saveFormData()"><option value="">-- Загрузка... --</option></select></div>
     <div class="section-title">Приборы:</div>
     <div id="devicesContainer"></div>
     <button class="btn-add-device" onclick="addDevice()">➕ Добавить прибор</button>
     <button class="btn-submit" id="submitBtn" onclick="submitAct()">📧 Сформировать акт и отправить</button>
     <div class="hint" id="emailHint">Письмо уйдёт на указанную в настройках почту</div>
+    <div class="saved-indicator" id="savedIndicator">💾 Сохранено</div>
     <div class="status" id="status"></div>
 
     <div id="cameraOverlay">
@@ -141,6 +143,7 @@
         var currentVoiceField = null;
         var voiceResults = [];
         var allTypesFromSheet = [];
+        var saveTimeout = null;
 
         window.addEventListener('load', function() {
             document.getElementById('settingsEmail').value = settings.email || '';
@@ -151,6 +154,101 @@
             addDevice();
             initVoiceRecognition();
         });
+
+        // ============ АВТОСОХРАНЕНИЕ ============
+        function saveFormData() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(function() {
+                var data = {
+                    company: document.getElementById('companySelect').value,
+                    employee: document.getElementById('employeeSelect').value,
+                    devices: []
+                };
+                
+                document.querySelectorAll('.device-block').forEach(function(b) {
+                    var n = b.id.replace('device', '');
+                    var device = {
+                        type: document.getElementById('typeField' + n)?.value || '',
+                        name: document.getElementById('nameField' + n)?.value || '',
+                        serial: document.getElementById('serialField' + n)?.value || '',
+                        serial2: document.getElementById('serialDual2_' + n)?.value || '',
+                        address: document.getElementById('addressField' + n)?.value || '',
+                        akb: document.getElementById('akbCheck' + n)?.checked || false,
+                        note: document.getElementById('noteField' + n)?.value || ''
+                    };
+                    if (device.name || device.type || device.serial) {
+                        data.devices.push(device);
+                    }
+                });
+                
+                if (data.company || data.employee || data.devices.length > 0) {
+                    localStorage.setItem('priemkaFormData', JSON.stringify(data));
+                    showSaved();
+                }
+            }, 500);
+        }
+        
+        function showSaved() {
+            var el = document.getElementById('savedIndicator');
+            el.style.display = 'block';
+            setTimeout(function() { el.style.display = 'none'; }, 2000);
+        }
+        
+        function loadFormData() {
+            try {
+                var saved = JSON.parse(localStorage.getItem('priemkaFormData') || '{}');
+                if (!saved.devices || saved.devices.length === 0) return;
+                
+                if (saved.company) {
+                    document.getElementById('companySelect').value = saved.company;
+                }
+                if (saved.employee) {
+                    document.getElementById('employeeSelect').value = saved.employee;
+                }
+                
+                document.getElementById('devicesContainer').innerHTML = '';
+                deviceCounter = 0;
+                usedAddresses = [];
+                
+                saved.devices.forEach(function(dev) {
+                    deviceCounter++;
+                    createDeviceBlock(deviceCounter);
+                    
+                    setTimeout(function() {
+                        var n = deviceCounter;
+                        document.getElementById('nameField' + n).value = dev.name || '';
+                        document.getElementById('typeField' + n).value = dev.type || '';
+                        document.getElementById('noteField' + n).value = dev.note || '';
+                        
+                        if (dev.serial2) {
+                            document.getElementById('serialField' + n).style.display = 'none';
+                            document.getElementById('serialDual1_' + n).value = dev.serial || '';
+                            document.getElementById('serialDual2_' + n).value = dev.serial2 || '';
+                            checkType(n);
+                        } else {
+                            document.getElementById('serialField' + n).value = dev.serial || '';
+                        }
+                        
+                        if (dev.address) {
+                            document.getElementById('addressField' + n).value = dev.address;
+                            if (usedAddresses.indexOf(dev.address) === -1) usedAddresses.push(dev.address);
+                        }
+                        
+                        if (dev.akb) {
+                            var akbCheck = document.getElementById('akbCheck' + n);
+                            if (akbCheck) akbCheck.checked = true;
+                        }
+                    }, 200);
+                });
+                
+                updateAddressDatalists();
+                setStatus('✅ Данные восстановлены', 'success');
+            } catch(e) {}
+        }
+        
+        function clearFormData() {
+            localStorage.removeItem('priemkaFormData');
+        }
 
         function toggleSettings() { 
             var p = document.getElementById('settingsPanel'); 
@@ -173,7 +271,14 @@
 
         function loadDictionaries() {
             Promise.all([fetch(CSV_BASE+GID_TYPES).then(r=>r.text()), fetch(CSV_BASE+GID_COMPANIES).then(r=>r.text()), fetch(CSV_BASE+GID_EMPLOYEES).then(r=>r.text())])
-            .then(function(r){ typesData=parseCSV(r[0]); updateSelect('companySelect',parseCSV(r[1]),0); updateSelect('employeeSelect',parseCSV(r[2]),1); setStatus('✅ Готов к работе','success'); })
+            .then(function(r){ 
+                typesData=parseCSV(r[0]); 
+                updateSelect('companySelect',parseCSV(r[1]),0); 
+                updateSelect('employeeSelect',parseCSV(r[2]),1); 
+                setStatus('✅ Готов к работе','success'); 
+                // Загружаем сохранённые данные
+                setTimeout(loadFormData, 500);
+            })
             .catch(function(){ setStatus('⚠️ Справочники не загружены','error'); });
         }
 
@@ -228,10 +333,10 @@
                             if (field) {
                                 if (currentVoiceField === 'serialField') {
                                     field.value = extractSerialEnhanced(voiceResults[0]);
-                                    suggestSecondSerial(currentVoiceDevice);
                                 } else {
                                     field.value = voiceResults[0];
                                 }
+                                saveFormData();
                             }
                             stopVoiceInput();
                         }
@@ -325,6 +430,7 @@
             var variantsEl = document.getElementById('voiceVariants' + currentVoiceDevice);
             if (variantsEl) { variantsEl.classList.remove('active'); variantsEl.innerHTML = ''; }
             
+            saveFormData();
             currentVoiceDevice = null;
             currentVoiceField = null;
             setStatus('✅ ' + name, 'success');
@@ -468,7 +574,7 @@
                     <label>📷 Название:</label>
                     <div class="field-row">
                         <div class="autocomplete-wrap">
-                            <input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${num})" onfocus="filterAutocomplete(${num})" onblur="hideAutocomplete(${num})">
+                            <input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${num}); saveFormData();" onfocus="filterAutocomplete(${num})" onblur="hideAutocomplete(${num})">
                             <ul class="autocomplete-list" id="autocompleteList${num}"></ul>
                         </div>
                         <button class="btn-camera" onclick="openCamera('name',${num})">📷</button>
@@ -477,24 +583,22 @@
                     <div class="voice-variants" id="voiceVariants${num}"></div>
                     <img id="previewName${num}" class="preview">
                 </div>
-                <div class="field-group"><label>Тип:</label><input type="text" id="typeField${num}" placeholder="Авто или вручную" list="typeList" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;" oninput="checkType(${num})"></div>
+                <div class="field-group"><label>Тип:</label><input type="text" id="typeField${num}" placeholder="Авто или вручную" list="typeList" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;" oninput="checkType(${num}); saveFormData();"></div>
                 <div class="field-group">
                     <label>📷 Заводской номер:</label>
                     <div class="field-row">
-                        <input type="text" id="serialField${num}" placeholder="Номер" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;">
+                        <input type="text" id="serialField${num}" placeholder="Номер" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;" oninput="saveFormData();">
                         <button class="btn-camera" onclick="openCamera('serial',${num})" id="serialBtn${num}">📷</button>
                         <button class="btn-voice voice-btn-serialField-${num}" onclick="startVoiceInput(${num},'serialField')" title="Голосовой ввод номера" id="serialVoiceBtn${num}">🎤</button>
                     </div>
                     <div class="serial-dual-block" id="serialDualBlock${num}">
                         <div class="serial-dual-row">
                             <label>Ном. 1:</label>
-                            <input type="text" id="serialDual1_${num}" placeholder="Первый номер">
-                            <button class="btn-voice voice-btn-serialField-${num}" onclick="startVoiceInput(${num},'serialField')" title="Голосовой ввод">🎤</button>
+                            <input type="text" id="serialDual1_${num}" placeholder="Первый номер" oninput="saveFormData();">
                         </div>
                         <div class="serial-dual-row">
                             <label>Ном. 2:</label>
-                            <input type="text" id="serialDual2_${num}" placeholder="Второй номер">
-                            <button class="btn-voice voice-btn-serialField-${num}" onclick="startVoiceInput(${num},'serialField')" title="Голосовой ввод">🎤</button>
+                            <input type="text" id="serialDual2_${num}" placeholder="Второй номер" oninput="saveFormData();">
                         </div>
                     </div>
                     <div class="serial-hint" id="serialHint${num}">💡 Номер с пробелом: "865 451" → 865451, "45678 10" → 45678/10</div>
@@ -503,16 +607,16 @@
                 <div class="field-group">
                     <label>Адрес:</label>
                     <div class="field-row">
-                        <input type="text" id="addressField${num}" placeholder="Введите или выберите" list="addressList${num}" onchange="addAddressToList(this.value)" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;">
+                        <input type="text" id="addressField${num}" placeholder="Введите или выберите" list="addressList${num}" onchange="addAddressToList(this.value); saveFormData();" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;">
                         <datalist id="addressList${num}"></datalist>
                         <button class="btn-voice voice-btn-addressField-${num}" onclick="startVoiceInput(${num},'addressField')" title="Голосовой ввод адреса">🎤</button>
                     </div>
                 </div>
-                <div class="checkbox-row" id="akbRow${num}" style="display:none;"><input type="checkbox" id="akbCheck${num}"><label for="akbCheck${num}">Замена АКБ</label></div>
+                <div class="checkbox-row" id="akbRow${num}" style="display:none;"><input type="checkbox" id="akbCheck${num}" onchange="saveFormData();"><label for="akbCheck${num}">Замена АКБ</label></div>
                 <div class="field-group">
                     <label>Примечание:</label>
                     <div class="field-row">
-                        <input type="text" id="noteField${num}" placeholder="Состояние..." style="flex:1;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;">
+                        <input type="text" id="noteField${num}" placeholder="Состояние..." style="flex:1;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;" oninput="saveFormData();">
                         <button class="btn-voice voice-btn-noteField-${num}" onclick="startVoiceInput(${num},'noteField')" title="Голосовой ввод примечания">🎤</button>
                     </div>
                 </div>`;
@@ -527,8 +631,8 @@
             return b;
         }
 
-        function addDevice() { deviceCounter++; createDeviceBlock(deviceCounter); }
-        function removeDevice(id) { var b = document.getElementById(id); if (b) b.remove(); renumberDevices(); updateAddressDatalists(); }
+        function addDevice() { deviceCounter++; createDeviceBlock(deviceCounter); saveFormData(); }
+        function removeDevice(id) { var b = document.getElementById(id); if (b) b.remove(); renumberDevices(); updateAddressDatalists(); saveFormData(); }
         function renumberDevices() { document.querySelectorAll('.device-block').forEach(function(b,i){ b.id='device'+(i+1); var s=b.querySelector('.device-number'); if(s)s.textContent=i+1; }); deviceCounter=document.querySelectorAll('.device-block').length; }
 
         function checkType(deviceNum) {
@@ -545,13 +649,22 @@
             if (!typeVal) typeVal = (document.getElementById('typeField' + deviceNum)?.value || '').toLowerCase();
             var isDual = isDualSerialType(deviceNum);
             var dualBlock = document.getElementById('serialDualBlock' + deviceNum);
+            var serialField = document.getElementById('serialField' + deviceNum);
+            var serialBtn = document.getElementById('serialBtn' + deviceNum);
+            var serialVoiceBtn = document.getElementById('serialVoiceBtn' + deviceNum);
             var serialHint = document.getElementById('serialHint' + deviceNum);
             
             if (isDual) {
                 if (dualBlock) dualBlock.classList.add('active');
+                if (serialField) serialField.style.display = 'none';
+                if (serialBtn) serialBtn.style.display = 'none';
+                if (serialVoiceBtn) serialVoiceBtn.style.display = 'none';
                 if (serialHint) serialHint.style.display = 'none';
             } else {
                 if (dualBlock) dualBlock.classList.remove('active');
+                if (serialField) serialField.style.display = 'block';
+                if (serialBtn) serialBtn.style.display = 'block';
+                if (serialVoiceBtn) serialVoiceBtn.style.display = 'block';
                 if (serialHint) serialHint.style.display = 'block';
             }
         }
@@ -579,7 +692,7 @@
             list.style.display='block';
         }
         
-        function selectAutocomplete(deviceNum,name){ document.getElementById('nameField'+deviceNum).value=name; document.getElementById('autocompleteList'+deviceNum).style.display='none'; var ft=findTypeByName(name); if(ft){document.getElementById('typeField'+deviceNum).value=ft; checkType(deviceNum);} }
+        function selectAutocomplete(deviceNum,name){ document.getElementById('nameField'+deviceNum).value=name; document.getElementById('autocompleteList'+deviceNum).style.display='none'; var ft=findTypeByName(name); if(ft){document.getElementById('typeField'+deviceNum).value=ft; checkType(deviceNum);} saveFormData(); }
         function hideAutocomplete(deviceNum){ setTimeout(function(){ document.getElementById('autocompleteList'+deviceNum).style.display='none'; },200); }
 
         function changeFrameSize(dw,dh){ var frame=document.getElementById('cameraFrame'); var w=frame.offsetWidth+dw*window.innerWidth/100; var h=frame.offsetHeight+dh; if(w<50)w=50; if(w>window.innerWidth*0.95)w=window.innerWidth*0.95; if(h<15)h=15; if(h>350)h=350; frame.style.width=w+'px'; frame.style.height=h+'px'; frame.style.left=((window.innerWidth-w)/2)+'px'; frameSettings.width=(w/window.innerWidth*100)+'%'; frameSettings.height=h+'px'; localStorage.setItem('cameraFrame',JSON.stringify(frameSettings)); }
@@ -607,17 +720,18 @@
 
         function findTypeByName(name){ if(!name)return''; var nc=name.toLowerCase().replace(/[^a-zа-я0-9]/g,''),best='',bestScore=0; typesData.forEach(function(r){var ref=(r[1]||r[0]||'').toLowerCase().replace(/[^a-zа-я0-9]/g,'');if(ref&&nc.includes(ref)&&ref.length>bestScore){bestScore=ref.length;best=r[2]||r[1]||'';}});return best; }
         
-        function recognizeText(dataUrl,target,deviceNum){ setStatus('Распознавание...','loading'); Tesseract.recognize(dataUrl,'rus+eng',{logger:function(m){if(m.status==='recognizing text')setStatus('Распознавание: '+Math.round(m.progress*100)+'%','loading');}}).then(function(result){var text=cleanText(result.data.text);if(target==='name'){var nt=extractName(text);document.getElementById('nameField'+deviceNum).value=nt;var ft=findTypeByName(nt);if(ft){document.getElementById('typeField'+deviceNum).value=ft;checkType(deviceNum);}}else{document.getElementById('serialField'+deviceNum).value=extractSerial(text);}}).catch(function(){setStatus('❌ Ошибка','error');}); }
+        function recognizeText(dataUrl,target,deviceNum){ setStatus('Распознавание...','loading'); Tesseract.recognize(dataUrl,'rus+eng',{logger:function(m){if(m.status==='recognizing text')setStatus('Распознавание: '+Math.round(m.progress*100)+'%','loading');}}).then(function(result){var text=cleanText(result.data.text);if(target==='name'){var nt=extractName(text);document.getElementById('nameField'+deviceNum).value=nt;var ft=findTypeByName(nt);if(ft){document.getElementById('typeField'+deviceNum).value=ft;checkType(deviceNum);}}else{document.getElementById('serialField'+deviceNum).value=extractSerial(text);} saveFormData();}).catch(function(){setStatus('❌ Ошибка','error');}); }
         
         function cleanText(text){ var c=text.replace(/(\d)\.(\d)/g,'$1-$2').replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g,' ').replace(/\s+/g,' ').trim(); return c; }
         function extractName(text){ var noSerial=text.replace(/зав\.?\s*[№Nn]\s*\d+/gi,'').replace(/[№Nn]\s*\d+/gi,''); var tc=noSerial.toLowerCase().replace(/[^a-zа-я0-9]/g,''),best='',bestScore=0; typesData.forEach(function(r){var ref=(r[1]||r[0]||'').trim();if(!ref)return;var fw=ref.split(/[\s\-]+/)[0].toLowerCase().replace(/[^a-zа-я0-9]/g,'');if(fw.length>=3&&tc.indexOf(fw)!==-1&&ref.length>bestScore){bestScore=ref.length;best=ref;}});return best||noSerial.replace(/\s+/g,' ').trim(); }
         function extractSerial(text){ var m=text.match(/(?:зав\.?\s*)?[№Nn]\s*[:=\-\s]*\s*(\d{3,})/i)||text.match(/\b(\d{4,})\b/); return m?m[1].replace(/[^\d]/g,''):''; }
-        function addCompany(){ var name=prompt('Введите название компании:'); if(name&&name.trim()){document.getElementById('companySelect').innerHTML+='<option value="'+esc(name.trim())+'" selected>'+esc(name.trim())+'</option>';} }
+        function addCompany(){ var name=prompt('Введите название компании:'); if(name&&name.trim()){ var sel = document.getElementById('companySelect'); sel.innerHTML+='<option value="'+esc(name.trim())+'" selected>'+esc(name.trim())+'</option>'; saveFormData(); } }
 
         function newAct() {
             if (confirm('Очистить все поля и начать новый акт?')) {
                 document.getElementById('devicesContainer').innerHTML = '';
                 deviceCounter = 0; usedAddresses = [];
+                clearFormData();
                 addDevice();
                 setStatus('✅ Новый акт', 'success');
             }
@@ -673,6 +787,7 @@
                         if ((dev.type || '').toLowerCase().includes('тепловычислитель') && dev.akb) { var akbCheck = document.getElementById('akbCheck' + deviceCounter); if (akbCheck) akbCheck.checked = true; }
                     });
                     if (deviceCounter === 0) addDevice();
+                    saveFormData();
                     closeActsList();
                     setStatus('✅ Загружен акт №' + actNum, 'success');
                 });
@@ -713,7 +828,13 @@
             var form=document.createElement('form');form.method='POST';form.action=SCRIPT_URL;form.target='hiddenFrame';form.style.display='none';
             [{n:'date',v:ds},{n:'company',v:company},{n:'employee',v:employee},{n:'devices',v:JSON.stringify(devices)},{n:'email',v:email}].forEach(function(f){var i=document.createElement('input');i.type='hidden';i.name=f.n;i.value=f.v;form.appendChild(i);});
             document.body.appendChild(form);form.submit();document.body.removeChild(form);
-            setTimeout(function(){ setStatus('✅ Акт отправлен на '+email,'success'); btn.textContent='📧 Сформировать акт и отправить'; btn.style.background='#FF5722'; btn.disabled=false; },2000);
+            setTimeout(function(){ 
+                setStatus('✅ Акт отправлен на '+email,'success'); 
+                btn.textContent='📧 Сформировать акт и отправить'; 
+                btn.style.background='#FF5722'; 
+                btn.disabled=false;
+                clearFormData();
+            },2000);
         }
         
         function setStatus(msg,cls){var el=document.getElementById('status');el.textContent=msg;el.className='status';if(cls)el.classList.add(cls);}
