@@ -11,14 +11,11 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #F2F2F7; padding: 15px; max-width: 500px; margin: 0 auto; }
-        
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .header h1 { font-size: 22px; font-weight: 700; color: #000; letter-spacing: -0.3px; }
         .header p { font-size: 12px; color: #8E8E93; margin-top: 2px; }
-        
         .btn-settings { background: none; border: none; font-size: 24px; cursor: pointer; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 0.15s ease; }
         .btn-settings:active { background: #E5E5EA; }
-        
         .btn-ios { background: #007AFF; color: white; border: none; border-radius: 12px; padding: 14px 20px; font-size: 16px; font-weight: 500; letter-spacing: -0.2px; transition: all 0.15s ease; cursor: pointer; user-select: none; }
         .btn-ios:active { transform: scale(0.96); opacity: 0.8; }
         .btn-ios-gray { background: #8E8E93; color: white; border: none; border-radius: 12px; padding: 14px 20px; font-size: 16px; font-weight: 500; transition: all 0.15s ease; cursor: pointer; user-select: none; }
@@ -26,7 +23,6 @@
         .btn-ios-green { background: #34C759; color: white; border: none; border-radius: 12px; padding: 16px 20px; font-size: 17px; font-weight: 600; transition: all 0.15s ease; cursor: pointer; user-select: none; width: 100%; }
         .btn-ios-green:active { transform: scale(0.97); opacity: 0.8; }
         .btn-ios-green:disabled { background: #AEAEB2; }
-        
         .btn-ios-icon { width: 44px; height: 44px; min-width: 44px; border-radius: 50%; background: #F2F2F7; border: none; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; cursor: pointer; user-select: none; flex: 0 0 auto; }
         .btn-ios-icon:active { background: #E5E5EA; transform: scale(0.92); }
         .btn-ios-icon.green { background: #34C759; color: white; }
@@ -35,32 +31,25 @@
         .btn-ios-icon.red:active { background: #E0352B; }
         .btn-ios-icon.pink { background: #FF2D55; color: white; }
         .btn-ios-icon.pink:active { background: #E0284D; }
-        
         .field-group { margin-bottom: 12px; }
         .field-group label { display: block; font-size: 13px; font-weight: 600; color: #3C3C43; margin-bottom: 4px; letter-spacing: -0.1px; }
         .field-row { display: flex; gap: 8px; align-items: center; }
         .field-row input, .field-row select { flex: 1; padding: 12px; border: 1px solid #E5E5EA; border-radius: 10px; font-size: 16px; background: #FFFFFF; color: #000; transition: border-color 0.2s ease; }
         .field-row input:focus, .field-row select:focus { outline: none; border-color: #007AFF; }
-        
         .device-block { background: #FFFFFF; border-radius: 16px; padding: 16px; margin-bottom: 12px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.06); animation: fadeInUp 0.3s ease-out; }
         .device-title { font-size: 15px; font-weight: 600; color: #000; margin-bottom: 10px; letter-spacing: -0.2px; }
         .device-number { background: #F2F2F7; border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; margin-right: 8px; color: #007AFF; }
-        
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
-        
         .skeleton { background: linear-gradient(90deg, #E5E5EA 25%, #F2F2F7 50%, #E5E5EA 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 10px; }
         .skeleton-text { height: 14px; margin: 8px 0; }
         .skeleton-block { height: 50px; margin: 10px 0; border-radius: 14px; }
-        
         .spinner { display: inline-block; width: 18px; height: 18px; border: 2.5px solid rgba(0,0,0,0.1); border-top-color: #007AFF; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
         .spinner-white { border-color: rgba(255,255,255,0.3); border-top-color: white; }
-        
         .status { text-align: center; margin-top: 12px; font-size: 13px; color: #8E8E93; min-height: 20px; }
         .status.success { color: #34C759; } .status.error { color: #FF3B30; } .status.loading { color: #007AFF; }
-        
         .hint { font-size: 11px; color: #AEAEB2; margin-top: 4px; text-align: center; }
         .section-title { font-size: 13px; color: #8E8E93; margin: 16px 0 8px; padding-top: 12px; font-weight: 600; }
         .preview { width: 100%; max-height: 120px; object-fit: contain; margin-top: 6px; border-radius: 10px; display: none; }
@@ -68,39 +57,32 @@
         .act-toolbar { display: flex; gap: 8px; margin-bottom: 16px; }
         .checkbox-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 15px; }
         .checkbox-row input { width: 20px; height: 20px; accent-color: #007AFF; }
-        
         .autocomplete-wrap { position: relative; flex: 1; }
         .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: #FFFFFF; border: 1px solid #E5E5EA; border-radius: 0 0 10px 10px; z-index: 100; display: none; list-style: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .autocomplete-list li { padding: 12px; cursor: pointer; font-size: 16px; border-bottom: 1px solid #F2F2F7; transition: background 0.1s; }
         .autocomplete-list li:active { background: #007AFF; color: white; }
         .autocomplete-list li:last-child { border-bottom: none; }
-        
         #settingsPanel { display: none; background: #FFFFFF; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
         #settingsPanel h3 { margin-bottom: 12px; font-size: 17px; }
         #settingsPanel input { width: 100%; padding: 12px; border: 1px solid #E5E5EA; border-radius: 10px; font-size: 16px; margin-bottom: 10px; }
-        
         #cameraOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; }
         #cameraVideo { width: 100%; height: 100%; object-fit: cover; }
         #cameraFrame { position: absolute; border: 3px solid #34C759; border-radius: 16px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.55); }
         #cameraFrameLabel { position: absolute; top: -30px; left: 0; width: 100%; text-align: center; color: #fff; font-size: 14px; font-weight: 600; }
         #cameraCaptureBtn { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); width: 72px; height: 72px; background: #fff; border: 4px solid #34C759; border-radius: 50%; cursor: pointer; z-index: 10001; }
         #cameraCloseBtn { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 28px; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; z-index: 10001; display: flex; align-items: center; justify-content: center; }
-        
         #actsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
         #actsModal .modal-content { background: #FFFFFF; margin: 60px auto; padding: 20px; border-radius: 20px; max-width: 420px; max-height: 75%; overflow-y: auto; }
         #actsModal h3 { margin-bottom: 16px; font-size: 18px; }
         #actsModal .act-item { padding: 14px; background: #F2F2F7; border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s ease; }
         #actsModal .act-item:active { transform: scale(0.98); background: #E5E5EA; }
-        
         .saved-indicator { font-size: 11px; color: #34C759; text-align: right; margin-top: 4px; display: none; animation: fadeInUp 0.3s ease-out; }
-        
         .serial-dual-block { display: none; margin-top: 8px; padding: 10px; background: #F2F2F7; border-radius: 12px; }
         .serial-dual-block.active { display: block; }
         .serial-dual-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
         .serial-dual-row:last-child { margin-bottom: 0; }
         .serial-dual-row label { font-size: 12px; font-weight: 600; color: #8E8E93; min-width: 40px; }
         .serial-dual-row input { flex: 1; padding: 10px; border: 1px solid #E5E5EA; border-radius: 8px; font-size: 15px; }
-        
         .voice-variants { margin-top: 8px; display: none; }
         .voice-variants.active { display: block; }
         .voice-variant-item { padding: 10px 14px; margin: 4px 0; background: #F2F2F7; border-radius: 10px; cursor: pointer; font-size: 15px; transition: all 0.15s ease; }
@@ -231,7 +213,7 @@
                     setTimeout(function() {
                         var n = deviceCounter;
                         document.getElementById('nameField' + n).value = dev.name || ''; document.getElementById('typeField' + n).value = dev.type || ''; document.getElementById('noteField' + n).value = dev.note || '';
-                        if (dev.serial2) { document.getElementById('serialField' + n).style.display = 'none'; document.getElementById('serialDual1_' + n).value = dev.serial || ''; document.getElementById('serialDual2_' + n).value = dev.serial2 || ''; checkType(n); }
+                        if (dev.serial2) { document.getElementById('serialDual1_' + n).value = dev.serial || ''; document.getElementById('serialDual2_' + n).value = dev.serial2 || ''; checkType(n); fixSerialLetter(n, 1); fixSerialLetter(n, 2); }
                         else document.getElementById('serialField' + n).value = dev.serial || '';
                         if (dev.address) { document.getElementById('addressField' + n).value = dev.address; if (usedAddresses.indexOf(dev.address) === -1) usedAddresses.push(dev.address); }
                         if (dev.akb) { var cb = document.getElementById('akbCheck' + n); if (cb) cb.checked = true; }
@@ -269,11 +251,32 @@
 
         function isDualSerialType(deviceNum) { var t = (document.getElementById('typeField' + deviceNum)?.value || '').toLowerCase(); return t.includes('термометр сопротивления') || t.includes('ктсп') || t.includes('ктптр') || t.includes('тспа'); }
 
+        // ============ ИСПРАВЛЕНИЕ БУКВЫ ============
+        function fixSerialLetter(deviceNum, fieldNum) {
+            var fieldId = 'serialDual' + fieldNum + '_' + deviceNum;
+            var field = document.getElementById(fieldId);
+            if (!field) return;
+            
+            var value = field.value;
+            value = value.replace(/[хХ]$/, 'Х');
+            value = value.replace(/[гГ]$/, 'Г');
+            value = value.replace(/[аА]$/, 'А');
+            value = value.replace(/[вВ]$/, 'В');
+            value = value.replace(/[бБ]$/, 'Б');
+            
+            field.value = value;
+        }
+
         function initVoiceRecognition() {
             var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SR) { recognition = new SR(); recognition.lang = 'ru-RU'; recognition.interimResults = false; recognition.continuous = false; recognition.maxAlternatives = 5;
                 recognition.onresult = function(e) { voiceResults = []; for (var i = 0; i < e.results.length; i++) for (var j = 0; j < e.results[i].length; j++) voiceResults.push(e.results[i][j].transcript.trim());
-                    if (voiceResults.length > 0 && currentVoiceDevice) { if (currentVoiceField === 'name') showVoiceVariants(voiceResults); else { var f = document.getElementById(currentVoiceField + currentVoiceDevice); if (f) { f.value = currentVoiceField === 'serialField' ? extractSerialEnhanced(voiceResults[0]) : voiceResults[0]; saveFormData(); } stopVoiceInput(); } } };
+                    if (voiceResults.length > 0 && currentVoiceDevice) {
+                        if (currentVoiceField === 'name') { showVoiceVariants(voiceResults); }
+                        else if (currentVoiceField === 'serialDual1_') { var f = document.getElementById('serialDual1_' + currentVoiceDevice); if (f) { f.value = extractSerialEnhanced(voiceResults[0]); fixSerialLetter(currentVoiceDevice, 1); saveFormData(); } stopVoiceInput(); }
+                        else if (currentVoiceField === 'serialDual2_') { var f = document.getElementById('serialDual2_' + currentVoiceDevice); if (f) { f.value = extractSerialEnhanced(voiceResults[0]); fixSerialLetter(currentVoiceDevice, 2); saveFormData(); } stopVoiceInput(); }
+                        else { var f = document.getElementById(currentVoiceField + currentVoiceDevice); if (f) { f.value = currentVoiceField === 'serialField' ? extractSerialEnhanced(voiceResults[0]) : voiceResults[0]; saveFormData(); } stopVoiceInput(); }
+                    } };
                 recognition.onerror = function() { stopVoiceInput(); }; recognition.onend = function() { if (isListening) stopVoiceInput(); }; isVoiceSupported = true; }
         }
 
@@ -336,8 +339,17 @@
                     <button class="btn-ios-icon pink voice-btn-serialField-${num}" onclick="startVoiceInput(${num},'serialField')">🎤</button>
                 </div>
                 <div class="serial-dual-block" id="serialDualBlock${num}">
-                    <div class="serial-dual-row"><label>Ном. 1:</label><input type="text" id="serialDual1_${num}" placeholder="Первый номер" oninput="saveFormData();"></div>
-                    <div class="serial-dual-row"><label>Ном. 2:</label><input type="text" id="serialDual2_${num}" placeholder="Второй номер" oninput="saveFormData();"></div>
+                    <div class="serial-dual-row">
+                        <label>Ном. 1:</label>
+                        <input type="text" id="serialDual1_${num}" placeholder="Первый номер" oninput="fixSerialLetter(${num},1); saveFormData();" style="flex:1;">
+                        <button class="btn-ios-icon pink voice-btn-serialDual1_-${num}" onclick="startVoiceInput(${num},'serialDual1_')">🎤</button>
+                    </div>
+                    <div class="serial-dual-row">
+                        <label>Ном. 2:</label>
+                        <input type="text" id="serialDual2_${num}" placeholder="Второй номер" oninput="fixSerialLetter(${num},2); saveFormData();" style="flex:1;">
+                        <button class="btn-ios-icon pink voice-btn-serialDual2_-${num}" onclick="startVoiceInput(${num},'serialDual2_')">🎤</button>
+                    </div>
+                    <div class="serial-hint">🔤 Буква (Х, Г, А) всегда заглавная</div>
                 </div>
                 <div class="serial-hint">💡 "865 451" → 865451, "45678 10" → 45678/10</div></div>
                 <div class="field-group"><label>Адрес:</label><div class="field-row">
@@ -391,7 +403,7 @@
                 if (act.employee) { var s = document.getElementById('employeeSelect'); for (var i = 0; i < s.options.length; i++) { if (s.options[i].value.indexOf(act.employee) !== -1) { s.value = s.options[i].value; break; } } }
                 document.getElementById('devicesContainer').innerHTML = ''; deviceCounter = 0; usedAddresses = [];
                 act.devices.forEach(function(dev) { deviceCounter++; createDeviceBlock(deviceCounter); document.getElementById('nameField' + deviceCounter).value = dev.name || ''; document.getElementById('typeField' + deviceCounter).value = dev.type || ''; document.getElementById('noteField' + deviceCounter).value = dev.note || ''; checkType(deviceCounter);
-                    if (isDualSerialType(deviceCounter) && dev.serial && dev.serial.includes('/')) { var p = dev.serial.split('/'); document.getElementById('serialDual1_' + deviceCounter).value = p[0] || ''; document.getElementById('serialDual2_' + deviceCounter).value = p[1] || ''; } else document.getElementById('serialField' + deviceCounter).value = dev.serial || '';
+                    if (isDualSerialType(deviceCounter) && dev.serial && dev.serial.includes('/')) { var p = dev.serial.split('/'); document.getElementById('serialDual1_' + deviceCounter).value = p[0] || ''; document.getElementById('serialDual2_' + deviceCounter).value = p[1] || ''; fixSerialLetter(deviceCounter, 1); fixSerialLetter(deviceCounter, 2); } else document.getElementById('serialField' + deviceCounter).value = dev.serial || '';
                     if (dev.address) { document.getElementById('addressField' + deviceCounter).value = dev.address; if (usedAddresses.indexOf(dev.address) === -1) usedAddresses.push(dev.address); } if (dev.akb) { var cb = document.getElementById('akbCheck' + deviceCounter); if (cb) cb.checked = true; } });
                 if (deviceCounter === 0) addDevice(); saveFormData(); closeActsList(); setStatus('✅ Загружен акт №' + actNum, 'success');
             });
