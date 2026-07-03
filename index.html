@@ -85,7 +85,7 @@
         .voice-variant-item { padding: 10px 14px; margin: 4px 0; background: #F2F2F7; border-radius: 10px; cursor: pointer; font-size: 15px; }
         .voice-variant-item:active { background: #007AFF; color: white; }
         .serial-hint { font-size: 10px; color: #AEAEB2; margin-top: 4px; }
-        #printContainer { text-align: center; margin-top: 8px; display: none; }
+        #printContainer { text-align: center; margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -139,7 +139,6 @@
         var recognition = null, isVoiceSupported = false, isListening = false;
         var currentVoiceDevice = null, currentVoiceField = null, voiceResults = [];
         var allTypesFromSheet = [], saveTimeout = null;
-        var lastActSheetId = null;
 
         window.addEventListener('load', function() {
             document.getElementById('settingsEmail').value = settings.email || '';
@@ -163,100 +162,26 @@
         function getTypeNames(){ var names=[]; typesData.forEach(function(r){ var n=r[1]||r[0]||''; if(n&&names.indexOf(n)===-1)names.push(n); }); return names; }
         function isDualSerialType(deviceNum){ var t=(document.getElementById('typeField'+deviceNum)?.value||'').toLowerCase(); return t.includes('термометр сопротивления')||t.includes('ктсп')||t.includes('ктптр')||t.includes('тспа'); }
 
-        function fixSerialLetter(deviceNum, fieldNum) {
-            var fieldId = 'serialDual' + fieldNum + '_' + deviceNum;
-            var field = document.getElementById(fieldId); if (!field) return;
-            field.value = field.value.replace(/[хХ]$/, 'Х').replace(/[гГ]$/, 'Г').replace(/[аА]$/, 'А').replace(/[вВ]$/, 'В').replace(/[бБ]$/, 'Б');
-            if (fieldNum === 1) autoFillSecondSerial(deviceNum);
-            saveFormData();
-        }
+        function fixSerialLetter(deviceNum, fieldNum) { var fieldId = 'serialDual' + fieldNum + '_' + deviceNum; var field = document.getElementById(fieldId); if (!field) return; field.value = field.value.replace(/[хХ]$/, 'Х').replace(/[гГ]$/, 'Г').replace(/[аА]$/, 'А').replace(/[вВ]$/, 'В').replace(/[бБ]$/, 'Б'); if (fieldNum === 1) autoFillSecondSerial(deviceNum); saveFormData(); }
+        function autoFillSecondSerial(deviceNum) { var dual1 = document.getElementById('serialDual1_' + deviceNum), dual2 = document.getElementById('serialDual2_' + deviceNum); if (!dual1 || !dual2) return; var s1 = dual1.value.trim(); if (!s1 || s1.length < 4) return; var lastChar = s1.slice(-1).toUpperCase(), base = s1.slice(0, -1); if (/^[А-Я]$/.test(lastChar)) { if (lastChar === 'Х') dual2.value = base + 'Г'; else if (lastChar === 'Г') dual2.value = base + 'Х'; else if (lastChar === 'А') dual2.value = base; } else if (s1.includes('/')) { var parts = s1.split('/'); if (parts.length === 2 && parts[1] === '1') dual2.value = parts[0] + '/2'; else if (parts.length === 2 && parts[1] === '2') dual2.value = parts[0] + '/1'; } saveFormData(); }
+        function onDual2Change(deviceNum) { var field = document.getElementById('serialDual2_' + deviceNum); if (!field) return; field.value = field.value.replace(/[хХ]$/, 'Х').replace(/[гГ]$/, 'Г').replace(/[аА]$/, 'А').replace(/[вВ]$/, 'В').replace(/[бБ]$/, 'Б'); saveFormData(); }
 
-        function autoFillSecondSerial(deviceNum) {
-            var dual1 = document.getElementById('serialDual1_' + deviceNum), dual2 = document.getElementById('serialDual2_' + deviceNum);
-            if (!dual1 || !dual2) return;
-            var s1 = dual1.value.trim(); if (!s1 || s1.length < 4) return;
-            var lastChar = s1.slice(-1).toUpperCase(), base = s1.slice(0, -1);
-            if (/^[А-Я]$/.test(lastChar)) {
-                if (lastChar === 'Х') dual2.value = base + 'Г'; else if (lastChar === 'Г') dual2.value = base + 'Х'; else if (lastChar === 'А') dual2.value = base;
-            } else if (s1.includes('/')) {
-                var parts = s1.split('/'); if (parts.length === 2 && parts[1] === '1') dual2.value = parts[0] + '/2'; else if (parts.length === 2 && parts[1] === '2') dual2.value = parts[0] + '/1';
-            }
-            saveFormData();
-        }
-
-        function onDual2Change(deviceNum) {
-            var field = document.getElementById('serialDual2_' + deviceNum); if (!field) return;
-            field.value = field.value.replace(/[хХ]$/, 'Х').replace(/[гГ]$/, 'Г').replace(/[аА]$/, 'А').replace(/[вВ]$/, 'В').replace(/[бБ]$/, 'Б');
-            saveFormData();
-        }
-
-        function initVoiceRecognition() {
-            var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (SR) { recognition = new SR(); recognition.lang = 'ru-RU'; recognition.interimResults = false; recognition.continuous = false; recognition.maxAlternatives = 5;
-                recognition.onresult = function(e) { voiceResults = []; for (var i = 0; i < e.results.length; i++) for (var j = 0; j < e.results[i].length; j++) voiceResults.push(e.results[i][j].transcript.trim());
-                    if (voiceResults.length > 0 && currentVoiceDevice) {
-                        if (currentVoiceField === 'name') showVoiceVariants(voiceResults);
-                        else if (currentVoiceField === 'serialDual1_') { var f = document.getElementById('serialDual1_' + currentVoiceDevice); if (f) { f.value = extractSerialEnhanced(voiceResults[0]); fixSerialLetter(currentVoiceDevice, 1); } stopVoiceInput(); }
-                        else if (currentVoiceField === 'serialDual2_') { var f = document.getElementById('serialDual2_' + currentVoiceDevice); if (f) { f.value = extractSerialEnhanced(voiceResults[0]); onDual2Change(currentVoiceDevice); } stopVoiceInput(); }
-                        else { var f = document.getElementById(currentVoiceField + currentVoiceDevice); if (f) { f.value = currentVoiceField === 'serialField' ? extractSerialEnhanced(voiceResults[0]) : voiceResults[0]; saveFormData(); } stopVoiceInput(); }
-                    } };
-                recognition.onerror = function() { stopVoiceInput(); }; recognition.onend = function() { if (isListening) stopVoiceInput(); }; isVoiceSupported = true; }
-        }
-
-        function startVoiceInput(deviceNum, field) {
-            if (!isVoiceSupported) { alert('Не поддерживается. Используйте Chrome.'); return; }
-            if (isListening) { stopVoiceInput(); return; }
-            currentVoiceDevice = deviceNum; currentVoiceField = field; isListening = true;
-            document.querySelectorAll('.btn-ios-icon.pink').forEach(function(b) { b.style.animation = ''; });
-            var btn = document.querySelector('.voice-btn-' + field + '-' + deviceNum); if (btn) btn.style.animation = 'pulse 1s infinite';
-            if (field === 'name') { var ve = document.getElementById('voiceVariants' + deviceNum); if (ve) { ve.classList.remove('active'); ve.innerHTML = ''; } }
-            if (navigator.vibrate) navigator.vibrate(10);
-            try { recognition.start(); } catch(e) {} setStatus('🎤 Слушаю...', 'loading');
-        }
-
+        function initVoiceRecognition() { var SR = window.SpeechRecognition || window.webkitSpeechRecognition; if (SR) { recognition = new SR(); recognition.lang = 'ru-RU'; recognition.interimResults = false; recognition.continuous = false; recognition.maxAlternatives = 5; recognition.onresult = function(e) { voiceResults = []; for (var i = 0; i < e.results.length; i++) for (var j = 0; j < e.results[i].length; j++) voiceResults.push(e.results[i][j].transcript.trim()); if (voiceResults.length > 0 && currentVoiceDevice) { if (currentVoiceField === 'name') showVoiceVariants(voiceResults); else if (currentVoiceField === 'serialDual1_') { var f = document.getElementById('serialDual1_' + currentVoiceDevice); if (f) { f.value = extractSerialEnhanced(voiceResults[0]); fixSerialLetter(currentVoiceDevice, 1); } stopVoiceInput(); } else if (currentVoiceField === 'serialDual2_') { var f = document.getElementById('serialDual2_' + currentVoiceDevice); if (f) { f.value = extractSerialEnhanced(voiceResults[0]); onDual2Change(currentVoiceDevice); } stopVoiceInput(); } else { var f = document.getElementById(currentVoiceField + currentVoiceDevice); if (f) { f.value = currentVoiceField === 'serialField' ? extractSerialEnhanced(voiceResults[0]) : voiceResults[0]; saveFormData(); } stopVoiceInput(); } } }; recognition.onerror = function() { stopVoiceInput(); }; recognition.onend = function() { if (isListening) stopVoiceInput(); }; isVoiceSupported = true; } }
+        function startVoiceInput(deviceNum, field) { if (!isVoiceSupported) { alert('Не поддерживается. Используйте Chrome.'); return; } if (isListening) { stopVoiceInput(); return; } currentVoiceDevice = deviceNum; currentVoiceField = field; isListening = true; document.querySelectorAll('.btn-ios-icon.pink').forEach(function(b) { b.style.animation = ''; }); var btn = document.querySelector('.voice-btn-' + field + '-' + deviceNum); if (btn) btn.style.animation = 'pulse 1s infinite'; if (field === 'name') { var ve = document.getElementById('voiceVariants' + deviceNum); if (ve) { ve.classList.remove('active'); ve.innerHTML = ''; } } if (navigator.vibrate) navigator.vibrate(10); try { recognition.start(); } catch(e) {} setStatus('🎤 Слушаю...', 'loading'); }
         function stopVoiceInput() { isListening = false; document.querySelectorAll('.btn-ios-icon.pink').forEach(function(b) { b.style.animation = ''; }); try { recognition.stop(); } catch(e) {} setStatus('✅ Готов', 'success'); }
-
-        function showVoiceVariants(results) {
-            if (!currentVoiceDevice) return; var ve = document.getElementById('voiceVariants' + currentVoiceDevice); if (!ve) return;
-            var all = []; results.forEach(function(t) { var m = findTypeMatches(t); m.forEach(function(match) { if (!all.some(function(v) { return v.name === match.name; })) all.push(match); }); });
-            if (all.length === 0) results.forEach(function(t) { if (t.length > 3) all.push({ name: t, score: 0 }); });
-            all.sort(function(a, b) { return b.score - a.score; }); var top = all.slice(0, 5);
-            if (top.length > 0) { ve.innerHTML = ''; top.forEach(function(v, i) { var item = document.createElement('div'); item.className = 'voice-variant-item'; item.textContent = (i+1) + '. ' + v.name; item.onclick = function() { selectVoiceVariant(v.name); }; ve.appendChild(item); }); ve.classList.add('active'); }
-            stopVoiceInput();
-        }
-
+        function showVoiceVariants(results) { if (!currentVoiceDevice) return; var ve = document.getElementById('voiceVariants' + currentVoiceDevice); if (!ve) return; var all = []; results.forEach(function(t) { var m = findTypeMatches(t); m.forEach(function(match) { if (!all.some(function(v) { return v.name === match.name; })) all.push(match); }); }); if (all.length === 0) results.forEach(function(t) { if (t.length > 3) all.push({ name: t, score: 0 }); }); all.sort(function(a, b) { return b.score - a.score; }); var top = all.slice(0, 5); if (top.length > 0) { ve.innerHTML = ''; top.forEach(function(v, i) { var item = document.createElement('div'); item.className = 'voice-variant-item'; item.textContent = (i+1) + '. ' + v.name; item.onclick = function() { selectVoiceVariant(v.name); }; ve.appendChild(item); }); ve.classList.add('active'); } stopVoiceInput(); }
         function selectVoiceVariant(name) { if (!currentVoiceDevice) return; document.getElementById('nameField'+currentVoiceDevice).value=name; var ft=findTypeByName(name); if(ft){document.getElementById('typeField'+currentVoiceDevice).value=ft; checkType(currentVoiceDevice);} document.getElementById('voiceVariants'+currentVoiceDevice).classList.remove('active'); document.getElementById('voiceVariants'+currentVoiceDevice).innerHTML=''; saveFormData(); currentVoiceDevice=null; currentVoiceField=null; setStatus('✅ '+name,'success'); }
         function findTypeMatches(text){ if(!text)return[]; var ct=text.toLowerCase().replace(/[^a-zа-я0-9\s]/g,' ').replace(/\s+/g,' ').trim(); var types=allTypesFromSheet.length>0?allTypesFromSheet:getTypeNames(); var words=ct.split(/\s+/); var results=[]; types.forEach(function(st){ var tc=st.toLowerCase().replace(/[^a-zа-я0-9\s]/g,' ').replace(/\s+/g,' ').trim(); if(tc.length<2)return; var s=calculateMatchScore(ct,words,tc); if(s>10)results.push({name:st,score:s}); }); results.sort(function(a,b){return b.score-a.score;}); return results.slice(0,5); }
         function calculateMatchScore(text,words,typeName){ var s=0; if(text.indexOf(typeName)!==-1)s+=100; var tw=typeName.split(/\s+/),mw=0; tw.forEach(function(w){ if(w.length<2)return; for(var i=0;i<words.length;i++){ if(words[i]===w){s+=30;mw++;}else if(w.startsWith(words[i])&&words[i].length>=2){s+=20;mw++;}else if(words[i].startsWith(w)&&w.length>=2){s+=15;mw++;} } }); if(mw>=tw.length)s+=50; else if(mw>0)s+=mw*8; s+=Math.min(typeName.length,15); return s; }
-
-        function extractSerialEnhanced(text) {
-            var cleaned = text.replace(/[^а-яА-ЯёЁa-zA-Z0-9\s\/№\-]/g, ' ').replace(/\s+/g, ' ').trim();
-            var slashIdx = cleaned.search(/\s*(?:дробь|слеш|слэш|\/)\s*/i);
-            if (slashIdx > 0) { var before = cleaned.substring(0, slashIdx).replace(/\s+/g, ''); var after = cleaned.substring(slashIdx).replace(/[^\d]/g, ''); if (before && after) return before + '/' + after; }
-            var withLetter = cleaned.match(/(\d[\d\s]*?)\s*([А-ЯХГABEKMHOPTXCа-яхгabekmhoptyxc]+)\s*$/i);
-            if (withLetter) { var num = withLetter[1].replace(/\s+/g, ''); var letter = withLetter[2].toUpperCase(); if (/^(ИКС|Х|X)$/i.test(letter)) letter = 'Х'; else if (/^(ГЭ|Г|G)$/i.test(letter)) letter = 'Г'; else if (/^(А|A)$/i.test(letter)) letter = 'А'; return num + letter; }
-            var nums = cleaned.match(/\d+/g); if (!nums) return cleaned; return nums.length === 1 ? nums[0] : nums.join('');
-        }
+        function extractSerialEnhanced(text) { var cleaned = text.replace(/[^а-яА-ЯёЁa-zA-Z0-9\s\/№\-]/g, ' ').replace(/\s+/g, ' ').trim(); var slashIdx = cleaned.search(/\s*(?:дробь|слеш|слэш|\/)\s*/i); if (slashIdx > 0) { var before = cleaned.substring(0, slashIdx).replace(/\s+/g, ''); var after = cleaned.substring(slashIdx).replace(/[^\d]/g, ''); if (before && after) return before + '/' + after; } var withLetter = cleaned.match(/(\d[\d\s]*?)\s*([А-ЯХГABEKMHOPTXCа-яхгabekmhoptyxc]+)\s*$/i); if (withLetter) { var num = withLetter[1].replace(/\s+/g, ''); var letter = withLetter[2].toUpperCase(); if (/^(ИКС|Х|X)$/i.test(letter)) letter = 'Х'; else if (/^(ГЭ|Г|G)$/i.test(letter)) letter = 'Г'; else if (/^(А|A)$/i.test(letter)) letter = 'А'; return num + letter; } var nums = cleaned.match(/\d+/g); if (!nums) return cleaned; return nums.length === 1 ? nums[0] : nums.join(''); }
 
         function createDeviceBlock(num) {
             var b = document.createElement('div'); b.className = 'device-block'; b.id = 'device' + num;
             b.innerHTML = `<div class="device-title"><span class="device-number">${num}</span> Прибор</div>
-                <div class="field-group"><label>Название:</label><div class="field-row">
-                    <div class="autocomplete-wrap"><input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${num}); saveFormData();" onfocus="filterAutocomplete(${num})" onblur="hideAutocomplete(${num})" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;"><ul class="autocomplete-list" id="autocompleteList${num}"></ul></div>
-                    <button class="btn-ios-icon green" onclick="openCamera('name',${num})">📷</button>
-                    <button class="btn-ios-icon pink voice-btn-name-${num}" onclick="startVoiceInput(${num},'name')">🎤</button>
-                </div><div class="voice-variants" id="voiceVariants${num}"></div></div>
+                <div class="field-group"><label>Название:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${num}); saveFormData();" onfocus="filterAutocomplete(${num})" onblur="hideAutocomplete(${num})" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;"><ul class="autocomplete-list" id="autocompleteList${num}"></ul></div><button class="btn-ios-icon green" onclick="openCamera('name',${num})">📷</button><button class="btn-ios-icon pink voice-btn-name-${num}" onclick="startVoiceInput(${num},'name')">🎤</button></div><div class="voice-variants" id="voiceVariants${num}"></div></div>
                 <div class="field-group"><label>Тип:</label><input type="text" id="typeField${num}" placeholder="Авто или вручную" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="checkType(${num}); saveFormData();"></div>
-                <div class="field-group"><label>Заводской номер:</label><div class="field-row">
-                    <input type="text" id="serialField${num}" placeholder="Номер" style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="saveFormData();">
-                    <button class="btn-ios-icon green" onclick="openCamera('serial',${num})">📷</button>
-                    <button class="btn-ios-icon pink voice-btn-serialField-${num}" onclick="startVoiceInput(${num},'serialField')">🎤</button>
-                </div>
-                <div class="serial-dual-block" id="serialDualBlock${num}">
-                    <div class="serial-dual-row"><label>Ном. 1:</label><input type="text" id="serialDual1_${num}" placeholder="Первый номер" oninput="fixSerialLetter(${num},1);" style="flex:1;"><button class="btn-ios-icon pink voice-btn-serialDual1_-${num}" onclick="startVoiceInput(${num},'serialDual1_')">🎤</button></div>
-                    <div class="serial-dual-row"><label>Ном. 2:</label><input type="text" id="serialDual2_${num}" placeholder="Второй номер (авто)" oninput="onDual2Change(${num});" style="flex:1;"><button class="btn-ios-icon pink voice-btn-serialDual2_-${num}" onclick="startVoiceInput(${num},'serialDual2_')">🎤</button></div>
-                    <div class="serial-hint">🔤 Х↔Г авто | А = без буквы | 1↔2 авто</div>
-                </div>
+                <div class="field-group"><label>Заводской номер:</label><div class="field-row"><input type="text" id="serialField${num}" placeholder="Номер" style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="saveFormData();"><button class="btn-ios-icon green" onclick="openCamera('serial',${num})">📷</button><button class="btn-ios-icon pink voice-btn-serialField-${num}" onclick="startVoiceInput(${num},'serialField')">🎤</button></div>
+                <div class="serial-dual-block" id="serialDualBlock${num}"><div class="serial-dual-row"><label>Ном. 1:</label><input type="text" id="serialDual1_${num}" placeholder="Первый номер" oninput="fixSerialLetter(${num},1);" style="flex:1;"><button class="btn-ios-icon pink voice-btn-serialDual1_-${num}" onclick="startVoiceInput(${num},'serialDual1_')">🎤</button></div><div class="serial-dual-row"><label>Ном. 2:</label><input type="text" id="serialDual2_${num}" placeholder="Второй номер (авто)" oninput="onDual2Change(${num});" style="flex:1;"><button class="btn-ios-icon pink voice-btn-serialDual2_-${num}" onclick="startVoiceInput(${num},'serialDual2_')">🎤</button></div><div class="serial-hint">🔤 Х↔Г авто | А = без буквы | 1↔2 авто</div></div>
                 <div class="serial-hint">💡 "4540 дробь 1" → 4540/1, "1312 г" → 1312Г</div></div>
                 <div class="field-group"><label>Адрес:</label><div class="field-row"><input type="text" id="addressField${num}" placeholder="Введите" style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" onchange="addAddressToList(this.value); saveFormData();"><button class="btn-ios-icon pink voice-btn-addressField-${num}" onclick="startVoiceInput(${num},'addressField')">🎤</button></div></div>
                 <div class="checkbox-row" id="akbRow${num}" style="display:none;"><input type="checkbox" id="akbCheck${num}" onchange="saveFormData();"><label>Замена АКБ</label></div>
@@ -278,17 +203,28 @@
         function recognizeText(dataUrl,target,deviceNum){ setStatus('Распознавание...','loading'); Tesseract.recognize(dataUrl,'rus+eng',{logger:function(m){if(m.status==='recognizing text')setStatus('Распознавание: '+Math.round(m.progress*100)+'%','loading');}}).then(function(result){var text=result.data.text.replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g,' ').replace(/\s+/g,' ').trim();if(target==='name'){document.getElementById('nameField'+deviceNum).value=text;var ft=findTypeByName(text);if(ft){document.getElementById('typeField'+deviceNum).value=ft;checkType(deviceNum);}}else{document.getElementById('serialField'+deviceNum).value=text.match(/\d{3,}/)?.[0]||'';}saveFormData();}).catch(function(){setStatus('❌ Ошибка','error');}); }
         function addCompany() { var name = prompt('Введите название компании:'); if (name && name.trim()) { var sel = document.getElementById('companySelect'); sel.innerHTML += '<option value="' + esc(name.trim()) + '" selected>' + esc(name.trim()) + '</option>'; saveFormData(); fetch(SCRIPT_URL + '?action=addCompany&name=' + encodeURIComponent(name.trim())).then(r => r.json()).then(function(res) { if (res.status === 'success') setStatus('✅ Компания сохранена', 'success'); }).catch(function(){}); } }
         function newAct() { if (confirm('Очистить все поля?')) { document.getElementById('devicesContainer').innerHTML = ''; deviceCounter = 0; usedAddresses = []; clearFormData(); addDevice(); setStatus('✅ Новый акт', 'success'); document.getElementById('printBtn').style.display = 'none'; } }
-        function openActsList() { document.getElementById('actsModal').style.display = 'block'; document.getElementById('actsList').innerHTML = '<div class="spinner"></div> Загрузка...'; fetch(SCRIPT_URL + '?action=getActs').then(r => r.json()).then(function(acts) { var html = ''; Object.keys(acts).sort().reverse().forEach(function(n) { var a = acts[n]; html += '<div class="act-item" onclick="loadAct(\'' + n + '\')"><b>Акт №' + n + '</b> от ' + a.date + '<br>Компания: ' + a.company + ' | Приборов: ' + a.devicesCount + '</div>'; }); document.getElementById('actsList').innerHTML = html || 'Нет актов.'; }).catch(function() { document.getElementById('actsList').innerHTML = 'Ошибка.'; }); }
+        
+        function openActsList() {
+            document.getElementById('actsModal').style.display = 'block';
+            document.getElementById('actsList').innerHTML = '<div class="spinner"></div> Загрузка...';
+            fetch(SCRIPT_URL + '?action=getActs').then(r => r.json()).then(function(acts) {
+                var html = '';
+                Object.keys(acts).sort(function(a, b) {
+                    var numA = parseInt(a.split('/').pop().replace(/[ПВ]/,'')) || 0;
+                    var numB = parseInt(b.split('/').pop().replace(/[ПВ]/,'')) || 0;
+                    return numB - numA;
+                }).forEach(function(n) {
+                    var a = acts[n];
+                    html += '<div class="act-item" onclick="loadAct(\'' + n + '\')"><b>Акт №' + n + '</b> от ' + a.date + '<br>Компания: ' + a.company + ' | Приборов: ' + a.devicesCount + '</div>';
+                });
+                document.getElementById('actsList').innerHTML = html || 'Нет актов.';
+            }).catch(function() { document.getElementById('actsList').innerHTML = 'Ошибка.'; });
+        }
+        
         function closeActsList() { document.getElementById('actsModal').style.display = 'none'; }
         function loadAct(actNum) { fetch(SCRIPT_URL + '?action=getAct&number=' + encodeURIComponent(actNum)).then(r => r.json()).then(function(act) { if (act.error) { alert(act.error); return; } if (act.company) { var s = document.getElementById('companySelect'); var f = false; for (var i = 0; i < s.options.length; i++) { if (s.options[i].value === act.company) { s.value = act.company; f = true; break; } } if (!f) s.innerHTML += '<option value="' + esc(act.company) + '" selected>' + esc(act.company) + '</option>'; } if (act.employee) { var s = document.getElementById('employeeSelect'); for (var i = 0; i < s.options.length; i++) { if (s.options[i].value.indexOf(act.employee) !== -1) { s.value = s.options[i].value; break; } } } document.getElementById('devicesContainer').innerHTML = ''; deviceCounter = 0; usedAddresses = []; act.devices.forEach(function(dev) { deviceCounter++; createDeviceBlock(deviceCounter); document.getElementById('nameField'+deviceCounter).value = dev.name || ''; document.getElementById('typeField'+deviceCounter).value = dev.type || ''; document.getElementById('noteField'+deviceCounter).value = dev.note || ''; checkType(deviceCounter); if (isDualSerialType(deviceCounter) && dev.serial && dev.serial.includes('/')) { var p = dev.serial.split('/'); document.getElementById('serialDual1_'+deviceCounter).value = p[0] || ''; document.getElementById('serialDual2_'+deviceCounter).value = p[1] || ''; fixSerialLetter(deviceCounter, 1); } else document.getElementById('serialField'+deviceCounter).value = dev.serial || ''; if (dev.address) { document.getElementById('addressField'+deviceCounter).value = dev.address; if (usedAddresses.indexOf(dev.address) === -1) usedAddresses.push(dev.address); } if (dev.akb) { var cb = document.getElementById('akbCheck'+deviceCounter); if (cb) cb.checked = true; } }); if (deviceCounter === 0) addDevice(); saveFormData(); closeActsList(); setStatus('✅ Загружен акт №' + actNum, 'success'); }); }
         
-        // ============ КНОПКА ПЕЧАТИ ============
-        function printAct() {
-            if (lastActSheetId) {
-                var pdfUrl = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/export?format=pdf&gid=' + lastActSheetId + '&size=A4&portrait=true&scale=4&fitw=true&gridlines=false';
-                window.open(pdfUrl, '_blank');
-            }
-        }
+        function printAct() { var pdfUrl = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/export?format=pdf&size=A4&portrait=true&scale=4&fitw=true&gridlines=false&gid=0'; window.open(pdfUrl, '_blank'); }
 
         function submitAct(){
             var company=document.getElementById('companySelect').value,employee=document.getElementById('employeeSelect').value;
@@ -307,10 +243,7 @@
                 setStatus('✅ Акт отправлен на '+email,'success');clearFormData();
                 if(navigator.vibrate)navigator.vibrate([30,50,30]);
                 if ('speechSynthesis' in window) { var utter = new SpeechSynthesisUtterance('Акт отправлен'); utter.lang = 'ru-RU'; utter.rate = 1; window.speechSynthesis.speak(utter); }
-                // Показываем кнопку печати
                 document.getElementById('printBtn').style.display = 'block';
-                // Получаем ID листа для печати
-                fetch(SCRIPT_URL + '?action=printAct').then(r=>r.json()).then(function(d){ if(d.status==='success'){ lastActSheetId = d.pdfUrl.match(/gid=(\d+)/)?.[1]; } }).catch(function(){});
             },2000);
         }
         
