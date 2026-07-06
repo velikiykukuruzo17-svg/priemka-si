@@ -175,36 +175,60 @@
         function calculateMatchScore(text,words,typeName){ var s=0; if(text.indexOf(typeName)!==-1)s+=100; var tw=typeName.split(/\s+/),mw=0; tw.forEach(function(w){ if(w.length<2)return; for(var i=0;i<words.length;i++){ if(words[i]===w){s+=30;mw++;}else if(w.startsWith(words[i])&&words[i].length>=2){s+=20;mw++;}else if(words[i].startsWith(w)&&w.length>=2){s+=15;mw++;} } }); if(mw>=tw.length)s+=50; else if(mw>0)s+=mw*8; s+=Math.min(typeName.length,15); return s; }
         function extractSerialEnhanced(text) { var cleaned = text.replace(/[^а-яА-ЯёЁa-zA-Z0-9\s\/№\-]/g, ' ').replace(/\s+/g, ' ').trim(); var slashIdx = cleaned.search(/\s*(?:дробь|слеш|слэш|\/)\s*/i); if (slashIdx > 0) { var before = cleaned.substring(0, slashIdx).replace(/\s+/g, ''); var after = cleaned.substring(slashIdx).replace(/[^\d]/g, ''); if (before && after) return before + '/' + after; } var withLetter = cleaned.match(/(\d[\d\s]*?)\s*([А-ЯХГABEKMHOPTXCа-яхгabekmhoptyxc]+)\s*$/i); if (withLetter) { var num = withLetter[1].replace(/\s+/g, ''); var letter = withLetter[2].toUpperCase(); if (/^(ИКС|Х|X)$/i.test(letter)) letter = 'Х'; else if (/^(ГЭ|Г|G)$/i.test(letter)) letter = 'Г'; else if (/^(А|A)$/i.test(letter)) letter = 'А'; return num + letter; } var nums = cleaned.match(/\d+/g); if (!nums) return cleaned; return nums.length === 1 ? nums[0] : nums.join(''); }
 
-        // ============ СОХРАНЕНИЕ НОВОГО ТИПА ============
+        // ============ СОХРАНЕНИЕ НОВОГО ТИПА (колонка C) ============
         function checkNewType(typeName) {
             if (!typeName || typeName.length < 3) return;
+            console.log('checkNewType: ' + typeName);
             var types = getTypeNames();
             var exists = types.some(function(t) { return t.toLowerCase() === typeName.toLowerCase(); });
             if (!exists) {
                 typesData.push(['', '', typeName.trim()]);
                 allTypesFromSheet.push(typeName.trim());
+                console.log('Отправляю тип в Google: ' + typeName);
                 fetch(SCRIPT_URL + '?action=addType&name=' + encodeURIComponent(typeName.trim()))
                     .then(r => r.json())
                     .then(function(res) {
+                        console.log('Ответ по типу: ', res);
                         if (res.status === 'success') setStatus('✅ Тип сохранён', 'success');
-                    }).catch(function(){});
+                    }).catch(function(err) {
+                        console.log('Ошибка типа: ', err);
+                    });
             }
         }
 
-        // ============ СОХРАНЕНИЕ НОВОГО НАЗВАНИЯ ============
+        // ============ СОХРАНЕНИЕ НОВОГО НАЗВАНИЯ (колонка B) ============
         function checkNewName(nameValue) {
             if (!nameValue || nameValue.length < 3) return;
+            console.log('checkNewName: ' + nameValue);
             var names = getTypeNames();
             var exists = names.some(function(n) { return n.toLowerCase() === nameValue.toLowerCase(); });
             if (!exists) {
                 typesData.push([nameValue.trim(), nameValue.trim(), '']);
                 allTypesFromSheet.push(nameValue.trim());
+                console.log('Отправляю название в Google: ' + nameValue);
                 fetch(SCRIPT_URL + '?action=addName&name=' + encodeURIComponent(nameValue.trim()))
                     .then(r => r.json())
                     .then(function(res) {
+                        console.log('Ответ по названию: ', res);
                         if (res.status === 'success') setStatus('✅ Название сохранено', 'success');
-                    }).catch(function(){});
+                    }).catch(function(err) {
+                        console.log('Ошибка названия: ', err);
+                    });
             }
+        }
+
+        // ============ ИСПРАВЛЕНО: поиск типа по названию ============
+        function findTypeByName(name) { 
+            if (!name) return ''; 
+            var nc = name.toLowerCase().replace(/[^a-zа-я0-9]/g, ''), best = '', bestScore = 0; 
+            typesData.forEach(function(r) { 
+                var ref = (r[1] || r[0] || '').toLowerCase().replace(/[^a-zа-я0-9]/g, ''); 
+                if (ref && nc.includes(ref) && ref.length > bestScore) { 
+                    bestScore = ref.length; 
+                    best = r[2] || '';  // БЕРЁМ ТОЛЬКО ИЗ КОЛОНКИ C (индекс 2) — ТИП
+                } 
+            }); 
+            return best; 
         }
 
         function createDeviceBlock(num) {
@@ -231,7 +255,6 @@
         function filterAutocomplete(deviceNum) { var input=document.getElementById('nameField'+deviceNum), list=document.getElementById('autocompleteList'+deviceNum); var filter=input.value.toLowerCase(), names=getTypeNames(); list.innerHTML=''; if(!filter&&names.length>0){names.slice(0,20).forEach(function(n){list.innerHTML+='<li onmousedown="selectAutocomplete('+deviceNum+',\''+esc(n)+'\')">'+esc(n)+'</li>';});list.style.display='block';return;} var matches=names.filter(function(n){return n.toLowerCase().includes(filter);}); if(matches.length===0){list.style.display='none';return;} matches.slice(0,20).forEach(function(n){list.innerHTML+='<li onmousedown="selectAutocomplete('+deviceNum+',\''+esc(n)+'\')">'+esc(n)+'</li>';});list.style.display='block'; }
         function selectAutocomplete(deviceNum,name){ document.getElementById('nameField'+deviceNum).value=name; document.getElementById('autocompleteList'+deviceNum).style.display='none'; var ft=findTypeByName(name); if(ft){document.getElementById('typeField'+deviceNum).value=ft;checkType(deviceNum);}saveFormData(); }
         function hideAutocomplete(deviceNum){ setTimeout(function(){document.getElementById('autocompleteList'+deviceNum).style.display='none';},200); }
-        function findTypeByName(name){ if(!name)return''; var nc=name.toLowerCase().replace(/[^a-zа-я0-9]/g,''),best='',bestScore=0; typesData.forEach(function(r){var ref=(r[1]||r[0]||'').toLowerCase().replace(/[^a-zа-я0-9]/g,'');if(ref&&nc.includes(ref)&&ref.length>bestScore){bestScore=ref.length;best=r[2]||r[1]||'';}});return best; }
         function recognizeText(dataUrl,target,deviceNum){ setStatus('Распознавание...','loading'); Tesseract.recognize(dataUrl,'rus+eng',{logger:function(m){if(m.status==='recognizing text')setStatus('Распознавание: '+Math.round(m.progress*100)+'%','loading');}}).then(function(result){var text=result.data.text.replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g,' ').replace(/\s+/g,' ').trim();if(target==='name'){document.getElementById('nameField'+deviceNum).value=text;var ft=findTypeByName(text);if(ft){document.getElementById('typeField'+deviceNum).value=ft;checkType(deviceNum);}}else{document.getElementById('serialField'+deviceNum).value=text.match(/\d{3,}/)?.[0]||'';}saveFormData();}).catch(function(){setStatus('❌ Ошибка','error');}); }
         function addCompany() { var name = prompt('Введите название компании:'); if (name && name.trim()) { var sel = document.getElementById('companySelect'); sel.innerHTML += '<option value="' + esc(name.trim()) + '" selected>' + esc(name.trim()) + '</option>'; saveFormData(); fetch(SCRIPT_URL + '?action=addCompany&name=' + encodeURIComponent(name.trim())).then(r => r.json()).then(function(res) { if (res.status === 'success') setStatus('✅ Компания сохранена', 'success'); }).catch(function(){}); } }
         function newAct() { if (confirm('Очистить все поля?')) { document.getElementById('devicesContainer').innerHTML = ''; deviceCounter = 0; usedAddresses = []; clearFormData(); addDevice(); setStatus('✅ Новый акт', 'success'); document.getElementById('printBtn').style.display = 'none'; } }
