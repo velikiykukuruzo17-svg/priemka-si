@@ -178,24 +178,27 @@
         // ============ СОХРАНЕНИЕ НОВОГО ТИПА ============
         function checkNewType(typeName) {
             if (!typeName || typeName.length < 3) return;
-            var types = getTypeNames();
-            var exists = types.some(function(t) { return t.toLowerCase() === typeName.toLowerCase(); });
-            if (!exists) {
-                fetch(SCRIPT_URL + '?action=addType&name=' + encodeURIComponent(typeName.trim()))
-                    .then(r => r.json())
-                    .then(function(res) {
-                        if (res.status === 'success') {
-                            allTypesFromSheet.push(typeName.trim());
-                            setStatus('✅ Тип сохранён', 'success');
-                        }
-                    }).catch(function(){});
-            }
+            fetch(SCRIPT_URL + '?action=addType&name=' + encodeURIComponent(typeName.trim()))
+                .then(r => r.json())
+                .then(function(res) {
+                    if (res.status === 'success') { allTypesFromSheet.push(typeName.trim()); setStatus('✅ Тип сохранён', 'success'); }
+                }).catch(function(){});
+        }
+
+        // ============ СОХРАНЕНИЕ НОВОГО НАЗВАНИЯ ============
+        function checkNewName(nameValue) {
+            if (!nameValue || nameValue.length < 3) return;
+            fetch(SCRIPT_URL + '?action=addName&name=' + encodeURIComponent(nameValue.trim()))
+                .then(r => r.json())
+                .then(function(res) {
+                    if (res.status === 'success') { setStatus('✅ Название сохранено', 'success'); }
+                }).catch(function(){});
         }
 
         function createDeviceBlock(num) {
             var b = document.createElement('div'); b.className = 'device-block'; b.id = 'device' + num;
             b.innerHTML = `<div class="device-title"><span class="device-number">${num}</span> Прибор</div>
-                <div class="field-group"><label>Название:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${num}); saveFormData();" onfocus="filterAutocomplete(${num})" onblur="hideAutocomplete(${num})" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;"><ul class="autocomplete-list" id="autocompleteList${num}"></ul></div><button class="btn-ios-icon green" onclick="openCamera('name',${num})">📷</button><button class="btn-ios-icon pink voice-btn-name-${num}" onclick="startVoiceInput(${num},'name')">🎤</button></div><div class="voice-variants" id="voiceVariants${num}"></div></div>
+                <div class="field-group"><label>Название:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${num}); saveFormData();" onfocus="filterAutocomplete(${num})" onblur="hideAutocomplete(${num})" onchange="checkNewName(this.value);" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;"><ul class="autocomplete-list" id="autocompleteList${num}"></ul></div><button class="btn-ios-icon green" onclick="openCamera('name',${num})">📷</button><button class="btn-ios-icon pink voice-btn-name-${num}" onclick="startVoiceInput(${num},'name')">🎤</button></div><div class="voice-variants" id="voiceVariants${num}"></div></div>
                 <div class="field-group"><label>Тип:</label><input type="text" id="typeField${num}" placeholder="Авто или вручную" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="checkType(${num}); saveFormData();" onchange="checkNewType(this.value);"></div>
                 <div class="field-group"><label>Заводской номер:</label><div class="field-row"><input type="text" id="serialField${num}" placeholder="Номер" style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="saveFormData();"><button class="btn-ios-icon green" onclick="openCamera('serial',${num})">📷</button><button class="btn-ios-icon pink voice-btn-serialField-${num}" onclick="startVoiceInput(${num},'serialField')">🎤</button></div>
                 <div class="serial-dual-block" id="serialDualBlock${num}"><div class="serial-dual-row"><label>Ном. 1:</label><input type="text" id="serialDual1_${num}" placeholder="Первый номер" oninput="fixSerialLetter(${num},1);" style="flex:1;"><button class="btn-ios-icon pink voice-btn-serialDual1_-${num}" onclick="startVoiceInput(${num},'serialDual1_')">🎤</button></div><div class="serial-dual-row"><label>Ном. 2:</label><input type="text" id="serialDual2_${num}" placeholder="Второй номер (авто)" oninput="onDual2Change(${num});" style="flex:1;"><button class="btn-ios-icon pink voice-btn-serialDual2_-${num}" onclick="startVoiceInput(${num},'serialDual2_')">🎤</button></div><div class="serial-hint">🔤 Х↔Г авто | А = без буквы | 1↔2 авто</div></div>
