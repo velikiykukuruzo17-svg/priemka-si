@@ -178,21 +178,33 @@
         // ============ СОХРАНЕНИЕ НОВОГО ТИПА ============
         function checkNewType(typeName) {
             if (!typeName || typeName.length < 3) return;
-            fetch(SCRIPT_URL + '?action=addType&name=' + encodeURIComponent(typeName.trim()))
-                .then(r => r.json())
-                .then(function(res) {
-                    if (res.status === 'success') { allTypesFromSheet.push(typeName.trim()); setStatus('✅ Тип сохранён', 'success'); }
-                }).catch(function(){});
+            var types = getTypeNames();
+            var exists = types.some(function(t) { return t.toLowerCase() === typeName.toLowerCase(); });
+            if (!exists) {
+                typesData.push(['', '', typeName.trim()]);
+                allTypesFromSheet.push(typeName.trim());
+                fetch(SCRIPT_URL + '?action=addType&name=' + encodeURIComponent(typeName.trim()))
+                    .then(r => r.json())
+                    .then(function(res) {
+                        if (res.status === 'success') setStatus('✅ Тип сохранён', 'success');
+                    }).catch(function(){});
+            }
         }
 
         // ============ СОХРАНЕНИЕ НОВОГО НАЗВАНИЯ ============
         function checkNewName(nameValue) {
             if (!nameValue || nameValue.length < 3) return;
-            fetch(SCRIPT_URL + '?action=addName&name=' + encodeURIComponent(nameValue.trim()))
-                .then(r => r.json())
-                .then(function(res) {
-                    if (res.status === 'success') { setStatus('✅ Название сохранено', 'success'); }
-                }).catch(function(){});
+            var names = getTypeNames();
+            var exists = names.some(function(n) { return n.toLowerCase() === nameValue.toLowerCase(); });
+            if (!exists) {
+                typesData.push([nameValue.trim(), nameValue.trim(), '']);
+                allTypesFromSheet.push(nameValue.trim());
+                fetch(SCRIPT_URL + '?action=addName&name=' + encodeURIComponent(nameValue.trim()))
+                    .then(r => r.json())
+                    .then(function(res) {
+                        if (res.status === 'success') setStatus('✅ Название сохранено', 'success');
+                    }).catch(function(){});
+            }
         }
 
         function createDeviceBlock(num) {
