@@ -6,7 +6,7 @@
     <title>Приёмка СИ</title>
     <link rel="icon" type="image/png" href="https://drive.google.com/uc?export=view&id=1iygIPf19buf7dI3O0lR3i-u5gZblkPjH">
     <link rel="apple-touch-icon" href="https://drive.google.com/uc?export=view&id=1iygIPf19buf7dI3O0lR3i-u5gZblkPjH">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -30,6 +30,7 @@
         .btn-ios-icon.green { background: #34C759; color: white; }
         .btn-ios-icon.red { background: #FF3B30; color: white; }
         .btn-ios-icon.pink { background: #FF2D55; color: white; }
+        .btn-ios-icon.blue { background: #007AFF; color: white; }
         .field-group { margin-bottom: 12px; }
         .field-group label { display: block; font-size: 13px; font-weight: 600; color: #3C3C43; margin-bottom: 4px; }
         .field-row { display: flex; gap: 8px; align-items: center; }
@@ -86,6 +87,8 @@
         .voice-variant-item:active { background: #007AFF; color: white; }
         .serial-hint { font-size: 10px; color: #AEAEB2; margin-top: 4px; }
         #printContainer { text-align: center; margin-top: 8px; }
+        .save-type-btn { font-size: 11px; padding: 6px 10px; background: #007AFF; color: white; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+        .save-type-btn:active { opacity: 0.7; }
     </style>
 </head>
 <body>
@@ -175,49 +178,44 @@
         function calculateMatchScore(text,words,typeName){ var s=0; if(text.indexOf(typeName)!==-1)s+=100; var tw=typeName.split(/\s+/),mw=0; tw.forEach(function(w){ if(w.length<2)return; for(var i=0;i<words.length;i++){ if(words[i]===w){s+=30;mw++;}else if(w.startsWith(words[i])&&words[i].length>=2){s+=20;mw++;}else if(words[i].startsWith(w)&&w.length>=2){s+=15;mw++;} } }); if(mw>=tw.length)s+=50; else if(mw>0)s+=mw*8; s+=Math.min(typeName.length,15); return s; }
         function extractSerialEnhanced(text) { var cleaned = text.replace(/[^а-яА-ЯёЁa-zA-Z0-9\s\/№\-]/g, ' ').replace(/\s+/g, ' ').trim(); var slashIdx = cleaned.search(/\s*(?:дробь|слеш|слэш|\/)\s*/i); if (slashIdx > 0) { var before = cleaned.substring(0, slashIdx).replace(/\s+/g, ''); var after = cleaned.substring(slashIdx).replace(/[^\d]/g, ''); if (before && after) return before + '/' + after; } var withLetter = cleaned.match(/(\d[\d\s]*?)\s*([А-ЯХГABEKMHOPTXCа-яхгabekmhoptyxc]+)\s*$/i); if (withLetter) { var num = withLetter[1].replace(/\s+/g, ''); var letter = withLetter[2].toUpperCase(); if (/^(ИКС|Х|X)$/i.test(letter)) letter = 'Х'; else if (/^(ГЭ|Г|G)$/i.test(letter)) letter = 'Г'; else if (/^(А|A)$/i.test(letter)) letter = 'А'; return num + letter; } var nums = cleaned.match(/\d+/g); if (!nums) return cleaned; return nums.length === 1 ? nums[0] : nums.join(''); }
 
-        // ============ СОХРАНЕНИЕ НОВОГО ТИПА (колонка C) ============
-        function checkNewType(typeName) {
-            if (!typeName || typeName.length < 3) return;
-            console.log('checkNewType: ' + typeName);
+        // ============ СОХРАНЕНИЕ ТИПА ============
+        function saveTypeToSheet(deviceNum) {
+            var typeName = document.getElementById('typeField' + deviceNum).value.trim();
+            if (!typeName || typeName.length < 3) { alert('Введите тип (минимум 3 символа)'); return; }
             var types = getTypeNames();
             var exists = types.some(function(t) { return t.toLowerCase() === typeName.toLowerCase(); });
             if (!exists) {
-                typesData.push(['', '', typeName.trim()]);
-                allTypesFromSheet.push(typeName.trim());
-                console.log('Отправляю тип в Google: ' + typeName);
-                fetch(SCRIPT_URL + '?action=addType&name=' + encodeURIComponent(typeName.trim()))
-                    .then(r => r.json())
-                    .then(function(res) {
-                        console.log('Ответ по типу: ', res);
-                        if (res.status === 'success') setStatus('✅ Тип сохранён', 'success');
-                    }).catch(function(err) {
-                        console.log('Ошибка типа: ', err);
-                    });
+                typesData.push(['', '', typeName]);
+                allTypesFromSheet.push(typeName);
             }
+            fetch(SCRIPT_URL + '?action=addType&name=' + encodeURIComponent(typeName))
+                .then(r => r.json())
+                .then(function(res) {
+                    if (res.status === 'success') setStatus('✅ Тип сохранён: ' + typeName, 'success');
+                    else if (res.status === 'exists') setStatus('ℹ️ Тип уже есть', 'success');
+                    else setStatus('❌ Ошибка', 'error');
+                }).catch(function() { setStatus('❌ Ошибка сети', 'error'); });
         }
 
-        // ============ СОХРАНЕНИЕ НОВОГО НАЗВАНИЯ (колонка B) ============
-        function checkNewName(nameValue) {
-            if (!nameValue || nameValue.length < 3) return;
-            console.log('checkNewName: ' + nameValue);
+        function saveNameToSheet(deviceNum) {
+            var nameValue = document.getElementById('nameField' + deviceNum).value.trim();
+            if (!nameValue || nameValue.length < 3) { alert('Введите название (минимум 3 символа)'); return; }
             var names = getTypeNames();
             var exists = names.some(function(n) { return n.toLowerCase() === nameValue.toLowerCase(); });
             if (!exists) {
-                typesData.push([nameValue.trim(), nameValue.trim(), '']);
-                allTypesFromSheet.push(nameValue.trim());
-                console.log('Отправляю название в Google: ' + nameValue);
-                fetch(SCRIPT_URL + '?action=addName&name=' + encodeURIComponent(nameValue.trim()))
-                    .then(r => r.json())
-                    .then(function(res) {
-                        console.log('Ответ по названию: ', res);
-                        if (res.status === 'success') setStatus('✅ Название сохранено', 'success');
-                    }).catch(function(err) {
-                        console.log('Ошибка названия: ', err);
-                    });
+                typesData.push([nameValue, nameValue, '']);
+                allTypesFromSheet.push(nameValue);
             }
+            fetch(SCRIPT_URL + '?action=addName&name=' + encodeURIComponent(nameValue))
+                .then(r => r.json())
+                .then(function(res) {
+                    if (res.status === 'success') setStatus('✅ Название сохранено: ' + nameValue, 'success');
+                    else if (res.status === 'exists') setStatus('ℹ️ Название уже есть', 'success');
+                    else setStatus('❌ Ошибка', 'error');
+                }).catch(function() { setStatus('❌ Ошибка сети', 'error'); });
         }
 
-        // ============ ИСПРАВЛЕНО: поиск типа по названию ============
+        // ============ ИСПРАВЛЕНО: поиск типа ============
         function findTypeByName(name) { 
             if (!name) return ''; 
             var nc = name.toLowerCase().replace(/[^a-zа-я0-9]/g, ''), best = '', bestScore = 0; 
@@ -225,7 +223,7 @@
                 var ref = (r[1] || r[0] || '').toLowerCase().replace(/[^a-zа-я0-9]/g, ''); 
                 if (ref && nc.includes(ref) && ref.length > bestScore) { 
                     bestScore = ref.length; 
-                    best = r[2] || '';  // БЕРЁМ ТОЛЬКО ИЗ КОЛОНКИ C (индекс 2) — ТИП
+                    best = r[2] || ''; 
                 } 
             }); 
             return best; 
@@ -234,8 +232,8 @@
         function createDeviceBlock(num) {
             var b = document.createElement('div'); b.className = 'device-block'; b.id = 'device' + num;
             b.innerHTML = `<div class="device-title"><span class="device-number">${num}</span> Прибор</div>
-                <div class="field-group"><label>Название:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${num}); saveFormData();" onfocus="filterAutocomplete(${num})" onblur="hideAutocomplete(${num})" onchange="checkNewName(this.value);" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;"><ul class="autocomplete-list" id="autocompleteList${num}"></ul></div><button class="btn-ios-icon green" onclick="openCamera('name',${num})">📷</button><button class="btn-ios-icon pink voice-btn-name-${num}" onclick="startVoiceInput(${num},'name')">🎤</button></div><div class="voice-variants" id="voiceVariants${num}"></div></div>
-                <div class="field-group"><label>Тип:</label><input type="text" id="typeField${num}" placeholder="Авто или вручную" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="checkType(${num}); saveFormData();" onchange="checkNewType(this.value);"></div>
+                <div class="field-group"><label>Название:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${num}); saveFormData();" onfocus="filterAutocomplete(${num})" onblur="hideAutocomplete(${num})" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;"><ul class="autocomplete-list" id="autocompleteList${num}"></ul></div><button class="btn-ios-icon green" onclick="openCamera('name',${num})">📷</button><button class="btn-ios-icon pink voice-btn-name-${num}" onclick="startVoiceInput(${num},'name')">🎤</button><button class="save-type-btn" onclick="saveNameToSheet(${num})" title="Сохранить название">💾</button></div><div class="voice-variants" id="voiceVariants${num}"></div></div>
+                <div class="field-group"><label>Тип:</label><div class="field-row"><input type="text" id="typeField${num}" placeholder="Авто или вручную" style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="checkType(${num}); saveFormData();"><button class="save-type-btn" onclick="saveTypeToSheet(${num})" title="Сохранить тип">💾</button></div></div>
                 <div class="field-group"><label>Заводской номер:</label><div class="field-row"><input type="text" id="serialField${num}" placeholder="Номер" style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="saveFormData();"><button class="btn-ios-icon green" onclick="openCamera('serial',${num})">📷</button><button class="btn-ios-icon pink voice-btn-serialField-${num}" onclick="startVoiceInput(${num},'serialField')">🎤</button></div>
                 <div class="serial-dual-block" id="serialDualBlock${num}"><div class="serial-dual-row"><label>Ном. 1:</label><input type="text" id="serialDual1_${num}" placeholder="Первый номер" oninput="fixSerialLetter(${num},1);" style="flex:1;"><button class="btn-ios-icon pink voice-btn-serialDual1_-${num}" onclick="startVoiceInput(${num},'serialDual1_')">🎤</button></div><div class="serial-dual-row"><label>Ном. 2:</label><input type="text" id="serialDual2_${num}" placeholder="Второй номер (авто)" oninput="onDual2Change(${num});" style="flex:1;"><button class="btn-ios-icon pink voice-btn-serialDual2_-${num}" onclick="startVoiceInput(${num},'serialDual2_')">🎤</button></div><div class="serial-hint">🔤 Х↔Г авто | А = без буквы | 1↔2 авто</div></div>
                 <div class="serial-hint">💡 "4540 дробь 1" → 4540/1, "1312 г" → 1312Г</div></div>
