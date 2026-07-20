@@ -16,6 +16,7 @@
         .header p { font-size: 12px; color: #8E8E93; margin-top: 2px; }
         .btn-settings { background: none; border: none; font-size: 24px; cursor: pointer; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .btn-settings:active { background: #E5E5EA; }
+        .btn-logout { background: none; border: none; font-size: 18px; cursor: pointer; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #FF3B30; }
         .btn-ios { background: #007AFF; color: white; border: none; border-radius: 12px; padding: 14px 20px; font-size: 16px; font-weight: 500; transition: all 0.15s ease; cursor: pointer; user-select: none; text-align: center; }
         .btn-ios:active { transform: scale(0.96); opacity: 0.8; }
         .btn-ios-gray { background: #8E8E93; color: white; border: none; border-radius: 12px; padding: 14px 20px; font-size: 16px; font-weight: 500; transition: all 0.15s ease; cursor: pointer; text-align: center; }
@@ -43,8 +44,6 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
         .skeleton { background: linear-gradient(90deg, #E5E5EA 25%, #F2F2F7 50%, #E5E5EA 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 10px; }
-        .skeleton-text { height: 14px; margin: 8px 0; }
-        .skeleton-block { height: 50px; margin: 10px 0; border-radius: 14px; }
         .spinner { display: inline-block; width: 18px; height: 18px; border: 2.5px solid rgba(0,0,0,0.1); border-top-color: #007AFF; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
         .spinner-white { border-color: rgba(255,255,255,0.3); border-top-color: white; }
         .status { text-align: center; margin-top: 12px; font-size: 13px; color: #8E8E93; min-height: 20px; }
@@ -58,14 +57,11 @@
         .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: #FFFFFF; border: 1px solid #E5E5EA; border-radius: 0 0 10px 10px; z-index: 100; display: none; list-style: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .autocomplete-list li { padding: 12px; cursor: pointer; font-size: 16px; border-bottom: 1px solid #F2F2F7; }
         .autocomplete-list li:active { background: #007AFF; color: white; }
-        .autocomplete-list li:last-child { border-bottom: none; }
         #settingsPanel { display: none; background: #FFFFFF; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
         #settingsPanel h3 { margin-bottom: 12px; font-size: 17px; }
         #settingsPanel input { width: 100%; padding: 12px; border: 1px solid #E5E5EA; border-radius: 10px; font-size: 16px; margin-bottom: 10px; }
         #cameraOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; }
         #cameraVideo { width: 100%; height: 100%; object-fit: cover; }
-        #cameraFrame { position: absolute; border: 3px solid #34C759; border-radius: 16px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.55); }
-        #cameraFrameLabel { position: absolute; top: -30px; left: 0; width: 100%; text-align: center; color: #fff; font-size: 14px; font-weight: 600; }
         #cameraCaptureBtn { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); width: 72px; height: 72px; background: #fff; border: 4px solid #34C759; border-radius: 50%; cursor: pointer; z-index: 10001; }
         #cameraCloseBtn { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 28px; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; z-index: 10001; display: flex; align-items: center; justify-content: center; }
         #actsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
@@ -77,7 +73,6 @@
         .serial-dual-block { display: none; margin-top: 8px; padding: 10px; background: #F2F2F7; border-radius: 12px; }
         .serial-dual-block.active { display: block; }
         .serial-dual-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
-        .serial-dual-row:last-child { margin-bottom: 0; }
         .serial-dual-row label { font-size: 12px; font-weight: 600; color: #8E8E93; min-width: 40px; }
         .serial-dual-row input { flex: 1; padding: 10px; border: 1px solid #E5E5EA; border-radius: 8px; font-size: 15px; }
         .voice-variants { margin-top: 8px; display: none; }
@@ -88,43 +83,67 @@
         #printContainer { text-align: center; margin-top: 8px; }
         .save-btn { font-size: 11px; padding: 6px 10px; background: #007AFF; color: white; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; flex: 0 0 auto; }
         .save-btn:active { opacity: 0.7; }
+        /* Экран входа */
+        #loginScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; }
+        #loginScreen h2 { font-size: 24px; margin-bottom: 8px; }
+        #loginScreen p { color: #8E8E93; margin-bottom: 24px; text-align: center; }
+        #loginScreen input { width: 100%; padding: 14px; border: 1px solid #E5E5EA; border-radius: 12px; font-size: 16px; margin-bottom: 12px; background: #FFFFFF; }
+        #loginScreen .login-btn { width: 100%; margin-top: 8px; }
+        #loginError { color: #FF3B30; font-size: 13px; min-height: 20px; text-align: center; margin-top: 8px; }
+        #userName { font-size: 12px; color: #8E8E93; margin-right: 8px; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div><h1>📋 Приёмка СИ</h1><p>ООО МС «ЦЕНТР ИЗМЕРЕНИЙ»</p></div>
-        <button class="btn-settings" onclick="toggleSettings()">⚙️</button>
+    <!-- ЭКРАН ВХОДА -->
+    <div id="loginScreen">
+        <h2>🔒 Вход</h2>
+        <p>МС «ЦЕНТР ИЗМЕРЕНИЙ»</p>
+        <input type="text" id="loginInput" placeholder="Логин" autocomplete="username">
+        <input type="password" id="passwordInput" placeholder="Пароль" autocomplete="current-password">
+        <button class="btn-ios login-btn" onclick="doLogin()">🔑 Войти</button>
+        <div id="loginError"></div>
     </div>
-    <div id="settingsPanel">
-        <h3>⚙️ Настройки</h3>
-        <label style="font-size:13px;font-weight:600;color:#3C3C43;">📧 Email:</label>
-        <input type="email" id="settingsEmail" placeholder="ms-tcentr@mail.ru">
-        <button class="btn-ios" onclick="saveSettings()" style="width:100%;">💾 Сохранить</button>
-    </div>
-    <div id="loadingSkeleton">
-        <div class="skeleton" style="height:24px;width:60%;margin:8px 0;"></div>
-        <div class="skeleton skeleton-text"></div>
-        <div class="skeleton skeleton-block"></div>
-    </div>
-    <div id="mainContent" style="display:none;">
-        <div class="act-toolbar">
-            <button class="btn-ios" onclick="newAct()" style="flex:1;">📝 Новый акт</button>
-            <button class="btn-ios-gray" onclick="openActsList()" style="flex:1;">📂 Выбрать акт</button>
+
+    <!-- ОСНОВНОЕ ПРИЛОЖЕНИЕ (скрыто до входа) -->
+    <div id="appContent" style="display:none;">
+        <div class="header">
+            <div><h1>📋 Приёмка СИ</h1><p>ООО МС «ЦЕНТР ИЗМЕРЕНИЙ»</p></div>
+            <div style="display:flex;align-items:center;">
+                <span id="userName"></span>
+                <button class="btn-logout" onclick="doLogout()" title="Выйти">🚪</button>
+                <button class="btn-settings" onclick="toggleSettings()">⚙️</button>
+            </div>
         </div>
-        <div class="field-group"><label>Компания-сдатчик:</label><div class="field-row"><select id="companySelect" onchange="saveFormData()"><option value="">-- Загрузка... --</option></select><button class="btn-ios-icon" onclick="addCompany()">➕</button></div></div>
-        <div class="field-group"><label>Кто принял:</label><select id="employeeSelect" onchange="saveFormData()"><option value="">-- Загрузка... --</option></select></div>
-        <div class="section-title">Приборы:</div>
-        <div id="devicesContainer"></div>
-        <button class="btn-ios" onclick="addDevice()" style="width:100%;margin:8px 0;">➕ Добавить прибор</button>
-        <button class="btn-ios-green" id="submitBtn" onclick="submitAct()">📧 Сформировать акт и отправить</button>
-        <div id="printContainer">
-            <button class="btn-ios-orange" id="printBtn" onclick="printAct()" style="display:none;">🖨️ Распечатать акт</button>
+        <div id="settingsPanel">
+            <h3>⚙️ Настройки</h3>
+            <label style="font-size:13px;font-weight:600;color:#3C3C43;">📧 Email:</label>
+            <input type="email" id="settingsEmail" placeholder="ms-tcentr@mail.ru">
+            <button class="btn-ios" onclick="saveSettings()" style="width:100%;">💾 Сохранить</button>
         </div>
-        <div class="hint" id="emailHint"></div>
-        <div class="saved-indicator" id="savedIndicator">💾 Сохранено</div>
-        <div class="status" id="status"></div>
+        <div id="loadingSkeleton">
+            <div class="skeleton" style="height:24px;width:60%;margin:8px 0;"></div>
+            <div class="skeleton" style="height:14px;margin:8px 0;"></div>
+            <div class="skeleton" style="height:50px;margin:10px 0;border-radius:14px;"></div>
+        </div>
+        <div id="mainContent" style="display:none;">
+            <div class="act-toolbar">
+                <button class="btn-ios" onclick="newAct()" style="flex:1;">📝 Новый акт</button>
+                <button class="btn-ios-gray" onclick="openActsList()" style="flex:1;">📂 Выбрать акт</button>
+            </div>
+            <div class="field-group"><label>Компания-сдатчик:</label><div class="field-row"><select id="companySelect" onchange="saveFormData()"><option value="">-- Загрузка... --</option></select><button class="btn-ios-icon" onclick="addCompany()">➕</button></div></div>
+            <div class="field-group"><label>Кто принял:</label><select id="employeeSelect" onchange="saveFormData()"><option value="">-- Загрузка... --</option></select></div>
+            <div class="section-title">Приборы:</div>
+            <div id="devicesContainer"></div>
+            <button class="btn-ios" onclick="addDevice()" style="width:100%;margin:8px 0;">➕ Добавить прибор</button>
+            <button class="btn-ios-green" id="submitBtn" onclick="submitAct()">📧 Сформировать акт и отправить</button>
+            <div id="printContainer"><button class="btn-ios-orange" id="printBtn" onclick="printAct()" style="display:none;">🖨️ Распечатать акт</button></div>
+            <div class="hint" id="emailHint"></div>
+            <div class="saved-indicator" id="savedIndicator">💾 Сохранено</div>
+            <div class="status" id="status"></div>
+        </div>
     </div>
-    <div id="cameraOverlay"><video id="cameraVideo" autoplay playsinline></video><div id="cameraFrame"><div id="cameraFrameLabel">Поместите текст в рамку</div></div><button id="cameraCloseBtn" onclick="closeCamera()">✕</button><button id="cameraCaptureBtn" onclick="captureFromCamera()"></button></div>
+
+    <div id="cameraOverlay"><video id="cameraVideo" autoplay playsinline></video><button id="cameraCloseBtn" onclick="closeCamera()">✕</button><button id="cameraCaptureBtn" onclick="captureFromCamera()"></button></div>
     <div id="actsModal"><div class="modal-content"><h3>📂 Существующие акты</h3><div id="actsList">Загрузка...</div><button class="btn-ios" onclick="closeActsList()" style="width:100%;margin-top:12px;">Закрыть</button></div></div>
     <iframe name="hiddenFrame" style="display:none;"></iframe>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -141,14 +160,90 @@
         var recognition = null, isVoiceSupported = false, isListening = false;
         var currentVoiceDevice = null, currentVoiceField = null, voiceResults = [];
         var allTypesFromSheet = [], saveTimeout = null;
+        var loginAttempts = 0;
+        var currentUser = '';
 
         window.addEventListener('load', function() {
+            checkSession();
+        });
+
+        // ============ АВТОРИЗАЦИЯ ============
+        function checkSession() {
+            var session = JSON.parse(localStorage.getItem('priemkaSession') || '{}');
+            var now = new Date();
+            var today = now.toDateString();
+            
+            if (session.date === today && session.user) {
+                currentUser = session.user;
+                showApp();
+            } else {
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('appContent').style.display = 'none';
+            localStorage.removeItem('priemkaSession');
+        }
+
+        function showApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContent').style.display = 'block';
+            document.getElementById('userName').textContent = currentUser ? '👤 ' + currentUser : '';
             document.getElementById('settingsEmail').value = settings.email || '';
             updateEmailHint();
             setStatus('<span class="spinner"></span> Загрузка...', 'loading');
             loadDictionaries(); loadAllTypesFromSheet(); addDevice(); initVoiceRecognition();
+        }
+
+        function doLogin() {
+            var login = document.getElementById('loginInput').value.trim();
+            var password = document.getElementById('passwordInput').value.trim();
+            
+            if (!login || !password) {
+                document.getElementById('loginError').textContent = 'Введите логин и пароль';
+                return;
+            }
+            
+            if (loginAttempts >= 5) {
+                document.getElementById('loginError').textContent = 'Слишком много попыток. Подождите 15 минут.';
+                return;
+            }
+            
+            fetch(SCRIPT_URL + '?action=checkLogin&login=' + encodeURIComponent(login) + '&password=' + encodeURIComponent(password))
+                .then(r => r.json())
+                .then(function(res) {
+                    if (res.status === 'success') {
+                        currentUser = res.name || login;
+                        var session = { user: currentUser, date: new Date().toDateString() };
+                        localStorage.setItem('priemkaSession', JSON.stringify(session));
+                        loginAttempts = 0;
+                        showApp();
+                    } else if (res.status === 'wrong_password') {
+                        loginAttempts++;
+                        document.getElementById('loginError').textContent = 'Неверный пароль. Попыток: ' + (5 - loginAttempts);
+                    } else {
+                        loginAttempts++;
+                        document.getElementById('loginError').textContent = 'Пользователь не найден';
+                    }
+                })
+                .catch(function() {
+                    document.getElementById('loginError').textContent = 'Ошибка соединения';
+                });
+        }
+
+        function doLogout() {
+            localStorage.removeItem('priemkaSession');
+            currentUser = '';
+            location.reload();
+        }
+
+        document.getElementById('passwordInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') doLogin();
         });
 
+        // ============ ОСТАЛЬНЫЕ ФУНКЦИИ (без изменений) ============
         function saveFormData() { clearTimeout(saveTimeout); saveTimeout = setTimeout(function() { var data = { company: document.getElementById('companySelect').value, employee: document.getElementById('employeeSelect').value, devices: [] }; document.querySelectorAll('.device-block').forEach(function(b) { var n = b.id.replace('device', ''); var d = { type: document.getElementById('typeField'+n)?.value||'', name: document.getElementById('nameField'+n)?.value||'', serial: document.getElementById('serialField'+n)?.value||'', serial2: document.getElementById('serialDual2_'+n)?.value||'', address: document.getElementById('addressField'+n)?.value||'', akb: document.getElementById('akbCheck'+n)?.checked||false, note: document.getElementById('noteField'+n)?.value||'' }; if(d.name||d.type||d.serial) data.devices.push(d); }); if(data.company||data.employee||data.devices.length>0){localStorage.setItem('priemkaFormData',JSON.stringify(data));showSaved();} }, 500); }
         function showSaved(){ var el=document.getElementById('savedIndicator'); el.style.display='block'; setTimeout(function(){el.style.display='none';},2000); }
         function loadFormData(){ try { var saved=JSON.parse(localStorage.getItem('priemkaFormData')||'{}'); if(!saved.devices||!saved.devices.length)return; if(saved.company)document.getElementById('companySelect').value=saved.company; if(saved.employee)document.getElementById('employeeSelect').value=saved.employee; document.getElementById('devicesContainer').innerHTML=''; deviceCounter=0; usedAddresses=[]; saved.devices.forEach(function(dev){ deviceCounter++; createDeviceBlock(deviceCounter); setTimeout(function(){ var n=deviceCounter; document.getElementById('nameField'+n).value=dev.name||''; document.getElementById('typeField'+n).value=dev.type||''; document.getElementById('noteField'+n).value=dev.note||''; if(dev.serial2){ document.getElementById('serialDual1_'+n).value=dev.serial||''; document.getElementById('serialDual2_'+n).value=dev.serial2||''; checkType(n); fixSerialLetter(n,1); } else document.getElementById('serialField'+n).value=dev.serial||''; if(dev.address){document.getElementById('addressField'+n).value=dev.address; if(usedAddresses.indexOf(dev.address)===-1)usedAddresses.push(dev.address);} if(dev.akb){var cb=document.getElementById('akbCheck'+n);if(cb)cb.checked=true;} },200); }); setStatus('✅ Данные восстановлены','success'); } catch(e){} }
@@ -176,60 +271,18 @@
         function findTypeMatches(text){ if(!text)return[]; var ct=text.toLowerCase().replace(/[^a-zа-я0-9\s]/g,' ').replace(/\s+/g,' ').trim(); var types=allTypesFromSheet.length>0?allTypesFromSheet:getTypeNames(); var words=ct.split(/\s+/); var results=[]; types.forEach(function(st){ var tc=st.toLowerCase().replace(/[^a-zа-я0-9\s]/g,' ').replace(/\s+/g,' ').trim(); if(tc.length<2)return; var s=calculateMatchScore(ct,words,tc); if(s>10)results.push({name:st,score:s}); }); results.sort(function(a,b){return b.score-a.score;}); return results.slice(0,5); }
         function calculateMatchScore(text,words,typeName){ var s=0; if(text.indexOf(typeName)!==-1)s+=100; var tw=typeName.split(/\s+/),mw=0; tw.forEach(function(w){ if(w.length<2)return; for(var i=0;i<words.length;i++){ if(words[i]===w){s+=30;mw++;}else if(w.startsWith(words[i])&&words[i].length>=2){s+=20;mw++;}else if(words[i].startsWith(w)&&w.length>=2){s+=15;mw++;} } }); if(mw>=tw.length)s+=50; else if(mw>0)s+=mw*8; s+=Math.min(typeName.length,15); return s; }
 
-        // ============ РАСПОЗНАВАНИЕ НОМЕРОВ (с буквой в начале) ============
         function extractSerialEnhanced(text) {
             var cleaned = text.replace(/[^а-яА-ЯёЁa-zA-Z0-9\s\/№\-]/g, ' ').replace(/\s+/g, ' ').trim();
-            
-            // Ищем "дробь" или "слеш"
             var slashIdx = cleaned.search(/\s*(?:дробь|слеш|слэш|\/)\s*/i);
-            if (slashIdx > 0) {
-                var before = cleaned.substring(0, slashIdx).replace(/\s+/g, '');
-                var after = cleaned.substring(slashIdx).replace(/[^\d]/g, '');
-                if (before && after) return before + '/' + after;
-            }
-            
-            // Ищем букву В НАЧАЛЕ номера (например "А 12345" → "А12345")
+            if (slashIdx > 0) { var before = cleaned.substring(0, slashIdx).replace(/\s+/g, ''); var after = cleaned.substring(slashIdx).replace(/[^\d]/g, ''); if (before && after) return before + '/' + after; }
             var withPrefix = cleaned.match(/^([А-ЯХГABEKMHOPTXCа-яхгabekmhoptyxc]+)\s*(\d[\d\s]*)$/i);
-            if (withPrefix) {
-                var letter = withPrefix[1].toUpperCase();
-                if (/^(ИКС|Х|X)$/i.test(letter)) letter = 'Х';
-                else if (/^(ГЭ|Г|G)$/i.test(letter)) letter = 'Г';
-                else if (/^(А|A)$/i.test(letter)) letter = 'А';
-                else if (/^(ВЭ|В|B)$/i.test(letter)) letter = 'В';
-                return letter + withPrefix[2].replace(/\s+/g, '');
-            }
-            
-            // Ищем букву В КОНЦЕ номера (например "12345 Х" → "12345Х")
+            if (withPrefix) { var letter = withPrefix[1].toUpperCase(); if (/^(ИКС|Х|X)$/i.test(letter)) letter = 'Х'; else if (/^(ГЭ|Г|G)$/i.test(letter)) letter = 'Г'; else if (/^(А|A)$/i.test(letter)) letter = 'А'; else if (/^(ВЭ|В|B)$/i.test(letter)) letter = 'В'; return letter + withPrefix[2].replace(/\s+/g, ''); }
             var withSuffix = cleaned.match(/(\d[\d\s]*?)\s*([А-ЯХГABEKMHOPTXCа-яхгabekmhoptyxc]+)\s*$/i);
-            if (withSuffix) {
-                var num = withSuffix[1].replace(/\s+/g, '');
-                var letter2 = withSuffix[2].toUpperCase();
-                if (/^(ИКС|Х|X)$/i.test(letter2)) letter2 = 'Х';
-                else if (/^(ГЭ|Г|G)$/i.test(letter2)) letter2 = 'Г';
-                else if (/^(А|A)$/i.test(letter2)) letter2 = 'А';
-                else if (/^(ВЭ|В|B)$/i.test(letter2)) letter2 = 'В';
-                return num + letter2;
-            }
-            
-            // Обычный номер
-            var nums = cleaned.match(/\d+/g);
-            if (!nums) return cleaned;
-            if (nums.length === 1) return nums[0];
-            return nums.join('');
+            if (withSuffix) { var num = withSuffix[1].replace(/\s+/g, ''); var letter2 = withSuffix[2].toUpperCase(); if (/^(ИКС|Х|X)$/i.test(letter2)) letter2 = 'Х'; else if (/^(ГЭ|Г|G)$/i.test(letter2)) letter2 = 'Г'; else if (/^(А|A)$/i.test(letter2)) letter2 = 'А'; else if (/^(ВЭ|В|B)$/i.test(letter2)) letter2 = 'В'; return num + letter2; }
+            var nums = cleaned.match(/\d+/g); if (!nums) return cleaned; if (nums.length === 1) return nums[0]; return nums.join('');
         }
 
-        function findTypeByName(name) { 
-            if (!name) return ''; 
-            var nc = name.toLowerCase().replace(/[^a-zа-я0-9]/g, ''), best = '', bestScore = 0; 
-            typesData.forEach(function(r) { 
-                var ref = (r[1] || r[0] || '').toLowerCase().replace(/[^a-zа-я0-9]/g, ''); 
-                if (ref && nc.includes(ref) && ref.length > bestScore) { 
-                    bestScore = ref.length; 
-                    best = r[2] || r[1] || r[0] || ''; 
-                } 
-            }); 
-            return best; 
-        }
+        function findTypeByName(name) { if (!name) return ''; var nc = name.toLowerCase().replace(/[^a-zа-я0-9]/g, ''), best = '', bestScore = 0; typesData.forEach(function(r) { var ref = (r[1] || r[0] || '').toLowerCase().replace(/[^a-zа-я0-9]/g, ''); if (ref && nc.includes(ref) && ref.length > bestScore) { bestScore = ref.length; best = r[2] || r[1] || r[0] || ''; } }); return best; }
 
         function createDeviceBlock(num) {
             var b = document.createElement('div'); b.className = 'device-block'; b.id = 'device' + num;
@@ -264,39 +317,15 @@
             document.getElementById('actsList').innerHTML = '<div class="spinner"></div> Загрузка...';
             fetch(SCRIPT_URL + '?action=getActs').then(r => r.json()).then(function(acts) {
                 var html = '';
-                Object.keys(acts).sort(function(a, b) {
-                    var numA = parseInt(a.split('/').pop().replace(/[ПВ]/,'')) || 0;
-                    var numB = parseInt(b.split('/').pop().replace(/[ПВ]/,'')) || 0;
-                    return numB - numA;
-                }).forEach(function(n) {
-                    var a = acts[n];
-                    html += '<div class="act-item" onclick="loadAct(\'' + n + '\')"><b>Акт №' + n + '</b> от ' + a.date + '<br>Компания: ' + a.company + ' | Приборов: ' + a.devicesCount + '</div>';
+                Object.keys(acts).sort(function(a, b) { var numA = parseInt(a.split('/').pop().replace(/[ПВ]/,'')) || 0; var numB = parseInt(b.split('/').pop().replace(/[ПВ]/,'')) || 0; return numB - numA; }).forEach(function(n) {
+                    var a = acts[n]; html += '<div class="act-item" onclick="loadAct(\'' + n + '\')"><b>Акт №' + n + '</b> от ' + a.date + '<br>Компания: ' + a.company + ' | Приборов: ' + a.devicesCount + '</div>';
                 });
                 document.getElementById('actsList').innerHTML = html || 'Нет актов.';
             }).catch(function() { document.getElementById('actsList').innerHTML = 'Ошибка.'; });
         }
-        
         function closeActsList() { document.getElementById('actsModal').style.display = 'none'; }
-        
-        function loadAct(actNum) { 
-            fetch(SCRIPT_URL + '?action=getAct&number=' + encodeURIComponent(actNum)).then(r => r.json()).then(function(act) { 
-                if (act.error) { alert(act.error); return; } 
-                if (act.company) { var s = document.getElementById('companySelect'); var f = false; for (var i = 0; i < s.options.length; i++) { if (s.options[i].value === act.company) { s.value = act.company; f = true; break; } } if (!f) s.innerHTML += '<option value="' + esc(act.company) + '" selected>' + esc(act.company) + '</option>'; } 
-                if (act.employee) { var s = document.getElementById('employeeSelect'); for (var i = 0; i < s.options.length; i++) { if (s.options[i].value.indexOf(act.employee) !== -1) { s.value = s.options[i].value; break; } } } 
-                document.getElementById('devicesContainer').innerHTML = ''; deviceCounter = 0; usedAddresses = []; 
-                act.devices.forEach(function(dev) { deviceCounter++; createDeviceBlock(deviceCounter); document.getElementById('nameField'+deviceCounter).value = dev.name || ''; document.getElementById('typeField'+deviceCounter).value = dev.type || ''; document.getElementById('noteField'+deviceCounter).value = dev.note || ''; checkType(deviceCounter); 
-                    if (isDualSerialType(deviceCounter) && dev.serial && dev.serial.includes('/')) { var p = dev.serial.split('/'); document.getElementById('serialDual1_'+deviceCounter).value = p[0] || ''; document.getElementById('serialDual2_'+deviceCounter).value = p[1] || ''; fixSerialLetter(deviceCounter, 1); } else document.getElementById('serialField'+deviceCounter).value = dev.serial || ''; 
-                    if (dev.address) { document.getElementById('addressField'+deviceCounter).value = dev.address; if (usedAddresses.indexOf(dev.address) === -1) usedAddresses.push(dev.address); } if (dev.akb) { var cb = document.getElementById('akbCheck'+deviceCounter); if (cb) cb.checked = true; } }); 
-                if (deviceCounter === 0) addDevice(); saveFormData(); closeActsList(); 
-                setStatus('✅ Загружен акт №' + actNum, 'success'); 
-                document.getElementById('printBtn').style.display = 'block';
-            }); 
-        }
-        
-        function printAct() {
-            var pdfUrl = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/export?format=pdf&size=A4&portrait=true&scale=4&fitw=true&gridlines=false&gid=1303750308';
-            window.open(pdfUrl, '_blank');
-        }
+        function loadAct(actNum) { fetch(SCRIPT_URL + '?action=getAct&number=' + encodeURIComponent(actNum)).then(r => r.json()).then(function(act) { if (act.error) { alert(act.error); return; } if (act.company) { var s = document.getElementById('companySelect'); var f = false; for (var i = 0; i < s.options.length; i++) { if (s.options[i].value === act.company) { s.value = act.company; f = true; break; } } if (!f) s.innerHTML += '<option value="' + esc(act.company) + '" selected>' + esc(act.company) + '</option>'; } if (act.employee) { var s = document.getElementById('employeeSelect'); for (var i = 0; i < s.options.length; i++) { if (s.options[i].value.indexOf(act.employee) !== -1) { s.value = s.options[i].value; break; } } } document.getElementById('devicesContainer').innerHTML = ''; deviceCounter = 0; usedAddresses = []; act.devices.forEach(function(dev) { deviceCounter++; createDeviceBlock(deviceCounter); document.getElementById('nameField'+deviceCounter).value = dev.name || ''; document.getElementById('typeField'+deviceCounter).value = dev.type || ''; document.getElementById('noteField'+deviceCounter).value = dev.note || ''; checkType(deviceCounter); if (isDualSerialType(deviceCounter) && dev.serial && dev.serial.includes('/')) { var p = dev.serial.split('/'); document.getElementById('serialDual1_'+deviceCounter).value = p[0] || ''; document.getElementById('serialDual2_'+deviceCounter).value = p[1] || ''; fixSerialLetter(deviceCounter, 1); } else document.getElementById('serialField'+deviceCounter).value = dev.serial || ''; if (dev.address) { document.getElementById('addressField'+deviceCounter).value = dev.address; if (usedAddresses.indexOf(dev.address) === -1) usedAddresses.push(dev.address); } if (dev.akb) { var cb = document.getElementById('akbCheck'+deviceCounter); if (cb) cb.checked = true; } }); if (deviceCounter === 0) addDevice(); saveFormData(); closeActsList(); setStatus('✅ Загружен акт №' + actNum, 'success'); document.getElementById('printBtn').style.display = 'block'; }); }
+        function printAct() { window.open('https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/export?format=pdf&size=A4&portrait=true&scale=4&fitw=true&gridlines=false&gid=1303750308', '_blank'); }
 
         function submitAct(){
             var company=document.getElementById('companySelect').value,employee=document.getElementById('employeeSelect').value;
@@ -310,13 +339,7 @@
             var form=document.createElement('form');form.method='POST';form.action=SCRIPT_URL;form.target='hiddenFrame';form.style.display='none';
             [{n:'date',v:ds},{n:'company',v:company},{n:'employee',v:employee},{n:'devices',v:JSON.stringify(devices)},{n:'email',v:email}].forEach(function(f){var i=document.createElement('input');i.type='hidden';i.name=f.n;i.value=f.v;form.appendChild(i);});
             document.body.appendChild(form);form.submit();document.body.removeChild(form);
-            setTimeout(function(){
-                btn.innerHTML='📧 Сформировать акт и отправить';btn.disabled=false;
-                setStatus('✅ Акт отправлен на '+email,'success');clearFormData();
-                if(navigator.vibrate)navigator.vibrate([30,50,30]);
-                if ('speechSynthesis' in window) { var utter = new SpeechSynthesisUtterance('Акт отправлен'); utter.lang = 'ru-RU'; utter.rate = 1; window.speechSynthesis.speak(utter); }
-                document.getElementById('printBtn').style.display = 'block';
-            },2000);
+            setTimeout(function(){ btn.innerHTML='📧 Сформировать акт и отправить';btn.disabled=false; setStatus('✅ Акт отправлен на '+email,'success');clearFormData(); if(navigator.vibrate)navigator.vibrate([30,50,30]); if ('speechSynthesis' in window) { var utter = new SpeechSynthesisUtterance('Акт отправлен'); utter.lang = 'ru-RU'; utter.rate = 1; window.speechSynthesis.speak(utter); } document.getElementById('printBtn').style.display = 'block'; },2000);
         }
         
         function setStatus(msg,cls){var el=document.getElementById('status');el.innerHTML=msg;el.className='status';if(cls)el.classList.add(cls);}
