@@ -14,8 +14,8 @@
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .header h1 { font-size: 22px; font-weight: 700; color: #000; }
         .header p { font-size: 12px; color: #8E8E93; margin-top: 2px; }
-        .btn-settings { background: none; border: none; font-size: 24px; cursor: pointer; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-        .btn-settings:active { background: #E5E5EA; }
+        .btn-icon { background: none; border: none; font-size: 24px; cursor: pointer; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .btn-icon:active { background: #E5E5EA; }
         .btn-logout { background: none; border: none; font-size: 18px; cursor: pointer; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #FF3B30; }
         .btn-ios { background: #007AFF; color: white; border: none; border-radius: 12px; padding: 14px 20px; font-size: 16px; font-weight: 500; transition: all 0.15s ease; cursor: pointer; user-select: none; text-align: center; }
         .btn-ios:active { transform: scale(0.96); opacity: 0.8; }
@@ -31,6 +31,9 @@
         .btn-ios-icon.green { background: #34C759; color: white; }
         .btn-ios-icon.red { background: #FF3B30; color: white; }
         .btn-ios-icon.pink { background: #FF2D55; color: white; }
+        .btn-sm { font-size: 12px; padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer; font-weight: 500; }
+        .btn-sm.blue { background: #007AFF; color: white; }
+        .btn-sm.gray { background: #8E8E93; color: white; }
         .field-group { margin-bottom: 12px; }
         .field-group label { display: block; font-size: 13px; font-weight: 600; color: #3C3C43; margin-bottom: 4px; }
         .field-row { display: flex; gap: 8px; align-items: center; }
@@ -57,9 +60,19 @@
         .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: #FFFFFF; border: 1px solid #E5E5EA; border-radius: 0 0 10px 10px; z-index: 100; display: none; list-style: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .autocomplete-list li { padding: 12px; cursor: pointer; font-size: 16px; border-bottom: 1px solid #F2F2F7; }
         .autocomplete-list li:active { background: #007AFF; color: white; }
-        #settingsPanel { display: none; background: #FFFFFF; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
-        #settingsPanel h3 { margin-bottom: 12px; font-size: 17px; }
-        #settingsPanel input { width: 100%; padding: 12px; border: 1px solid #E5E5EA; border-radius: 10px; font-size: 16px; margin-bottom: 10px; }
+        #settingsPanel, #devicesPanel { display: none; background: #FFFFFF; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+        #devicesPanel h3 { margin-bottom: 12px; font-size: 17px; }
+        .stats-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+        .stat-badge { padding: 6px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .stat-badge.blue { background: #E3F2FD; color: #007AFF; }
+        .stat-badge.green { background: #E8F5E9; color: #34C759; }
+        .stat-badge.orange { background: #FFF3E0; color: #FF9500; }
+        .stat-badge.red { background: #FFEBEE; color: #FF3B30; }
+        .stat-badge.gray { background: #F2F2F7; color: #8E8E93; }
+        .device-card { padding: 10px 12px; background: #F9F9F9; border-radius: 10px; margin-bottom: 6px; font-size: 13px; }
+        .device-card .btns { display: flex; gap: 6px; margin-top: 6px; }
+        #statusModal, #messageModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; }
+        #statusModal .modal-content, #messageModal .modal-content { background: #FFFFFF; margin: 60px auto; padding: 20px; border-radius: 20px; max-width: 400px; }
         #cameraOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; }
         #cameraVideo { width: 100%; height: 100%; object-fit: cover; }
         #cameraCaptureBtn { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); width: 72px; height: 72px; background: #fff; border: 4px solid #34C759; border-radius: 50%; cursor: pointer; z-index: 10001; }
@@ -82,49 +95,52 @@
         .serial-hint { font-size: 10px; color: #AEAEB2; margin-top: 4px; }
         #printContainer { text-align: center; margin-top: 8px; }
         .save-btn { font-size: 11px; padding: 6px 10px; background: #007AFF; color: white; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; flex: 0 0 auto; }
-        .save-btn:active { opacity: 0.7; }
-        /* Экран входа */
         #loginScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; }
         #loginScreen h2 { font-size: 24px; margin-bottom: 8px; }
-        #loginScreen p { color: #8E8E93; margin-bottom: 24px; text-align: center; }
+        #loginScreen p { color: #8E8E93; margin-bottom: 24px; }
         #loginScreen input { width: 100%; padding: 14px; border: 1px solid #E5E5EA; border-radius: 12px; font-size: 16px; margin-bottom: 12px; background: #FFFFFF; }
-        #loginScreen .login-btn { width: 100%; margin-top: 8px; }
         #loginError { color: #FF3B30; font-size: 13px; min-height: 20px; text-align: center; margin-top: 8px; }
         #userName { font-size: 12px; color: #8E8E93; margin-right: 8px; }
     </style>
 </head>
 <body>
-    <!-- ЭКРАН ВХОДА -->
     <div id="loginScreen">
         <h2>🔒 Вход</h2>
         <p>МС «ЦЕНТР ИЗМЕРЕНИЙ»</p>
         <input type="text" id="loginInput" placeholder="Логин" autocomplete="username">
         <input type="password" id="passwordInput" placeholder="Пароль" autocomplete="current-password">
-        <button class="btn-ios login-btn" onclick="doLogin()">🔑 Войти</button>
+        <button class="btn-ios" onclick="doLogin()" style="width:100%;">🔑 Войти</button>
         <div id="loginError"></div>
     </div>
 
-    <!-- ОСНОВНОЕ ПРИЛОЖЕНИЕ (скрыто до входа) -->
     <div id="appContent" style="display:none;">
         <div class="header">
             <div><h1>📋 Приёмка СИ</h1><p>ООО МС «ЦЕНТР ИЗМЕРЕНИЙ»</p></div>
             <div style="display:flex;align-items:center;">
                 <span id="userName"></span>
+                <button class="btn-icon" onclick="toggleDevices()" title="Приборы">🔧</button>
+                <button class="btn-icon" onclick="toggleSettings()">⚙️</button>
                 <button class="btn-logout" onclick="doLogout()" title="Выйти">🚪</button>
-                <button class="btn-settings" onclick="toggleSettings()">⚙️</button>
             </div>
         </div>
+        
+        <div id="devicesPanel">
+            <h3>🔧 Управление приборами</h3>
+            <div class="stats-row" id="statsRow"></div>
+            <input type="text" id="deviceSearch" placeholder="🔍 Поиск по номеру или названию" style="width:100%;padding:10px;border:1px solid #E5E5EA;border-radius:10px;font-size:14px;margin-bottom:10px;" oninput="loadDevices()">
+            <div id="devicesList" style="max-height:400px;overflow-y:auto;"></div>
+            <button class="btn-ios-gray" onclick="toggleDevices()" style="width:100%;margin-top:8px;">Закрыть</button>
+        </div>
+        
         <div id="settingsPanel">
             <h3>⚙️ Настройки</h3>
-            <label style="font-size:13px;font-weight:600;color:#3C3C43;">📧 Email:</label>
+            <label style="font-size:13px;font-weight:600;">📧 Email:</label>
             <input type="email" id="settingsEmail" placeholder="ms-tcentr@mail.ru">
             <button class="btn-ios" onclick="saveSettings()" style="width:100%;">💾 Сохранить</button>
         </div>
-        <div id="loadingSkeleton">
-            <div class="skeleton" style="height:24px;width:60%;margin:8px 0;"></div>
-            <div class="skeleton" style="height:14px;margin:8px 0;"></div>
-            <div class="skeleton" style="height:50px;margin:10px 0;border-radius:14px;"></div>
-        </div>
+        
+        <div id="loadingSkeleton"><div class="skeleton" style="height:24px;width:60%;margin:8px 0;"></div><div class="skeleton" style="height:14px;margin:8px 0;"></div><div class="skeleton" style="height:50px;border-radius:14px;"></div></div>
+        
         <div id="mainContent" style="display:none;">
             <div class="act-toolbar">
                 <button class="btn-ios" onclick="newAct()" style="flex:1;">📝 Новый акт</button>
@@ -140,6 +156,43 @@
             <div class="hint" id="emailHint"></div>
             <div class="saved-indicator" id="savedIndicator">💾 Сохранено</div>
             <div class="status" id="status"></div>
+        </div>
+    </div>
+
+    <!-- Модалка смены статуса -->
+    <div id="statusModal">
+        <div class="modal-content">
+            <h3>🔄 Изменить статус</h3>
+            <p id="statusDeviceInfo" style="font-size:13px;color:#8E8E93;margin-bottom:10px;"></p>
+            <select id="newStatus" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;margin-bottom:10px;">
+                <option value="В работе">🟡 В работе</option>
+                <option value="Годен">🟢 Годен</option>
+                <option value="Выдан">✅ Выдан</option>
+                <option value="Не годен">🔴 Не годен</option>
+                <option value="Ремонт">🔧 Ремонт</option>
+                <option value="Калибровка">📐 Калибровка</option>
+                <option value="Настройка">⚙️ Настройка</option>
+                <option value="Брак">❌ Брак</option>
+            </select>
+            <input type="text" id="statusReason" placeholder="Причина (для проблемных статусов)" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:14px;margin-bottom:10px;">
+            <button class="btn-ios" onclick="saveNewStatus()" style="width:100%;">✅ Сохранить</button>
+            <button class="btn-ios-gray" onclick="closeStatusModal()" style="width:100%;margin-top:6px;">Отмена</button>
+        </div>
+    </div>
+
+    <!-- Модалка отправки сообщения -->
+    <div id="messageModal">
+        <div class="modal-content">
+            <h3>📧 Отправить клиенту</h3>
+            <p id="msgDeviceInfo" style="font-size:13px;color:#8E8E93;margin-bottom:10px;"></p>
+            <label style="font-size:13px;font-weight:600;">Email:</label>
+            <input type="email" id="msgEmail" placeholder="Email клиента" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:14px;margin-bottom:10px;">
+            <label style="font-size:13px;font-weight:600;">Тема:</label>
+            <input type="text" id="msgSubject" value="Статус приборов" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:14px;margin-bottom:10px;">
+            <label style="font-size:13px;font-weight:600;">Сообщение:</label>
+            <textarea id="msgBody" rows="6" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:14px;margin-bottom:10px;"></textarea>
+            <button class="btn-ios" onclick="sendMsg()" style="width:100%;">📧 Отправить</button>
+            <button class="btn-ios-gray" onclick="closeMessageModal()" style="width:100%;margin-top:6px;">Отмена</button>
         </div>
     </div>
 
@@ -160,95 +213,125 @@
         var recognition = null, isVoiceSupported = false, isListening = false;
         var currentVoiceDevice = null, currentVoiceField = null, voiceResults = [];
         var allTypesFromSheet = [], saveTimeout = null;
-        var loginAttempts = 0;
-        var currentUser = '';
+        var loginAttempts = 0, currentUser = '';
+        var currentStatusRow = null, currentMsgCompany = '';
 
-        window.addEventListener('load', function() {
-            checkSession();
-        });
+        window.addEventListener('load', function() { checkSession(); });
 
-        // ============ АВТОРИЗАЦИЯ ============
         function checkSession() {
             var session = JSON.parse(localStorage.getItem('priemkaSession') || '{}');
             var now = new Date();
-            var today = now.toDateString();
-            
-            if (session.date === today && session.user) {
-                currentUser = session.user;
-                showApp();
-            } else {
-                showLogin();
-            }
+            if (session.date === now.toDateString() && session.user) { currentUser = session.user; showApp(); }
+            else { showLogin(); }
         }
 
-        function showLogin() {
-            document.getElementById('loginScreen').style.display = 'flex';
-            document.getElementById('appContent').style.display = 'none';
-            localStorage.removeItem('priemkaSession');
-        }
-
+        function showLogin() { document.getElementById('loginScreen').style.display = 'flex'; document.getElementById('appContent').style.display = 'none'; localStorage.removeItem('priemkaSession'); }
+        
         function showApp() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('appContent').style.display = 'block';
+            document.getElementById('loginScreen').style.display = 'none'; document.getElementById('appContent').style.display = 'block';
             document.getElementById('userName').textContent = currentUser ? '👤 ' + currentUser : '';
-            document.getElementById('settingsEmail').value = settings.email || '';
-            updateEmailHint();
+            document.getElementById('settingsEmail').value = settings.email || ''; updateEmailHint();
             setStatus('<span class="spinner"></span> Загрузка...', 'loading');
             loadDictionaries(); loadAllTypesFromSheet(); addDevice(); initVoiceRecognition();
         }
 
         function doLogin() {
-            var login = document.getElementById('loginInput').value.trim();
-            var password = document.getElementById('passwordInput').value.trim();
-            
-            if (!login || !password) {
-                document.getElementById('loginError').textContent = 'Введите логин и пароль';
-                return;
-            }
-            
-            if (loginAttempts >= 5) {
-                document.getElementById('loginError').textContent = 'Слишком много попыток. Подождите 15 минут.';
-                return;
-            }
-            
+            var login = document.getElementById('loginInput').value.trim(), password = document.getElementById('passwordInput').value.trim();
+            if (!login || !password) { document.getElementById('loginError').textContent = 'Введите логин и пароль'; return; }
+            if (loginAttempts >= 5) { document.getElementById('loginError').textContent = 'Слишком много попыток.'; return; }
             fetch(SCRIPT_URL + '?action=checkLogin&login=' + encodeURIComponent(login) + '&password=' + encodeURIComponent(password))
-                .then(r => r.json())
-                .then(function(res) {
-                    if (res.status === 'success') {
-                        currentUser = res.name || login;
-                        var session = { user: currentUser, date: new Date().toDateString() };
-                        localStorage.setItem('priemkaSession', JSON.stringify(session));
-                        loginAttempts = 0;
-                        showApp();
-                    } else if (res.status === 'wrong_password') {
-                        loginAttempts++;
-                        document.getElementById('loginError').textContent = 'Неверный пароль. Попыток: ' + (5 - loginAttempts);
-                    } else {
-                        loginAttempts++;
-                        document.getElementById('loginError').textContent = 'Пользователь не найден';
-                    }
-                })
-                .catch(function() {
-                    document.getElementById('loginError').textContent = 'Ошибка соединения';
+                .then(r => r.json()).then(function(res) {
+                    if (res.status === 'success') { currentUser = res.name || login; localStorage.setItem('priemkaSession', JSON.stringify({user: currentUser, date: new Date().toDateString()})); loginAttempts = 0; showApp(); }
+                    else if (res.status === 'wrong_password') { loginAttempts++; document.getElementById('loginError').textContent = 'Неверный пароль. Попыток: ' + (5 - loginAttempts); }
+                    else { loginAttempts++; document.getElementById('loginError').textContent = 'Пользователь не найден'; }
+                }).catch(function() { document.getElementById('loginError').textContent = 'Ошибка соединения'; });
+        }
+
+        function doLogout() { localStorage.removeItem('priemkaSession'); currentUser = ''; location.reload(); }
+        document.getElementById('passwordInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
+
+        function toggleDevices() { var p = document.getElementById('devicesPanel'); if (p.style.display === 'none' || !p.style.display) { p.style.display = 'block'; loadDevices(); } else { p.style.display = 'none'; } }
+        function toggleSettings() { var p = document.getElementById('settingsPanel'); p.style.display = p.style.display === 'none' ? 'block' : 'none'; }
+
+        function loadDevices() {
+            var search = document.getElementById('deviceSearch').value || '';
+            fetch(SCRIPT_URL + '?action=getDevices&search=' + encodeURIComponent(search))
+                .then(r => r.json()).then(function(data) {
+                    var stats = data.stats || {};
+                    document.getElementById('statsRow').innerHTML = 
+                        '<span class="stat-badge blue">🔵 В работе: ' + (stats.inWork||0) + '</span>' +
+                        '<span class="stat-badge green">🟢 Годен: ' + (stats.ready||0) + '</span>' +
+                        '<span class="stat-badge orange">🔧 Ремонт: ' + (stats.repair||0) + '</span>' +
+                        '<span class="stat-badge red">🔴 Не годен: ' + (stats.notGood||0) + '</span>' +
+                        '<span class="stat-badge gray">✅ Выдано: ' + (stats.issued||0) + '</span>';
+                    
+                    var html = '';
+                    (data.devices||[]).forEach(function(d) {
+                        var statusEmoji = '🟡';
+                        if (d.status === 'Годен') statusEmoji = '🟢';
+                        else if (d.status === 'Выдан') statusEmoji = '✅';
+                        else if (d.status === 'Ремонт') statusEmoji = '🔧';
+                        else if (d.status === 'Не годен') statusEmoji = '🔴';
+                        else if (d.status === 'Брак') statusEmoji = '❌';
+                        else if (d.status === 'Калибровка') statusEmoji = '📐';
+                        else if (d.status === 'Настройка') statusEmoji = '⚙️';
+                        
+                        html += '<div class="device-card">' + statusEmoji + ' <b>' + (d.name||'') + '</b> | ' + (d.serial||'') + '<br>🏢 ' + (d.company||'') + ' | 📅 ' + (d.actDate||'') + '<br>Статус: ' + (d.status||'В работе');
+                        if (d.repairReason) html += '<br>Причина: ' + d.repairReason;
+                        html += '<div class="btns"><button class="btn-sm blue" onclick="openStatusModal(' + d.row + ',\'' + (d.name||'') + '\',\'' + (d.serial||'') + '\',\'' + (d.status||'') + '\')">🔄 Статус</button> <button class="btn-sm gray" onclick="openMessageModal(\'' + (d.company||'') + '\',\'' + (d.name||'') + '\',\'' + (d.serial||'') + '\',\'' + (d.status||'') + '\')">📧</button></div></div>';
+                    });
+                    document.getElementById('devicesList').innerHTML = html || 'Нет приборов';
                 });
         }
 
-        function doLogout() {
-            localStorage.removeItem('priemkaSession');
-            currentUser = '';
-            location.reload();
+        function openStatusModal(row, name, serial, status) {
+            currentStatusRow = row;
+            document.getElementById('statusDeviceInfo').textContent = name + ' | зав.№ ' + serial + ' | Текущий: ' + status;
+            document.getElementById('newStatus').value = status || 'В работе';
+            document.getElementById('statusReason').value = '';
+            document.getElementById('statusModal').style.display = 'block';
+        }
+        function closeStatusModal() { document.getElementById('statusModal').style.display = 'none'; currentStatusRow = null; }
+
+        function saveNewStatus() {
+            if (!currentStatusRow) return;
+            var status = document.getElementById('newStatus').value;
+            var reason = document.getElementById('statusReason').value.trim();
+            fetch(SCRIPT_URL + '?action=updateStatus&row=' + currentStatusRow + '&status=' + encodeURIComponent(status) + '&reason=' + encodeURIComponent(reason))
+                .then(r => r.json()).then(function(res) {
+                    if (res.status === 'success') { setStatus('✅ Статус обновлён', 'success'); closeStatusModal(); loadDevices(); }
+                    else { setStatus('❌ Ошибка', 'error'); }
+                });
         }
 
-        document.getElementById('passwordInput').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') doLogin();
-        });
+        function openMessageModal(company, name, serial, status) {
+            currentMsgCompany = company;
+            document.getElementById('msgDeviceInfo').textContent = '🏢 ' + company + ' | ' + name + ' | зав.№ ' + serial + ' | ' + status;
+            document.getElementById('msgSubject').value = 'Статус приборов';
+            document.getElementById('msgBody').value = 'Уважаемый клиент!\n\nСтатус вашего прибора:\n' + name + ' (зав.№ ' + serial + ') — ' + status + '\n\n🏢 Адрес: ул. Новаторов, 5\n📞 Тел: +7(996)6418436';
+            document.getElementById('messageModal').style.display = 'block';
+            fetch(SCRIPT_URL + '?action=getClientEmail&company=' + encodeURIComponent(company))
+                .then(r => r.json()).then(function(res) { document.getElementById('msgEmail').value = res.email || ''; });
+        }
+        function closeMessageModal() { document.getElementById('messageModal').style.display = 'none'; }
 
-        // ============ ОСТАЛЬНЫЕ ФУНКЦИИ (без изменений) ============
+        function sendMsg() {
+            var email = document.getElementById('msgEmail').value.trim();
+            var subject = document.getElementById('msgSubject').value.trim();
+            var body = document.getElementById('msgBody').value.trim();
+            if (!email || !subject || !body) { alert('Заполните все поля'); return; }
+            fetch(SCRIPT_URL + '?action=sendMessage&email=' + encodeURIComponent(email) + '&subject=' + encodeURIComponent(subject) + '&message=' + encodeURIComponent(body))
+                .then(r => r.json()).then(function(res) {
+                    if (res.status === 'success') { setStatus('✅ Сообщение отправлено', 'success'); closeMessageModal(); }
+                    else { setStatus('❌ Ошибка', 'error'); }
+                });
+        }
+
+        // ============ ОСТАЛЬНЫЕ ФУНКЦИИ ============
         function saveFormData() { clearTimeout(saveTimeout); saveTimeout = setTimeout(function() { var data = { company: document.getElementById('companySelect').value, employee: document.getElementById('employeeSelect').value, devices: [] }; document.querySelectorAll('.device-block').forEach(function(b) { var n = b.id.replace('device', ''); var d = { type: document.getElementById('typeField'+n)?.value||'', name: document.getElementById('nameField'+n)?.value||'', serial: document.getElementById('serialField'+n)?.value||'', serial2: document.getElementById('serialDual2_'+n)?.value||'', address: document.getElementById('addressField'+n)?.value||'', akb: document.getElementById('akbCheck'+n)?.checked||false, note: document.getElementById('noteField'+n)?.value||'' }; if(d.name||d.type||d.serial) data.devices.push(d); }); if(data.company||data.employee||data.devices.length>0){localStorage.setItem('priemkaFormData',JSON.stringify(data));showSaved();} }, 500); }
         function showSaved(){ var el=document.getElementById('savedIndicator'); el.style.display='block'; setTimeout(function(){el.style.display='none';},2000); }
         function loadFormData(){ try { var saved=JSON.parse(localStorage.getItem('priemkaFormData')||'{}'); if(!saved.devices||!saved.devices.length)return; if(saved.company)document.getElementById('companySelect').value=saved.company; if(saved.employee)document.getElementById('employeeSelect').value=saved.employee; document.getElementById('devicesContainer').innerHTML=''; deviceCounter=0; usedAddresses=[]; saved.devices.forEach(function(dev){ deviceCounter++; createDeviceBlock(deviceCounter); setTimeout(function(){ var n=deviceCounter; document.getElementById('nameField'+n).value=dev.name||''; document.getElementById('typeField'+n).value=dev.type||''; document.getElementById('noteField'+n).value=dev.note||''; if(dev.serial2){ document.getElementById('serialDual1_'+n).value=dev.serial||''; document.getElementById('serialDual2_'+n).value=dev.serial2||''; checkType(n); fixSerialLetter(n,1); } else document.getElementById('serialField'+n).value=dev.serial||''; if(dev.address){document.getElementById('addressField'+n).value=dev.address; if(usedAddresses.indexOf(dev.address)===-1)usedAddresses.push(dev.address);} if(dev.akb){var cb=document.getElementById('akbCheck'+n);if(cb)cb.checked=true;} },200); }); setStatus('✅ Данные восстановлены','success'); } catch(e){} }
         function clearFormData(){ localStorage.removeItem('priemkaFormData'); }
-        function toggleSettings(){ var p=document.getElementById('settingsPanel'); p.style.display=p.style.display==='none'?'block':'none'; }
         function saveSettings(){ settings.email=document.getElementById('settingsEmail').value.trim(); localStorage.setItem('appSettings',JSON.stringify(settings)); updateEmailHint(); document.getElementById('settingsPanel').style.display='none'; setStatus('✅ Настройки сохранены','success'); }
         function updateEmailHint(){ var e=settings.email||''; document.getElementById('emailHint').textContent=e?'📧 Письмо уйдёт на '+e:'⚠️ Укажите email в настройках (⚙️)'; }
 
@@ -287,8 +370,8 @@
         function createDeviceBlock(num) {
             var b = document.createElement('div'); b.className = 'device-block'; b.id = 'device' + num;
             b.innerHTML = `<div class="device-title"><span class="device-number">${num}</span> Прибор</div>
-                <div class="field-group"><label>Название:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${num}); saveFormData();" onfocus="filterAutocomplete(${num})" onblur="hideAutocomplete(${num})" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;"><ul class="autocomplete-list" id="autocompleteList${num}"></ul></div><button class="btn-ios-icon green" onclick="openCamera('name',${num})">📷</button><button class="btn-ios-icon pink voice-btn-name-${num}" onclick="startVoiceInput(${num},'name')">🎤</button><button class="save-btn" onclick="var n=document.getElementById('nameField${num}').value.trim();if(n.length>=3){fetch(SCRIPT_URL+'?action=addName&name='+encodeURIComponent(n)).then(r=>r.json()).then(function(res){if(res.status==='success'){typesData.push([n,n,'']);allTypesFromSheet.push(n);setStatus('✅ Название сохранено','success');}});}" title="Сохранить название">💾</button></div><div class="voice-variants" id="voiceVariants${num}"></div></div>
-                <div class="field-group"><label>Тип:</label><div class="field-row"><input type="text" id="typeField${num}" placeholder="Авто или вручную" style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="checkType(${num}); saveFormData();"><button class="save-btn" onclick="var t=document.getElementById('typeField${num}').value.trim();if(t.length>=3){fetch(SCRIPT_URL+'?action=addType&name='+encodeURIComponent(t)).then(r=>r.json()).then(function(res){if(res.status==='success'){typesData.push([t,t,t]);allTypesFromSheet.push(t);setStatus('✅ Тип сохранён','success');}});}" title="Сохранить тип">💾</button></div></div>
+                <div class="field-group"><label>Название:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="nameField${num}" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete(${num}); saveFormData();" onfocus="filterAutocomplete(${num})" onblur="hideAutocomplete(${num})" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;"><ul class="autocomplete-list" id="autocompleteList${num}"></ul></div><button class="btn-ios-icon green" onclick="openCamera('name',${num})">📷</button><button class="btn-ios-icon pink voice-btn-name-${num}" onclick="startVoiceInput(${num},'name')">🎤</button><button class="save-btn" onclick="var n=document.getElementById('nameField${num}').value.trim();if(n.length>=3){fetch(SCRIPT_URL+'?action=addName&name='+encodeURIComponent(n)).then(r=>r.json()).then(function(res){if(res.status==='success'){typesData.push([n,n,'']);allTypesFromSheet.push(n);setStatus('✅ Название сохранено','success');}});}" title="Сохранить">💾</button></div><div class="voice-variants" id="voiceVariants${num}"></div></div>
+                <div class="field-group"><label>Тип:</label><div class="field-row"><input type="text" id="typeField${num}" placeholder="Авто или вручную" style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="checkType(${num}); saveFormData();"><button class="save-btn" onclick="var t=document.getElementById('typeField${num}').value.trim();if(t.length>=3){fetch(SCRIPT_URL+'?action=addType&name='+encodeURIComponent(t)).then(r=>r.json()).then(function(res){if(res.status==='success'){typesData.push([t,t,t]);allTypesFromSheet.push(t);setStatus('✅ Тип сохранён','success');}});}" title="Сохранить">💾</button></div></div>
                 <div class="field-group"><label>Заводской номер:</label><div class="field-row"><input type="text" id="serialField${num}" placeholder="Номер" style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="saveFormData();"><button class="btn-ios-icon green" onclick="openCamera('serial',${num})">📷</button><button class="btn-ios-icon pink voice-btn-serialField-${num}" onclick="startVoiceInput(${num},'serialField')">🎤</button></div>
                 <div class="serial-dual-block" id="serialDualBlock${num}"><div class="serial-dual-row"><label>Ном. 1:</label><input type="text" id="serialDual1_${num}" placeholder="Первый номер" oninput="fixSerialLetter(${num},1);" style="flex:1;"><button class="btn-ios-icon pink voice-btn-serialDual1_-${num}" onclick="startVoiceInput(${num},'serialDual1_')">🎤</button></div><div class="serial-dual-row"><label>Ном. 2:</label><input type="text" id="serialDual2_${num}" placeholder="Второй номер (авто)" oninput="onDual2Change(${num});" style="flex:1;"><button class="btn-ios-icon pink voice-btn-serialDual2_-${num}" onclick="startVoiceInput(${num},'serialDual2_')">🎤</button></div><div class="serial-hint">🔤 Х↔Г авто | А = без буквы | 1↔2 авто</div></div>
                 <div class="serial-hint">💡 "А 12345" → А12345, "4540 дробь 1" → 4540/1, "1312 г" → 1312Г</div></div>
@@ -311,18 +394,7 @@
         function recognizeText(dataUrl,target,deviceNum){ setStatus('Распознавание...','loading'); Tesseract.recognize(dataUrl,'rus+eng',{logger:function(m){if(m.status==='recognizing text')setStatus('Распознавание: '+Math.round(m.progress*100)+'%','loading');}}).then(function(result){var text=result.data.text.replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g,' ').replace(/\s+/g,' ').trim();if(target==='name'){document.getElementById('nameField'+deviceNum).value=text;var ft=findTypeByName(text);if(ft){document.getElementById('typeField'+deviceNum).value=ft;checkType(deviceNum);}}else{document.getElementById('serialField'+deviceNum).value=text.match(/\d{3,}/)?.[0]||'';}saveFormData();}).catch(function(){setStatus('❌ Ошибка','error');}); }
         function addCompany() { var name = prompt('Введите название компании:'); if (name && name.trim()) { var sel = document.getElementById('companySelect'); sel.innerHTML += '<option value="' + esc(name.trim()) + '" selected>' + esc(name.trim()) + '</option>'; saveFormData(); fetch(SCRIPT_URL + '?action=addCompany&name=' + encodeURIComponent(name.trim())).then(r => r.json()).then(function(res) { if (res.status === 'success') setStatus('✅ Компания сохранена', 'success'); }).catch(function(){}); } }
         function newAct() { if (confirm('Очистить все поля?')) { document.getElementById('devicesContainer').innerHTML = ''; deviceCounter = 0; usedAddresses = []; clearFormData(); addDevice(); setStatus('✅ Новый акт', 'success'); document.getElementById('printBtn').style.display = 'none'; } }
-        
-        function openActsList() {
-            document.getElementById('actsModal').style.display = 'block';
-            document.getElementById('actsList').innerHTML = '<div class="spinner"></div> Загрузка...';
-            fetch(SCRIPT_URL + '?action=getActs').then(r => r.json()).then(function(acts) {
-                var html = '';
-                Object.keys(acts).sort(function(a, b) { var numA = parseInt(a.split('/').pop().replace(/[ПВ]/,'')) || 0; var numB = parseInt(b.split('/').pop().replace(/[ПВ]/,'')) || 0; return numB - numA; }).forEach(function(n) {
-                    var a = acts[n]; html += '<div class="act-item" onclick="loadAct(\'' + n + '\')"><b>Акт №' + n + '</b> от ' + a.date + '<br>Компания: ' + a.company + ' | Приборов: ' + a.devicesCount + '</div>';
-                });
-                document.getElementById('actsList').innerHTML = html || 'Нет актов.';
-            }).catch(function() { document.getElementById('actsList').innerHTML = 'Ошибка.'; });
-        }
+        function openActsList() { document.getElementById('actsModal').style.display = 'block'; document.getElementById('actsList').innerHTML = '<div class="spinner"></div> Загрузка...'; fetch(SCRIPT_URL + '?action=getActs').then(r => r.json()).then(function(acts) { var html = ''; Object.keys(acts).sort(function(a, b) { var numA = parseInt(a.split('/').pop().replace(/[ПВ]/,'')) || 0; var numB = parseInt(b.split('/').pop().replace(/[ПВ]/,'')) || 0; return numB - numA; }).forEach(function(n) { var a = acts[n]; html += '<div class="act-item" onclick="loadAct(\'' + n + '\')"><b>Акт №' + n + '</b> от ' + a.date + '<br>Компания: ' + a.company + ' | Приборов: ' + a.devicesCount + '</div>'; }); document.getElementById('actsList').innerHTML = html || 'Нет актов.'; }).catch(function() { document.getElementById('actsList').innerHTML = 'Ошибка.'; }); }
         function closeActsList() { document.getElementById('actsModal').style.display = 'none'; }
         function loadAct(actNum) { fetch(SCRIPT_URL + '?action=getAct&number=' + encodeURIComponent(actNum)).then(r => r.json()).then(function(act) { if (act.error) { alert(act.error); return; } if (act.company) { var s = document.getElementById('companySelect'); var f = false; for (var i = 0; i < s.options.length; i++) { if (s.options[i].value === act.company) { s.value = act.company; f = true; break; } } if (!f) s.innerHTML += '<option value="' + esc(act.company) + '" selected>' + esc(act.company) + '</option>'; } if (act.employee) { var s = document.getElementById('employeeSelect'); for (var i = 0; i < s.options.length; i++) { if (s.options[i].value.indexOf(act.employee) !== -1) { s.value = s.options[i].value; break; } } } document.getElementById('devicesContainer').innerHTML = ''; deviceCounter = 0; usedAddresses = []; act.devices.forEach(function(dev) { deviceCounter++; createDeviceBlock(deviceCounter); document.getElementById('nameField'+deviceCounter).value = dev.name || ''; document.getElementById('typeField'+deviceCounter).value = dev.type || ''; document.getElementById('noteField'+deviceCounter).value = dev.note || ''; checkType(deviceCounter); if (isDualSerialType(deviceCounter) && dev.serial && dev.serial.includes('/')) { var p = dev.serial.split('/'); document.getElementById('serialDual1_'+deviceCounter).value = p[0] || ''; document.getElementById('serialDual2_'+deviceCounter).value = p[1] || ''; fixSerialLetter(deviceCounter, 1); } else document.getElementById('serialField'+deviceCounter).value = dev.serial || ''; if (dev.address) { document.getElementById('addressField'+deviceCounter).value = dev.address; if (usedAddresses.indexOf(dev.address) === -1) usedAddresses.push(dev.address); } if (dev.akb) { var cb = document.getElementById('akbCheck'+deviceCounter); if (cb) cb.checked = true; } }); if (deviceCounter === 0) addDevice(); saveFormData(); closeActsList(); setStatus('✅ Загружен акт №' + actNum, 'success'); document.getElementById('printBtn').style.display = 'block'; }); }
         function printAct() { window.open('https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/export?format=pdf&size=A4&portrait=true&scale=4&fitw=true&gridlines=false&gid=1303750308', '_blank'); }
