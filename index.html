@@ -36,6 +36,7 @@
         .btn-sm.blue { background: #007AFF; color: white; }
         .btn-sm.gray { background: #8E8E93; color: white; }
         .btn-sm.green { background: #34C759; color: white; }
+        .btn-sm.orange { background: #FF9500; color: white; }
         .field-group { margin-bottom: 12px; }
         .field-group label { display: block; font-size: 13px; font-weight: 600; color: #3C3C43; margin-bottom: 4px; }
         .field-row { display: flex; gap: 8px; align-items: center; }
@@ -60,18 +61,13 @@
         .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: #FFFFFF; border: 1px solid #E5E5EA; border-radius: 0 0 10px 10px; z-index: 100; display: none; list-style: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .autocomplete-list li { padding: 12px; cursor: pointer; font-size: 16px; border-bottom: 1px solid #F2F2F7; }
         .autocomplete-list li:active { background: #007AFF; color: white; }
-
-        /* Главное меню */
         #mainMenu { display: none; }
         .menu-card { background: #FFFFFF; border-radius: 16px; padding: 20px; margin-bottom: 14px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.06); transition: all 0.15s ease; display: flex; align-items: center; gap: 14px; }
         .menu-card:active { transform: scale(0.98); background: #F2F2F7; }
         .menu-icon { font-size: 40px; width: 60px; text-align: center; }
         .menu-info h3 { font-size: 17px; font-weight: 600; }
         .menu-info p { font-size: 12px; color: #8E8E93; margin-top: 2px; }
-
-        /* Режимы */
         #priemkaMode, #devicesMode, #archiveMode, #settingsPanel { display: none; }
-        
         .stats-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
         .stat-badge { padding: 5px 8px; border-radius: 15px; font-size: 11px; font-weight: 600; }
         .stat-badge.blue { background: #E3F2FD; color: #007AFF; }
@@ -82,14 +78,14 @@
         .group-card { background: #F9F9F9; border-radius: 12px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #007AFF; }
         .group-card .company-name { font-weight: 700; font-size: 15px; cursor: pointer; }
         .group-card .act-date { font-size: 12px; color: #8E8E93; margin-bottom: 6px; }
-        .group-card .devices-inner { margin-top: 6px; padding-left: 8px; border-left: 2px solid #E5E5EA; }
+        .group-card .devices-inner { margin-top: 6px; padding-left: 8px; border-left: 2px solid #E5E5EA; display: none; }
+        .group-card .group-actions { margin-top: 8px; padding-top: 8px; border-top: 1px solid #E5E5EA; display: none; flex-wrap: wrap; gap: 6px; }
+        .group-card.expanded .devices-inner, .group-card.expanded .group-actions { display: block; }
+        .group-card.expanded .group-actions { display: flex; }
+        .toggle-icon { float: right; font-size: 12px; transition: transform 0.2s; }
+        .group-card.expanded .toggle-icon { transform: rotate(90deg); }
         .device-mini { font-size: 12px; padding: 6px 0; border-bottom: 1px solid #f0f0f0; }
         .device-mini:last-child { border-bottom: none; }
-        .group-actions { margin-top: 8px; padding-top: 8px; border-top: 1px solid #E5E5EA; display: flex; gap: 6px; flex-wrap: wrap; }
-        .collapsed .devices-inner, .collapsed .group-actions { display: none; }
-        .toggle-icon { float: right; font-size: 12px; transition: transform 0.2s; }
-        .collapsed .toggle-icon { transform: rotate(-90deg); }
-
         #cameraOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; }
         #cameraVideo { width: 100%; height: 100%; object-fit: cover; }
         #cameraCaptureBtn { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); width: 72px; height: 72px; background: #fff; border: 4px solid #34C759; border-radius: 50%; cursor: pointer; z-index: 10001; }
@@ -125,7 +121,6 @@
     </style>
 </head>
 <body>
-    <!-- ЭКРАН ВХОДА -->
     <div id="loginScreen">
         <h2>🔒 Вход</h2>
         <p>МС «ЦЕНТР ИЗМЕРЕНИЙ»</p>
@@ -135,42 +130,25 @@
         <div id="loginError"></div>
     </div>
 
-    <!-- ПРИЛОЖЕНИЕ -->
     <div id="appContent" style="display:none;">
-        <!-- ГЛАВНОЕ МЕНЮ -->
         <div id="mainMenu">
             <div class="header">
                 <div><h1>📋 Меню</h1><p>ООО МС «ЦЕНТР ИЗМЕРЕНИЙ»</p></div>
-                <button class="btn-logout" onclick="doLogout()" title="Выйти">🚪</button>
+                <button class="btn-logout" onclick="doLogout()">🚪</button>
             </div>
             <p style="margin-bottom:16px;color:#8E8E93;">👤 <span id="menuUserName"></span></p>
-            
-            <div class="menu-card" onclick="showMode('priemka')">
-                <div class="menu-icon">📝</div>
-                <div class="menu-info"><h3>Приёмка СИ</h3><p>Создание актов приёма-передачи и выдачи</p></div>
-            </div>
-            <div class="menu-card" onclick="showMode('devices')">
-                <div class="menu-icon">🔧</div>
-                <div class="menu-info"><h3>Управление СИ</h3><p>Статусы, ремонт, отправка сообщений</p></div>
-            </div>
-            <div class="menu-card" onclick="showMode('archive')">
-                <div class="menu-icon">📂</div>
-                <div class="menu-info"><h3>Архив актов</h3><p>Просмотр, печать, восстановление</p></div>
-            </div>
-            <div class="menu-card" onclick="showMode('settings')">
-                <div class="menu-icon">⚙️</div>
-                <div class="menu-info"><h3>Настройки</h3><p>Email для отправки актов</p></div>
-            </div>
+            <div class="menu-card" onclick="showMode('priemka')"><div class="menu-icon">📝</div><div class="menu-info"><h3>Приёмка СИ</h3><p>Создание актов приёма-передачи и выдачи</p></div></div>
+            <div class="menu-card" onclick="showMode('devices')"><div class="menu-icon">🔧</div><div class="menu-info"><h3>Управление СИ</h3><p>Статусы, ремонт, отправка сообщений</p></div></div>
+            <div class="menu-card" onclick="showMode('archive')"><div class="menu-icon">📂</div><div class="menu-info"><h3>Архив актов</h3><p>Просмотр, печать, восстановление</p></div></div>
+            <div class="menu-card" onclick="showMode('settings')"><div class="menu-icon">⚙️</div><div class="menu-info"><h3>Настройки</h3><p>Email для отправки актов</p></div></div>
         </div>
 
-        <!-- РЕЖИМ: ПРИЁМКА -->
         <div id="priemkaMode">
             <button class="btn-back" onclick="showMainMenu()">↩ Назад</button>
             <div class="header"><div><h1>📝 Приёмка СИ</h1></div></div>
             <div id="priemkaContent"></div>
         </div>
 
-        <!-- РЕЖИМ: УПРАВЛЕНИЕ -->
         <div id="devicesMode">
             <button class="btn-back" onclick="showMainMenu()">↩ Назад</button>
             <div class="header"><div><h1>🔧 Управление СИ</h1></div></div>
@@ -179,14 +157,12 @@
             <div id="devicesList" style="max-height:450px;overflow-y:auto;"></div>
         </div>
 
-        <!-- РЕЖИМ: АРХИВ -->
         <div id="archiveMode">
             <button class="btn-back" onclick="showMainMenu()">↩ Назад</button>
             <div class="header"><div><h1>📂 Архив актов</h1></div></div>
             <div id="archiveContent">Загрузка...</div>
         </div>
 
-        <!-- РЕЖИМ: НАСТРОЙКИ -->
         <div id="settingsPanel">
             <button class="btn-back" onclick="showMainMenu()">↩ Назад</button>
             <div class="header"><div><h1>⚙️ Настройки</h1></div></div>
@@ -197,7 +173,6 @@
         </div>
     </div>
 
-    <!-- МОДАЛКИ -->
     <div id="statusModal">
         <div class="modal-content">
             <h3>🔄 Изменить статус</h3>
@@ -218,12 +193,9 @@
         <div class="modal-content">
             <h3>📧 Отправить клиенту</h3>
             <p id="msgDeviceInfo" style="font-size:13px;color:#8E8E93;margin-bottom:10px;"></p>
-            <label style="font-size:13px;font-weight:600;">Email:</label>
-            <input type="email" id="msgEmail" placeholder="Email клиента">
-            <label style="font-size:13px;font-weight:600;">Тема:</label>
-            <input type="text" id="msgSubject" value="Статус приборов">
-            <label style="font-size:13px;font-weight:600;">Сообщение:</label>
-            <textarea id="msgBody" rows="6"></textarea>
+            <label style="font-size:13px;font-weight:600;">Email:</label><input type="email" id="msgEmail" placeholder="Email клиента">
+            <label style="font-size:13px;font-weight:600;">Тема:</label><input type="text" id="msgSubject" value="Статус приборов">
+            <label style="font-size:13px;font-weight:600;">Сообщение:</label><textarea id="msgBody" rows="6"></textarea>
             <button class="btn-ios" onclick="sendMsg()" style="width:100%;">📧 Отправить</button>
             <button class="btn-ios-gray" onclick="closeMessageModal()" style="width:100%;margin-top:6px;">Отмена</button>
         </div>
@@ -247,7 +219,7 @@
         var currentVoiceDevice = null, currentVoiceField = null, voiceResults = [];
         var allTypesFromSheet = [], saveTimeout = null;
         var loginAttempts = 0, currentUser = '';
-        var currentStatusRows = [], currentMode = '';
+        var currentStatusRows = [];
 
         window.addEventListener('load', function() { checkSession(); });
 
@@ -256,7 +228,6 @@
             if (session.date === new Date().toDateString() && session.user) { currentUser = session.user; showApp(); }
             else { showLogin(); }
         }
-
         function showLogin() { document.getElementById('loginScreen').style.display = 'flex'; document.getElementById('appContent').style.display = 'none'; }
         function showApp() { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('appContent').style.display = 'block'; showMainMenu(); }
 
@@ -274,43 +245,18 @@
         function doLogout() { localStorage.removeItem('priemkaSession'); currentUser = ''; location.reload(); }
         document.getElementById('passwordInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
 
-        // ============ НАВИГАЦИЯ ============
-        function showMainMenu() {
-            hideAllModes();
-            document.getElementById('mainMenu').style.display = 'block';
-            document.getElementById('menuUserName').textContent = currentUser || '';
-        }
-
+        function showMainMenu() { hideAllModes(); document.getElementById('mainMenu').style.display = 'block'; document.getElementById('menuUserName').textContent = currentUser || ''; }
         function showMode(mode) {
             hideAllModes();
-            currentMode = mode;
-            if (mode === 'priemka') {
-                document.getElementById('priemkaMode').style.display = 'block';
-                if (!document.getElementById('priemkaContent').innerHTML) initPriemkaMode();
-            } else if (mode === 'devices') {
-                document.getElementById('devicesMode').style.display = 'block';
-                loadDevices();
-            } else if (mode === 'archive') {
-                document.getElementById('archiveMode').style.display = 'block';
-                loadArchive();
-            } else if (mode === 'settings') {
-                document.getElementById('settingsPanel').style.display = 'block';
-                document.getElementById('settingsEmail').value = settings.email || '';
-            }
+            if (mode === 'priemka') { document.getElementById('priemkaMode').style.display = 'block'; if (!document.getElementById('priemkaContent').innerHTML) initPriemkaMode(); }
+            else if (mode === 'devices') { document.getElementById('devicesMode').style.display = 'block'; loadDevices(); }
+            else if (mode === 'archive') { document.getElementById('archiveMode').style.display = 'block'; loadArchive(); }
+            else if (mode === 'settings') { document.getElementById('settingsPanel').style.display = 'block'; document.getElementById('settingsEmail').value = settings.email || ''; }
         }
+        function hideAllModes() { document.getElementById('mainMenu').style.display = 'none'; document.getElementById('priemkaMode').style.display = 'none'; document.getElementById('devicesMode').style.display = 'none'; document.getElementById('archiveMode').style.display = 'none'; document.getElementById('settingsPanel').style.display = 'none'; }
 
-        function hideAllModes() {
-            document.getElementById('mainMenu').style.display = 'none';
-            document.getElementById('priemkaMode').style.display = 'none';
-            document.getElementById('devicesMode').style.display = 'none';
-            document.getElementById('archiveMode').style.display = 'none';
-            document.getElementById('settingsPanel').style.display = 'none';
-        }
-
-        // ============ ПРИЁМКА ============
         function initPriemkaMode() {
-            var html = `
-                <div id="loadingSkeleton"><div class="skeleton" style="height:24px;width:60%;margin:8px 0;"></div><div class="skeleton" style="height:14px;margin:8px 0;"></div><div class="skeleton" style="height:50px;border-radius:14px;"></div></div>
+            document.getElementById('priemkaContent').innerHTML = `<div id="loadingSkeleton"><div class="skeleton" style="height:24px;width:60%;margin:8px 0;"></div><div class="skeleton" style="height:14px;margin:8px 0;"></div><div class="skeleton" style="height:50px;border-radius:14px;"></div></div>
                 <div id="mainContent" style="display:none;">
                     <div class="act-toolbar"><button class="btn-ios" onclick="newAct()" style="flex:1;">📝 Новый акт</button><button class="btn-ios-gray" onclick="openActsList()" style="flex:1;">📂 Выбрать акт</button></div>
                     <div class="field-group"><label>Компания-сдатчик:</label><div class="field-row"><select id="companySelect" onchange="saveFormData()"><option value="">-- Загрузка... --</option></select><button class="btn-ios-icon" onclick="addCompany()">➕</button></div></div>
@@ -319,17 +265,12 @@
                     <button class="btn-ios" onclick="addDevice()" style="width:100%;margin:8px 0;">➕ Добавить прибор</button>
                     <button class="btn-ios-green" id="submitBtn" onclick="submitAct()">📧 Сформировать акт и отправить</button>
                     <div id="printContainer"><button class="btn-ios-orange" id="printBtn" onclick="printAct()" style="display:none;">🖨️ Распечатать акт</button></div>
-                    <div class="hint" id="emailHint"></div>
-                    <div class="saved-indicator" id="savedIndicator">💾 Сохранено</div>
-                    <div class="status" id="status"></div>
-                </div>`;
-            document.getElementById('priemkaContent').innerHTML = html;
+                    <div class="hint" id="emailHint"></div><div class="saved-indicator" id="savedIndicator">💾 Сохранено</div><div class="status" id="status"></div></div>`;
             document.getElementById('settingsEmail').value = settings.email || ''; updateEmailHint();
             setStatus('<span class="spinner"></span> Загрузка...', 'loading');
             loadDictionaries(); loadAllTypesFromSheet(); addDevice(); initVoiceRecognition();
         }
 
-        // ============ УПРАВЛЕНИЕ ============
         function loadDevices() {
             var search = document.getElementById('deviceSearch').value || '';
             fetch(SCRIPT_URL + '?action=getDevices&search=' + encodeURIComponent(search))
@@ -353,7 +294,7 @@
                     sortedGroups.forEach(function(group, gi) {
                         var groupId = 'group_' + gi;
                         html += '<div class="group-card" id="' + groupId + '">';
-                        html += '<div class="company-name" onclick="var el=document.getElementById(\'' + groupId + '\');el.classList.toggle(\'collapsed\');">🏢 ' + (group.company||'Нет компании') + ' <span class="toggle-icon">▼</span></div>';
+                        html += '<div class="company-name" onclick="var el=document.getElementById(\'' + groupId + '\');el.classList.toggle(\'expanded\');">🏢 ' + (group.company||'Нет компании') + ' <span class="toggle-icon">▶</span></div>';
                         html += '<div class="act-date">📅 ' + (group.actDate||'') + ' (' + group.devices.length + ' прибора)</div>';
                         html += '<div class="devices-inner">';
                         group.devices.forEach(function(d) {
@@ -365,7 +306,8 @@
                             html += '</div>';
                         });
                         html += '</div><div class="group-actions">';
-                        html += '<button class="btn-sm green" onclick="openStatusModal(' + JSON.stringify(group.devices.map(function(d){return d.row;})) + ',\'ВСЕ ПРИБОРЫ\',\'' + group.devices.length + ' шт.\')">🔄 Всем статус</button>';
+                        html += '<button class="btn-sm green" onclick="openStatusModal(' + JSON.stringify(group.devices.map(function(d){return d.row;})) + ',\'ВСЕ\',\'' + group.devices.length + ' шт.\')">🔄 Статус всем</button>';
+                        html += '<button class="btn-sm orange" onclick="createReturnAct(\'' + (group.company||'') + '\',' + JSON.stringify(group.devices) + ')">📝 Акт возврата</button>';
                         html += '<button class="btn-sm gray" onclick="openMessageModal(\'' + (group.company||'') + '\',\'' + group.devices.length + ' приборов от ' + (group.actDate||'') + '\')">📧 Написать</button>';
                         html += '</div></div>';
                     });
@@ -373,22 +315,45 @@
                 });
         }
 
+        function createReturnAct(company, devices) {
+            showMode('priemka');
+            setTimeout(function() {
+                var sel = document.getElementById('companySelect');
+                if (sel) {
+                    var found = false;
+                    for (var i = 0; i < sel.options.length; i++) { if (sel.options[i].value === company) { sel.value = company; found = true; break; } }
+                    if (!found) sel.innerHTML += '<option value="' + esc(company) + '" selected>' + esc(company) + '</option>';
+                }
+                document.getElementById('devicesContainer').innerHTML = ''; deviceCounter = 0; usedAddresses = [];
+                devices.forEach(function(dev) {
+                    deviceCounter++; createDeviceBlock(deviceCounter);
+                    setTimeout(function() {
+                        var n = deviceCounter;
+                        document.getElementById('nameField'+n).value = dev.name || '';
+                        document.getElementById('typeField'+n).value = dev.type || '';
+                        document.getElementById('serialField'+n).value = dev.serial || '';
+                        if (dev.address) { document.getElementById('addressField'+n).value = dev.address; if (usedAddresses.indexOf(dev.address) === -1) usedAddresses.push(dev.address); }
+                        if (dev.note) document.getElementById('noteField'+n).value = dev.note || '';
+                        checkType(n);
+                    }, 100);
+                });
+                saveFormData();
+                setStatus('✅ Приборы загружены для акта возврата', 'success');
+            }, 600);
+        }
+
         function openStatusModal(rows, name, serial) {
             currentStatusRows = rows;
             document.getElementById('statusDeviceInfo').textContent = name + ' | ' + (Array.isArray(rows) ? rows.length + ' шт.' : serial);
-            document.getElementById('newStatus').value = 'В работе';
-            document.getElementById('statusReason').value = '';
+            document.getElementById('newStatus').value = 'В работе'; document.getElementById('statusReason').value = '';
             document.getElementById('statusModal').style.display = 'block';
         }
         function closeStatusModal() { document.getElementById('statusModal').style.display = 'none'; currentStatusRows = []; }
         function saveNewStatus() {
             if (!currentStatusRows || currentStatusRows.length === 0) return;
-            var status = document.getElementById('newStatus').value;
-            var reason = document.getElementById('statusReason').value.trim();
+            var status = document.getElementById('newStatus').value, reason = document.getElementById('statusReason').value.trim();
             var promises = [];
-            currentStatusRows.forEach(function(row) {
-                promises.push(fetch(SCRIPT_URL + '?action=updateStatus&row=' + row + '&status=' + encodeURIComponent(status) + '&reason=' + encodeURIComponent(reason)).then(r => r.json()));
-            });
+            currentStatusRows.forEach(function(row) { promises.push(fetch(SCRIPT_URL + '?action=updateStatus&row=' + row + '&status=' + encodeURIComponent(status) + '&reason=' + encodeURIComponent(reason)).then(r => r.json())); });
             Promise.all(promises).then(function() { setStatus('✅ Статус обновлён (' + currentStatusRows.length + ' шт.)', 'success'); closeStatusModal(); loadDevices(); });
         }
 
@@ -397,8 +362,7 @@
             document.getElementById('msgSubject').value = 'Статус приборов';
             document.getElementById('msgBody').value = 'Уважаемый клиент!\n\nИнформация по вашим приборам:\n' + info + '\n\n🏢 Адрес: ул. Новаторов, 5\n📞 Тел: +7(996)6418436';
             document.getElementById('messageModal').style.display = 'block';
-            fetch(SCRIPT_URL + '?action=getClientEmail&company=' + encodeURIComponent(company))
-                .then(r => r.json()).then(function(res) { document.getElementById('msgEmail').value = res.email || ''; });
+            fetch(SCRIPT_URL + '?action=getClientEmail&company=' + encodeURIComponent(company)).then(r => r.json()).then(function(res) { document.getElementById('msgEmail').value = res.email || ''; });
         }
         function closeMessageModal() { document.getElementById('messageModal').style.display = 'none'; }
         function sendMsg() {
@@ -408,20 +372,12 @@
                 .then(r => r.json()).then(function(res) { if (res.status === 'success') { setStatus('✅ Сообщение отправлено', 'success'); closeMessageModal(); } else { setStatus('❌ Ошибка', 'error'); } });
         }
 
-        // ============ АРХИВ ============
         function loadArchive() {
             document.getElementById('archiveContent').innerHTML = '<div class="spinner"></div> Загрузка...';
             fetch(SCRIPT_URL + '?action=getActs').then(r => r.json()).then(function(acts) {
                 var html = '';
                 var keys = Object.keys(acts).sort(function(a, b) { var numA = parseInt(a.split('/').pop().replace(/[ПВ]/,'')) || 0; var numB = parseInt(b.split('/').pop().replace(/[ПВ]/,'')) || 0; return numB - numA; });
-                keys.forEach(function(n) {
-                    var a = acts[n];
-                    html += '<div class="act-item" style="background:#F2F2F7;border-radius:12px;padding:14px;margin-bottom:8px;">';
-                    html += '<b>Акт №' + n + '</b> от ' + a.date + '<br>';
-                    html += 'Компания: ' + (a.company||'') + ' | Приборов: ' + a.devicesCount;
-                    html += ' <button class="btn-sm blue" onclick="restoreAct(\'' + n + '\')">📤</button>';
-                    html += '</div>';
-                });
+                keys.forEach(function(n) { var a = acts[n]; html += '<div class="act-item" style="background:#F2F2F7;border-radius:12px;padding:14px;margin-bottom:8px;"><b>Акт №' + n + '</b> от ' + a.date + '<br>Компания: ' + (a.company||'') + ' | Приборов: ' + a.devicesCount + ' <button class="btn-sm blue" onclick="restoreAct(\'' + n + '\')">📤</button></div>'; });
                 document.getElementById('archiveContent').innerHTML = html || 'Нет актов.';
             }).catch(function() { document.getElementById('archiveContent').innerHTML = 'Ошибка загрузки.'; });
         }
@@ -431,7 +387,7 @@
                 if (act.error) { alert(act.error); return; }
                 showMode('priemka');
                 setTimeout(function() { loadActData(act); }, 500);
-                setStatus('✅ Акт восстановлен в режим Приёмки', 'success');
+                setStatus('✅ Акт восстановлен', 'success');
             });
         }
 
@@ -445,16 +401,15 @@
             if (deviceCounter === 0) addDevice(); saveFormData();
         }
 
-        // ============ НАСТРОЙКИ ============
         function saveSettings() { settings.email = document.getElementById('settingsEmail').value.trim(); localStorage.setItem('appSettings', JSON.stringify(settings)); document.getElementById('settingsStatus').textContent = '✅ Настройки сохранены'; document.getElementById('settingsStatus').className = 'status success'; }
         function updateEmailHint() { var e = settings.email || ''; var el = document.getElementById('emailHint'); if (el) el.textContent = e ? '📧 Письмо уйдёт на ' + e : '⚠️ Укажите email в настройках'; }
 
-        // ============ ОСТАЛЬНЫЕ ФУНКЦИИ ============
+        // ============ ОБЩИЕ ФУНКЦИИ ============
         function saveFormData() { clearTimeout(saveTimeout); saveTimeout = setTimeout(function() { var data = { company: document.getElementById('companySelect').value, employee: document.getElementById('employeeSelect').value, devices: [] }; document.querySelectorAll('.device-block').forEach(function(b) { var n = b.id.replace('device', ''); var d = { type: document.getElementById('typeField'+n)?.value||'', name: document.getElementById('nameField'+n)?.value||'', serial: document.getElementById('serialField'+n)?.value||'', serial2: document.getElementById('serialDual2_'+n)?.value||'', address: document.getElementById('addressField'+n)?.value||'', akb: document.getElementById('akbCheck'+n)?.checked||false, note: document.getElementById('noteField'+n)?.value||'' }; if(d.name||d.type||d.serial) data.devices.push(d); }); if(data.company||data.employee||data.devices.length>0){localStorage.setItem('priemkaFormData',JSON.stringify(data));showSaved();} }, 500); }
         function showSaved(){ var el=document.getElementById('savedIndicator'); if(el){el.style.display='block';setTimeout(function(){el.style.display='none';},2000);} }
         function loadFormData(){ try { var saved=JSON.parse(localStorage.getItem('priemkaFormData')||'{}'); if(!saved.devices||!saved.devices.length)return; if(saved.company)document.getElementById('companySelect').value=saved.company; if(saved.employee)document.getElementById('employeeSelect').value=saved.employee; document.getElementById('devicesContainer').innerHTML=''; deviceCounter=0; usedAddresses=[]; saved.devices.forEach(function(dev){ deviceCounter++; createDeviceBlock(deviceCounter); setTimeout(function(){ var n=deviceCounter; document.getElementById('nameField'+n).value=dev.name||''; document.getElementById('typeField'+n).value=dev.type||''; document.getElementById('noteField'+n).value=dev.note||''; if(dev.serial2){ document.getElementById('serialDual1_'+n).value=dev.serial||''; document.getElementById('serialDual2_'+n).value=dev.serial2||''; checkType(n); fixSerialLetter(n,1); } else document.getElementById('serialField'+n).value=dev.serial||''; if(dev.address){document.getElementById('addressField'+n).value=dev.address; if(usedAddresses.indexOf(dev.address)===-1)usedAddresses.push(dev.address);} if(dev.akb){var cb=document.getElementById('akbCheck'+n);if(cb)cb.checked=true;} },200); }); setStatus('✅ Данные восстановлены','success'); } catch(e){} }
         function clearFormData(){ localStorage.removeItem('priemkaFormData'); }
-        function loadDictionaries(){ Promise.all([fetch(CSV_BASE+GID_TYPES).then(r=>r.text()),fetch(CSV_BASE+GID_COMPANIES).then(r=>r.text()),fetch(CSV_BASE+GID_EMPLOYEES).then(r=>r.text())]).then(function(r){ typesData=parseCSV(r[0]); updateSelect('companySelect',parseCSV(r[1]),0); updateSelect('employeeSelect',parseCSV(r[2]),1); var sk = document.getElementById('loadingSkeleton'); if(sk)sk.style.display='none'; var mc = document.getElementById('mainContent'); if(mc)mc.style.display='block'; setStatus('✅ Готов к работе','success'); setTimeout(loadFormData,500); }).catch(function(){ setStatus('⚠️ Ошибка загрузки','error'); var sk = document.getElementById('loadingSkeleton'); if(sk)sk.style.display='none'; var mc = document.getElementById('mainContent'); if(mc)mc.style.display='block'; }); }
+        function loadDictionaries(){ Promise.all([fetch(CSV_BASE+GID_TYPES).then(r=>r.text()),fetch(CSV_BASE+GID_COMPANIES).then(r=>r.text()),fetch(CSV_BASE+GID_EMPLOYEES).then(r=>r.text())]).then(function(r){ typesData=parseCSV(r[0]); updateSelect('companySelect',parseCSV(r[1]),0); updateSelect('employeeSelect',parseCSV(r[2]),1); var sk=document.getElementById('loadingSkeleton');if(sk)sk.style.display='none';var mc=document.getElementById('mainContent');if(mc)mc.style.display='block';setStatus('✅ Готов к работе','success');setTimeout(loadFormData,500); }).catch(function(){ setStatus('⚠️ Ошибка загрузки','error');var sk=document.getElementById('loadingSkeleton');if(sk)sk.style.display='none';var mc=document.getElementById('mainContent');if(mc)mc.style.display='block'; }); }
         function loadAllTypesFromSheet(){ fetch(CSV_BASE+GID_TYPES).then(r=>r.text()).then(function(csv){ var d=parseCSV(csv); allTypesFromSheet=[]; d.forEach(function(r){ for(var i=0;i<r.length;i++){ var v=(r[i]||'').trim(); if(v&&v.length>2&&allTypesFromSheet.indexOf(v)===-1)allTypesFromSheet.push(v); } }); }).catch(function(){}); }
         function parseCSV(csv){ var lines=csv.trim().split('\n'),result=[]; for(var i=1;i<lines.length;i++){ var cells=[],cur='',q=false; for(var j=0;j<lines[i].length;j++){ var c=lines[i][j]; if(c=='"')q=!q; else if(c===','&&!q){cells.push(cur.trim());cur='';} else cur+=c; } cells.push(cur.trim()); if(cells.some(function(c){return c.length>0;}))result.push(cells); } return result; }
         function updateSelect(id,data,col){ var sel=document.getElementById(id); if(!sel)return; sel.innerHTML='<option value="">-- Выберите --</option>'; var names=[]; data.forEach(function(r){ var v=r[col]||r[0]||''; if(v&&names.indexOf(v)===-1){names.push(v); sel.innerHTML+='<option value="'+esc(v)+'">'+esc(v)+'</option>';} }); }
