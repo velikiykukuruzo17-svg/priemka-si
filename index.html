@@ -449,7 +449,11 @@
             setTimeout(function(){ btn.innerHTML='📧 Сформировать акт и отправить';btn.disabled=false; setStatus('✅ Акт отправлен на '+email,'success');clearFormData(); if(navigator.vibrate)navigator.vibrate([30,50,30]); if ('speechSynthesis' in window) { var utter = new SpeechSynthesisUtterance('Акт отправлен'); utter.lang = 'ru-RU'; utter.rate = 1; window.speechSynthesis.speak(utter); } var pb = document.getElementById('printBtn'); if(pb)pb.style.display = 'block'; },2000);
         }
         function setStatus(msg,cls){var el=document.getElementById('status');if(el){el.innerHTML=msg;el.className='status';if(cls)el.classList.add(cls);}}
-        function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+        function esc(s){
+    if (s === null || s === undefined) return '';
+    s = String(s);
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
         function openCamera(target,deviceNum){ currentCameraTarget=target; currentCameraDevice=deviceNum; document.getElementById('cameraOverlay').style.display='block'; var video=document.getElementById('cameraVideo'); if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){ if(window._cachedStream){cameraStream=window._cachedStream;video.srcObject=cameraStream;video.play();return;} navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(function(s){cameraStream=s;window._cachedStream=s;video.srcObject=s;video.play();}).catch(function(){closeCamera();}); } }
         function captureFromCamera(){ if(!currentCameraTarget||!currentCameraDevice)return; var video=document.getElementById('cameraVideo'); var canvas=document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight; canvas.getContext('2d').drawImage(video,0,0); var dataUrl=canvas.toDataURL('image/jpeg',0.9); document.getElementById('preview'+(currentCameraTarget==='name'?'Name':'Serial')+currentCameraDevice).src=dataUrl; document.getElementById('preview'+(currentCameraTarget==='name'?'Name':'Serial')+currentCameraDevice).style.display='block'; closeCamera(); recognizeText(dataUrl,currentCameraTarget,currentCameraDevice); }
         function closeCamera(){ document.getElementById('cameraOverlay').style.display='none'; document.getElementById('cameraVideo').srcObject=null; }
