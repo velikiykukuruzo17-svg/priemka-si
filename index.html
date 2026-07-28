@@ -212,6 +212,7 @@
         var SPREADSHEET_ID = '1nj6cd6fGp6WVNDcHpRPxT4OLL6iUYli5IO8l6TVzMLI';
         var typesData = [], deviceCounter = 0, cameraStream = null;
         var currentCameraTarget = null, currentCameraDevice = null;
+        var frameSettings = JSON.parse(localStorage.getItem('cameraFrame') || '{"top":"35%","width":"80%","height":"80px"}');
         var settings = JSON.parse(localStorage.getItem('appSettings') || '{"email":""}');
         var usedAddresses = [];
         var recognition = null, isVoiceSupported = false, isListening = false;
@@ -314,86 +315,33 @@
                 });
         }
 
-       function createReturnAct(company, devices) {
-    alert('Шаг 1: функция вызвана. Компания: ' + company + ', приборов: ' + devices.length);
-    
-    var email = settings.email || '';
-    if (!email) { 
-        alert('ОШИБКА: нет email. Зайдите в Настройки и укажите email'); 
-        return; 
-    }
-    
-    alert('Шаг 2: email = ' + email + '. Сейчас будет запрос подтверждения...');
-    
-    if (!confirm('Сформировать акт возврата для «' + company + '» на ' + devices.length + ' приборов и отправить на ' + email + '?')) {
-        alert('Отмена: пользователь нажал Нет');
-        return;
-    }
-    
-    alert('Шаг 3: пользователь подтвердил. Формируем данные...');
-    setStatus('📤 Формирование акта возврата...', 'loading');
-    
-    var employee = '';
-    try { 
-        var saved = JSON.parse(localStorage.getItem('priemkaFormData') || '{}'); 
-        employee = saved.employee || ''; 
-    } catch(e) {}
-    if (!employee) employee = 'Сотрудник';
-    
-    var now = new Date();
-    var ds = ('0' + now.getDate()).slice(-2) + '.' + ('0' + (now.getMonth() + 1)).slice(-2) + '.' + now.getFullYear();
-    
-    var devicesSimple = [];
-    for (var i = 0; i < devices.length; i++) {
-        var d = devices[i];
-        devicesSimple.push({ 
-            type: d.type || '', 
-            name: d.name || '', 
-            serial: d.serial || '', 
-            address: d.address || '', 
-            akb: d.akb || false, 
-            note: d.note || d.repairReason || '' 
-        });
-    }
-    
-    alert('Шаг 4: данные готовы. Отправляем POST на ' + SCRIPT_URL);
-    
-    var form = document.createElement('form');
-    form.method = 'POST';
-    form.action = SCRIPT_URL;
-    form.target = 'hiddenFrame';
-    form.style.display = 'none';
-    
-    var params = [
-        ['date', ds],
-        ['company', company],
-        ['employee', employee],
-        ['devices', JSON.stringify(devicesSimple)],
-        ['email', email],
-        ['actType', 'Выдача']
-    ];
-    
-    for (var j = 0; j < params.length; j++) {
-        var input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = params[j][0];
-        input.value = params[j][1];
-        form.appendChild(input);
-    }
-    
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
-    
-    alert('Шаг 5: форма отправлена! Проверьте лист "Акт" в таблице.');
-    
-    setStatus('✅ Акт возврата отправлен на ' + email, 'success');
-    if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
-    
-    setTimeout(function() {
-        window.open('https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/export?format=pdf&size=A4&portrait=true&scale=4&fitw=true&gridlines=false&gid=1303750308', '_blank');
-    }, 3000);
-}
+        function createReturnAct(company, devices) {
+            showMode('priemka');
+            setTimeout(function() {
+                var sel = document.getElementById('companySelect');
+                if (sel) {
+                    var found = false;
+                    for (var i = 0; i < sel.options.length; i++) { if (sel.options[i].value === company) { sel.value = company; found = true; break; } }
+                    if (!found) sel.innerHTML += '<option value="' + esc(company) + '" selected>' + esc(company) + '</option>';
+                }
+                document.getElementById('devicesContainer').innerHTML = ''; deviceCounter = 0; usedAddresses = [];
+                devices.forEach(function(dev) {
+                    deviceCounter++; createDeviceBlock(deviceCounter);
+                    setTimeout(function() {
+                        var n = deviceCounter;
+                        document.getElementById('nameField'+n).value = dev.name || '';
+                        document.getElementById('typeField'+n).value = dev.type || '';
+                        document.getElementById('serialField'+n).value = dev.serial || '';
+                        if (dev.address) { document.getElementById('addressField'+n).value = dev.address; if (usedAddresses.indexOf(dev.address) === -1) usedAddresses.push(dev.address); }
+                        if (dev.note) document.getElementById('noteField'+n).value = dev.note || '';
+                        checkType(n);
+                    }, 100);
+                });
+                saveFormData();
+                setStatus('✅ Приборы загружены для акта возврата', 'success');
+            }, 600);
+        }
+
         function openStatusModal(rows, name, serial) {
             currentStatusRows = rows;
             document.getElementById('statusDeviceInfo').textContent = name + ' | ' + (Array.isArray(rows) ? rows.length + ' шт.' : serial);
@@ -456,6 +404,7 @@
         function saveSettings() { settings.email = document.getElementById('settingsEmail').value.trim(); localStorage.setItem('appSettings', JSON.stringify(settings)); document.getElementById('settingsStatus').textContent = '✅ Настройки сохранены'; document.getElementById('settingsStatus').className = 'status success'; }
         function updateEmailHint() { var e = settings.email || ''; var el = document.getElementById('emailHint'); if (el) el.textContent = e ? '📧 Письмо уйдёт на ' + e : '⚠️ Укажите email в настройках'; }
 
+        // ============ ОБЩИЕ ФУНКЦИИ ============
         function saveFormData() { clearTimeout(saveTimeout); saveTimeout = setTimeout(function() { var data = { company: document.getElementById('companySelect').value, employee: document.getElementById('employeeSelect').value, devices: [] }; document.querySelectorAll('.device-block').forEach(function(b) { var n = b.id.replace('device', ''); var d = { type: document.getElementById('typeField'+n)?.value||'', name: document.getElementById('nameField'+n)?.value||'', serial: document.getElementById('serialField'+n)?.value||'', serial2: document.getElementById('serialDual2_'+n)?.value||'', address: document.getElementById('addressField'+n)?.value||'', akb: document.getElementById('akbCheck'+n)?.checked||false, note: document.getElementById('noteField'+n)?.value||'' }; if(d.name||d.type||d.serial) data.devices.push(d); }); if(data.company||data.employee||data.devices.length>0){localStorage.setItem('priemkaFormData',JSON.stringify(data));showSaved();} }, 500); }
         function showSaved(){ var el=document.getElementById('savedIndicator'); if(el){el.style.display='block';setTimeout(function(){el.style.display='none';},2000);} }
         function loadFormData(){ try { var saved=JSON.parse(localStorage.getItem('priemkaFormData')||'{}'); if(!saved.devices||!saved.devices.length)return; if(saved.company)document.getElementById('companySelect').value=saved.company; if(saved.employee)document.getElementById('employeeSelect').value=saved.employee; document.getElementById('devicesContainer').innerHTML=''; deviceCounter=0; usedAddresses=[]; saved.devices.forEach(function(dev){ deviceCounter++; createDeviceBlock(deviceCounter); setTimeout(function(){ var n=deviceCounter; document.getElementById('nameField'+n).value=dev.name||''; document.getElementById('typeField'+n).value=dev.type||''; document.getElementById('noteField'+n).value=dev.note||''; if(dev.serial2){ document.getElementById('serialDual1_'+n).value=dev.serial||''; document.getElementById('serialDual2_'+n).value=dev.serial2||''; checkType(n); fixSerialLetter(n,1); } else document.getElementById('serialField'+n).value=dev.serial||''; if(dev.address){document.getElementById('addressField'+n).value=dev.address; if(usedAddresses.indexOf(dev.address)===-1)usedAddresses.push(dev.address);} if(dev.akb){var cb=document.getElementById('akbCheck'+n);if(cb)cb.checked=true;} },200); }); setStatus('✅ Данные восстановлены','success'); } catch(e){} }
