@@ -354,12 +354,7 @@
                 var inp = document.createElement('input'); inp.type = 'hidden'; inp.name = p[0]; inp.value = p[1]; form.appendChild(inp);
             });
             document.body.appendChild(form); form.submit(); document.body.removeChild(form);
-            if (devices.length > 0) {
-                var rows = devices.map(function(d){return d.row;}).filter(function(r){return r;});
-                if (rows.length > 0) {
-                    fetch(SCRIPT_URL + '?action=updateStatusBulk&rows=' + encodeURIComponent(JSON.stringify(rows)) + '&status=Выдан&reason=');
-                }
-            }
+           // Статусы обновляются вручную через кнопку "Статус"
             setTimeout(function() {
                 setStatus('✅ Акт возврата отправлен на ' + email, 'success');
                 if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
