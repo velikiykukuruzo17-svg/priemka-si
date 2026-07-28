@@ -305,8 +305,8 @@
             if (!email) { alert('Укажите email в настройках (⚙️)!'); return; }
             if (!confirm('Сформировать акт возврата для «' + company + '» на ' + devices.length + ' приборов и отправить на ' + email + '?')) return;
             setStatus('📤 Формирование акта возврата...', 'loading');
-            var employee = '';
-            try { var saved = JSON.parse(localStorage.getItem('priemkaFormData') || '{}'); employee = saved.employee || ''; } catch(e) {}
+            var employee = currentUser || '';
+            if (!employee) { try { var saved = JSON.parse(localStorage.getItem('priemkaFormData') || '{}'); employee = saved.employee || ''; } catch(e) {} }
             if (!employee) employee = 'Сотрудник';
             var now = new Date();
             var ds = ('0' + now.getDate()).slice(-2) + '.' + ('0' + (now.getMonth() + 1)).slice(-2) + '.' + now.getFullYear();
@@ -450,10 +450,10 @@
         }
         function setStatus(msg,cls){var el=document.getElementById('status');if(el){el.innerHTML=msg;el.className='status';if(cls)el.classList.add(cls);}}
         function esc(s){
-    if (s === null || s === undefined) return '';
-    s = String(s);
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
+            if (s === null || s === undefined) return '';
+            s = String(s);
+            return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
         function openCamera(target,deviceNum){ currentCameraTarget=target; currentCameraDevice=deviceNum; document.getElementById('cameraOverlay').style.display='block'; var video=document.getElementById('cameraVideo'); if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){ if(window._cachedStream){cameraStream=window._cachedStream;video.srcObject=cameraStream;video.play();return;} navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(function(s){cameraStream=s;window._cachedStream=s;video.srcObject=s;video.play();}).catch(function(){closeCamera();}); } }
         function captureFromCamera(){ if(!currentCameraTarget||!currentCameraDevice)return; var video=document.getElementById('cameraVideo'); var canvas=document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight; canvas.getContext('2d').drawImage(video,0,0); var dataUrl=canvas.toDataURL('image/jpeg',0.9); document.getElementById('preview'+(currentCameraTarget==='name'?'Name':'Serial')+currentCameraDevice).src=dataUrl; document.getElementById('preview'+(currentCameraTarget==='name'?'Name':'Serial')+currentCameraDevice).style.display='block'; closeCamera(); recognizeText(dataUrl,currentCameraTarget,currentCameraDevice); }
         function closeCamera(){ document.getElementById('cameraOverlay').style.display='none'; document.getElementById('cameraVideo').srcObject=null; }
