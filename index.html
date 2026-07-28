@@ -345,7 +345,7 @@
                     address: d.address || '', 
                     akb: d.akb || false, 
                     note: d.status === 'Не годен' ? (d.repairReason || 'Не годен') : (d.note || d.repairReason || ''),
-                    workType: d.status === 'Не годен' ? 'Не годен' : 'Поверка (годен)'
+                    workType: d.status === 'Не годен' ? 'Поверка (не годен)' : 'Поверка (годен)'
                 });
             }
             var form = document.createElement('form');
