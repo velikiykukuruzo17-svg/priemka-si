@@ -219,6 +219,7 @@
         var allTypesFromSheet = [], saveTimeout = null;
         var loginAttempts = 0, currentUser = '';
         var currentStatusRows = [];
+        var deviceGroups = {};
 
         window.addEventListener('load', function() { checkSession(); });
 
@@ -267,28 +268,36 @@
                 .then(r => r.json()).then(function(data) {
                     var stats = data.stats || {};
                     document.getElementById('statsRow').innerHTML = '<span class="stat-badge blue">🔵 В работе: ' + (stats.inWork||0) + '</span><span class="stat-badge green">🟢 Годен: ' + (stats.ready||0) + '</span><span class="stat-badge orange">🔧 Ремонт: ' + (stats.repair||0) + '</span><span class="stat-badge red">🔴 Не годен: ' + (stats.notGood||0) + '</span><span class="stat-badge gray">✅ Выдано: ' + (stats.issued||0) + '</span>';
-                    var groups = {};
+                    deviceGroups = {};
                     (data.devices||[]).forEach(function(d) {
                         var key = (d.company||'') + '|' + (d.actDate||'');
-                        if (!groups[key]) groups[key] = { company: d.company, actDate: d.actDate, devices: [] };
-                        groups[key].devices.push(d);
+                        if (!deviceGroups[key]) deviceGroups[key] = { company: d.company, actDate: d.actDate, devices: [] };
+                        deviceGroups[key].devices.push(d);
                     });
-                    var sortedGroups = Object.values(groups).sort(function(a, b) { return (b.actDate||'').localeCompare(a.actDate||''); });
+                    var sortedGroups = Object.values(deviceGroups).sort(function(a, b) { return (b.actDate||'').localeCompare(a.actDate||''); });
                     var html = '';
                     var statusEmojis = { 'В работе': '🟡', 'Годен': '🟢', 'Выдан': '✅', 'Ремонт': '🔧', 'Не годен': '🔴', 'Брак': '❌', 'Калибровка': '📐', 'Настройка': '⚙️' };
                     sortedGroups.forEach(function(group, gi) {
                         var groupId = 'group_' + gi;
-                        html += '<div class="group-card" id="' + groupId + '"><div class="company-name" onclick="var el=document.getElementById(\'' + groupId + '\');el.classList.toggle(\'expanded\');">🏢 ' + (group.company||'Нет компании') + ' <span class="toggle-icon">▶</span></div><div class="act-date">📅 ' + (group.actDate||'') + ' (' + group.devices.length + ' прибора)</div><div class="devices-inner">';
+                        html += '<div class="group-card" id="' + groupId + '"><div class="company-name" onclick="var el=document.getElementById(\'' + groupId + '\');el.classList.toggle(\'expanded\');">🏢 ' + esc(group.company||'Нет компании') + ' <span class="toggle-icon">▶</span></div><div class="act-date">📅 ' + esc(group.actDate||'') + ' (' + group.devices.length + ' прибора)</div><div class="devices-inner">';
                         group.devices.forEach(function(d) {
                             var emoji = statusEmojis[d.status] || '🟡';
-                            html += '<div class="device-mini">' + emoji + ' <b>' + (d.name||'') + '</b> | ' + (d.serial||'') + ' | ' + (d.status||'В работе');
-                            if (d.repairReason) html += '<br><span style="color:#FF3B30;">Причина: ' + d.repairReason + '</span>';
-                            html += ' <button class="btn-sm blue" onclick="openStatusModal([' + d.row + '],\'' + (d.name||'') + '\',\'' + (d.serial||'') + '\')">🔄</button> <button class="btn-sm gray" onclick="openMessageModal(\'' + (d.company||'') + '\',\'' + (d.name||'') + ' ' + (d.serial||'') + '\')">📧</button></div>';
+                            html += '<div class="device-mini">' + emoji + ' <b>' + esc(d.name||'') + '</b> | ' + esc(d.serial||'') + ' | ' + esc(d.status||'В работе');
+                            if (d.repairReason) html += '<br><span style="color:#FF3B30;">Причина: ' + esc(d.repairReason) + '</span>';
+                            html += ' <button class="btn-sm blue" onclick="openStatusModal([' + d.row + '],\'' + esc(d.name||'') + '\',\'' + esc(d.serial||'') + '\')">🔄</button> <button class="btn-sm gray" onclick="openMessageModal(\'' + esc(d.company||'') + '\',\'' + esc(d.name||'') + ' ' + esc(d.serial||'') + '\')">📧</button></div>';
                         });
-                        html += '</div><div class="group-actions"><button class="btn-sm green" onclick="openStatusModal(' + JSON.stringify(group.devices.map(function(d){return d.row;})) + ',\'ВСЕ\',\'' + group.devices.length + ' шт.\')">🔄 Статус всем</button> <button class="btn-sm orange" onclick="createReturnAct(\'' + (group.company||'') + '\',' + JSON.stringify(group.devices) + ')">📧 Акт возврата</button> <button class="btn-sm gray" onclick="printAct()">🖨️ Печать</button> <button class="btn-sm gray" onclick="openMessageModal(\'' + (group.company||'') + '\',\'' + group.devices.length + ' приборов от ' + (group.actDate||'') + '\')">📧 Написать</button></div></div>';
+                        html += '</div><div class="group-actions"><button class="btn-sm green" onclick="openStatusModal(' + JSON.stringify(group.devices.map(function(d){return d.row;})) + ',\'ВСЕ\',\'' + group.devices.length + ' шт.\')">🔄 Статус всем</button> <button class="btn-sm orange" onclick="createReturnActByKey(\'' + gi + '\')">📧 Акт возврата</button> <button class="btn-sm gray" onclick="printAct()">🖨️ Печать</button> <button class="btn-sm gray" onclick="openMessageModal(\'' + esc(group.company||'') + '\',\'' + group.devices.length + ' приборов от ' + esc(group.actDate||'') + '\')">📧 Написать</button></div></div>';
                     });
                     document.getElementById('devicesList').innerHTML = html || 'Нет приборов';
                 });
+        }
+
+        function createReturnActByKey(groupIndex) {
+            var keys = Object.keys(deviceGroups);
+            var key = keys[groupIndex];
+            if (!key || !deviceGroups[key]) { alert('Группа не найдена'); return; }
+            var group = deviceGroups[key];
+            createReturnAct(group.company, group.devices);
         }
 
         function createReturnAct(company, devices) {
