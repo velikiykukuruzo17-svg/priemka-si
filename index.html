@@ -322,27 +322,54 @@
             setStatus('📤 Формирование акта возврата...', 'loading');
             
             var employee = '';
-            var empSel = document.getElementById('employeeSelect');
-            if (empSel && empSel.value) { employee = empSel.value; }
-            else { var saved = JSON.parse(localStorage.getItem('priemkaFormData') || '{}'); employee = saved.employee || ''; }
+            try {
+                var saved = JSON.parse(localStorage.getItem('priemkaFormData') || '{}');
+                employee = saved.employee || '';
+            } catch(e) {}
+            if (!employee) employee = 'Сотрудник';
             
             var now = new Date();
             var ds = ('0' + now.getDate()).slice(-2) + '.' + ('0' + (now.getMonth() + 1)).slice(-2) + '.' + now.getFullYear();
             
             var devicesData = devices.map(function(dev) {
-                return { type: dev.type || '', name: dev.name || '', serial: dev.serial || '', address: dev.address || '', akb: dev.akb || false, note: dev.note || dev.repairReason || '' };
+                return { 
+                    type: dev.type || '', 
+                    name: dev.name || '', 
+                    serial: dev.serial || '', 
+                    address: dev.address || '', 
+                    akb: dev.akb || false, 
+                    note: dev.note || dev.repairReason || '' 
+                };
             });
             
             var form = document.createElement('form');
-            form.method = 'POST'; form.action = SCRIPT_URL; form.target = 'hiddenFrame'; form.style.display = 'none';
-            [{n:'date',v:ds},{n:'company',v:company},{n:'employee',v:employee||'Сотрудник'},{n:'devices',v:JSON.stringify(devicesData)},{n:'email',v:email},{n:'actType',v:'Выдача'}].forEach(function(f){var i=document.createElement('input');i.type='hidden';i.name=f.n;i.value=f.v;form.appendChild(i);});
-            document.body.appendChild(form); form.submit(); document.body.removeChild(form);
+            form.method = 'POST';
+            form.action = SCRIPT_URL;
+            form.target = 'hiddenFrame';
+            form.style.display = 'none';
+            
+            [{n:'date',v:ds},
+             {n:'company',v:company},
+             {n:'employee',v:employee},
+             {n:'devices',v:JSON.stringify(devicesData)},
+             {n:'email',v:email},
+             {n:'actType',v:'Выдача'}].forEach(function(f) {
+                var i = document.createElement('input');
+                i.type = 'hidden';
+                i.name = f.n;
+                i.value = f.v;
+                form.appendChild(i);
+            });
+            
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
             
             setTimeout(function() {
                 setStatus('✅ Акт возврата отправлен на ' + email, 'success');
-                if (navigator.vibrate) navigator.vibrate([30,50,30]);
+                if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
                 window.open('https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/export?format=pdf&size=A4&portrait=true&scale=4&fitw=true&gridlines=false&gid=1303750308', '_blank');
-            }, 3000);
+            }, 2000);
         }
 
         function openStatusModal(rows, name, serial) {
