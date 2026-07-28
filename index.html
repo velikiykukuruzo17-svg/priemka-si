@@ -195,7 +195,7 @@
             <p id="msgDeviceInfo" style="font-size:13px;color:#8E8E93;margin-bottom:10px;"></p>
             <label style="font-size:13px;font-weight:600;">Email:</label><input type="email" id="msgEmail" placeholder="Email клиента">
             <label style="font-size:13px;font-weight:600;">Тема:</label><input type="text" id="msgSubject" value="Статус приборов">
-            <label style="font-size:13px;font-weight:600;">Сообщение:</label><textarea id="msgBody" rows="6"></textarea>
+            <label style="font-size:13px;font-weight:600;">Сообщение:</label><textarea id="msgBody" rows="8"></textarea>
             <button class="btn-ios" onclick="sendMsg()" style="width:100%;">📧 Отправить</button>
             <button class="btn-ios-gray" onclick="closeMessageModal()" style="width:100%;margin-top:6px;">Отмена</button>
         </div>
@@ -270,8 +270,8 @@
                     document.getElementById('statsRow').innerHTML = '<span class="stat-badge blue">🔵 В работе: ' + (stats.inWork||0) + '</span><span class="stat-badge green">🟢 Годен: ' + (stats.ready||0) + '</span><span class="stat-badge orange">🔧 Ремонт: ' + (stats.repair||0) + '</span><span class="stat-badge red">🔴 Не годен: ' + (stats.notGood||0) + '</span><span class="stat-badge gray">✅ Выдано: ' + (stats.issued||0) + '</span>';
                     deviceGroups = {};
                     (data.devices||[]).forEach(function(d) {
-                        var key = (d.company||'') + '|' + (d.actDate||'');
-                        if (!deviceGroups[key]) deviceGroups[key] = { company: d.company, actDate: d.actDate, devices: [] };
+                        var key = (d.company||'') + '|' + (d.actDate||'') + '|' + (d.actNumber||'');
+                        if (!deviceGroups[key]) deviceGroups[key] = { company: d.company, actDate: d.actDate, actNumber: d.actNumber, devices: [] };
                         deviceGroups[key].devices.push(d);
                     });
                     var sortedGroups = Object.values(deviceGroups).sort(function(a, b) { return (b.actDate||'').localeCompare(a.actDate||''); });
@@ -279,17 +279,43 @@
                     var statusEmojis = { 'В работе': '🟡', 'Годен': '🟢', 'Выдан': '✅', 'Ремонт': '🔧', 'Не годен': '🔴', 'Брак': '❌', 'Калибровка': '📐', 'Настройка': '⚙️' };
                     sortedGroups.forEach(function(group, gi) {
                         var groupId = 'group_' + gi;
-                        html += '<div class="group-card" id="' + groupId + '"><div class="company-name" onclick="var el=document.getElementById(\'' + groupId + '\');el.classList.toggle(\'expanded\');">🏢 ' + esc(group.company||'Нет компании') + ' <span class="toggle-icon">▶</span></div><div class="act-date">📅 ' + esc(group.actDate||'') + ' (' + group.devices.length + ' прибора)</div><div class="devices-inner">';
+                        var displayDate = group.actDate ? group.actDate.replace(/T.*/, '').split('-').reverse().join('.') : '';
+                        html += '<div class="group-card" id="' + groupId + '"><div class="company-name" onclick="var el=document.getElementById(\'' + groupId + '\');el.classList.toggle(\'expanded\');">🏢 ' + esc(group.company||'Нет компании') + ' <span class="toggle-icon">▶</span></div><div class="act-date">📅 ' + displayDate + (group.actNumber ? ' | Акт №' + esc(group.actNumber) : '') + ' (' + group.devices.length + ' прибора)</div><div class="devices-inner">';
                         group.devices.forEach(function(d) {
                             var emoji = statusEmojis[d.status] || '🟡';
                             html += '<div class="device-mini" data-row="' + d.row + '">' + emoji + ' <b>' + esc(d.name||'') + '</b> | ' + esc(d.serial||'') + ' | <span class="dev-status">' + esc(d.status||'В работе') + '</span>';
                             if (d.repairReason) html += '<br><span style="color:#FF3B30;">Причина: ' + esc(d.repairReason) + '</span>';
                             html += ' <button class="btn-sm blue" onclick="openStatusModal([' + d.row + '],\'' + esc(d.name||'') + '\',\'' + esc(d.serial||'') + '\')">🔄</button> <button class="btn-sm gray" onclick="openMessageModal(\'' + esc(d.company||'') + '\',\'' + esc(d.name||'') + ' ' + esc(d.serial||'') + '\')">📧</button></div>';
                         });
-                        html += '</div><div class="group-actions"><button class="btn-sm green" onclick="openStatusModal(' + JSON.stringify(group.devices.map(function(d){return d.row;})) + ',\'ВСЕ\',\'' + group.devices.length + ' шт.\')">🔄 Статус всем</button> <button class="btn-sm orange" onclick="createReturnActByKey(\'' + gi + '\')">📧 Акт возврата</button> <button class="btn-sm gray" onclick="printAct()">🖨️ Печать</button> <button class="btn-sm gray" onclick="openMessageModal(\'' + esc(group.company||'') + '\',\'' + group.devices.length + ' приборов от ' + esc(group.actDate||'') + '\')">📧 Написать</button></div></div>';
+                        html += '</div><div class="group-actions"><button class="btn-sm green" onclick="openStatusModal(' + JSON.stringify(group.devices.map(function(d){return d.row;})) + ',\'ВСЕ\',\'' + group.devices.length + ' шт.\')">🔄 Статус всем</button> <button class="btn-sm orange" onclick="createReturnActByKey(\'' + gi + '\')">📧 Акт возврата</button> <button class="btn-sm gray" onclick="printAct()">🖨️ Печать</button> <button class="btn-sm gray" onclick="openGroupMessageModal(\'' + gi + '\')">📧 Написать</button></div></div>';
                     });
                     document.getElementById('devicesList').innerHTML = html || 'Нет приборов';
                 });
+        }
+
+        function openGroupMessageModal(groupIndex) {
+            var keys = Object.keys(deviceGroups);
+            var key = keys[groupIndex];
+            if (!key || !deviceGroups[key]) { alert('Группа не найдена'); return; }
+            var group = deviceGroups[key];
+            var displayDate = group.actDate ? group.actDate.replace(/T.*/, '').split('-').reverse().join('.') : '';
+            var text = 'Уважаемый клиент!\n\nИнформация по вашим приборам:\n\n';
+            text += '📅 ' + displayDate;
+            if (group.actNumber) text += ' | Акт №' + group.actNumber;
+            text += ' | Приборов: ' + group.devices.length + '\n\n';
+            group.devices.forEach(function(d, i) {
+                text += (i+1) + '. ' + (d.name||'') + ' ' + (d.type||'') + ' | зав.№ ' + (d.serial||'') + ' | ' + (d.status||'В работе');
+                if (d.address) text += '\n   Адрес: ' + d.address;
+                if (d.repairReason) text += '\n   Причина: ' + d.repairReason;
+                if (d.note && d.note !== d.repairReason) text += '\n   Примечание: ' + d.note;
+                text += '\n\n';
+            });
+            text += '🏢 Адрес: ул. Новаторов, 5\n📞 Тел: +7(996)6418436';
+            document.getElementById('msgDeviceInfo').textContent = '🏢 ' + (group.company||'');
+            document.getElementById('msgSubject').value = 'Статус приборов';
+            document.getElementById('msgBody').value = text;
+            document.getElementById('messageModal').style.display = 'block';
+            fetch(SCRIPT_URL + '?action=getClientEmail&company=' + encodeURIComponent(group.company||'')).then(r => r.json()).then(function(res) { document.getElementById('msgEmail').value = res.email || ''; });
         }
 
         function createReturnActByKey(groupIndex) {
@@ -312,7 +338,15 @@
             var devicesSimple = [];
             for (var i = 0; i < devices.length; i++) {
                 var d = devices[i];
-                devicesSimple.push({ type: d.type || '', name: d.name || '', serial: d.serial || '', address: d.address || '', akb: d.akb || false, note: d.note || d.repairReason || '' });
+                devicesSimple.push({ 
+                    type: d.type || '', 
+                    name: d.name || '', 
+                    serial: d.serial || '', 
+                    address: d.address || '', 
+                    akb: d.akb || false, 
+                    note: d.status === 'Не годен' ? (d.repairReason || 'Не годен') : (d.note || d.repairReason || ''),
+                    workType: d.status === 'Не годен' ? 'Не годен' : 'Поверка (годен)'
+                });
             }
             var form = document.createElement('form');
             form.method = 'POST'; form.action = SCRIPT_URL; form.target = 'hiddenFrame'; form.style.display = 'none';
@@ -320,7 +354,6 @@
                 var inp = document.createElement('input'); inp.type = 'hidden'; inp.name = p[0]; inp.value = p[1]; form.appendChild(inp);
             });
             document.body.appendChild(form); form.submit(); document.body.removeChild(form);
-            // Обновляем статусы на "Выдан" для всех приборов
             if (devices.length > 0) {
                 var rows = devices.map(function(d){return d.row;}).filter(function(r){return r;});
                 if (rows.length > 0) {
@@ -375,7 +408,7 @@
         function openMessageModal(company, info) {
             document.getElementById('msgDeviceInfo').textContent = '🏢 ' + company + ' | ' + info;
             document.getElementById('msgSubject').value = 'Статус приборов';
-            document.getElementById('msgBody').value = 'Уважаемый клиент!\n\nИнформация по вашим приборам:\n' + info + '\n\n🏢 Адрес: ул. Новаторов, 5\n📞 Тел: +7(996)6418436';
+            document.getElementById('msgBody').value = 'Уважаемый клиент!\n\nИнформация по прибору:\n' + info + '\n\n🏢 Адрес: ул. Новаторов, 5\n📞 Тел: +7(996)6418436';
             document.getElementById('messageModal').style.display = 'block';
             fetch(SCRIPT_URL + '?action=getClientEmail&company=' + encodeURIComponent(company)).then(r => r.json()).then(function(res) { document.getElementById('msgEmail').value = res.email || ''; });
         }
