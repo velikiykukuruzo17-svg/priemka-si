@@ -282,7 +282,7 @@
                         html += '<div class="group-card" id="' + groupId + '"><div class="company-name" onclick="var el=document.getElementById(\'' + groupId + '\');el.classList.toggle(\'expanded\');">🏢 ' + esc(group.company||'Нет компании') + ' <span class="toggle-icon">▶</span></div><div class="act-date">📅 ' + esc(group.actDate||'') + ' (' + group.devices.length + ' прибора)</div><div class="devices-inner">';
                         group.devices.forEach(function(d) {
                             var emoji = statusEmojis[d.status] || '🟡';
-                            html += '<div class="device-mini">' + emoji + ' <b>' + esc(d.name||'') + '</b> | ' + esc(d.serial||'') + ' | ' + esc(d.status||'В работе');
+                            html += '<div class="device-mini" data-row="' + d.row + '">' + emoji + ' <b>' + esc(d.name||'') + '</b> | ' + esc(d.serial||'') + ' | <span class="dev-status">' + esc(d.status||'В работе') + '</span>';
                             if (d.repairReason) html += '<br><span style="color:#FF3B30;">Причина: ' + esc(d.repairReason) + '</span>';
                             html += ' <button class="btn-sm blue" onclick="openStatusModal([' + d.row + '],\'' + esc(d.name||'') + '\',\'' + esc(d.serial||'') + '\')">🔄</button> <button class="btn-sm gray" onclick="openMessageModal(\'' + esc(d.company||'') + '\',\'' + esc(d.name||'') + ' ' + esc(d.serial||'') + '\')">📧</button></div>';
                         });
@@ -320,6 +320,13 @@
                 var inp = document.createElement('input'); inp.type = 'hidden'; inp.name = p[0]; inp.value = p[1]; form.appendChild(inp);
             });
             document.body.appendChild(form); form.submit(); document.body.removeChild(form);
+            // Обновляем статусы на "Выдан" для всех приборов
+            if (devices.length > 0) {
+                var rows = devices.map(function(d){return d.row;}).filter(function(r){return r;});
+                if (rows.length > 0) {
+                    fetch(SCRIPT_URL + '?action=updateStatusBulk&rows=' + encodeURIComponent(JSON.stringify(rows)) + '&status=Выдан&reason=');
+                }
+            }
             setTimeout(function() {
                 setStatus('✅ Акт возврата отправлен на ' + email, 'success');
                 if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
@@ -337,9 +344,32 @@
         function saveNewStatus() {
             if (!currentStatusRows || currentStatusRows.length === 0) return;
             var status = document.getElementById('newStatus').value, reason = document.getElementById('statusReason').value.trim();
-            var promises = [];
-            currentStatusRows.forEach(function(row) { promises.push(fetch(SCRIPT_URL + '?action=updateStatus&row=' + row + '&status=' + encodeURIComponent(status) + '&reason=' + encodeURIComponent(reason)).then(r => r.json())); });
-            Promise.all(promises).then(function() { setStatus('✅ Статус обновлён (' + currentStatusRows.length + ' шт.)', 'success'); closeStatusModal(); loadDevices(); });
+            var url = SCRIPT_URL + '?action=updateStatusBulk&rows=' + encodeURIComponent(JSON.stringify(currentStatusRows)) + '&status=' + encodeURIComponent(status) + '&reason=' + encodeURIComponent(reason);
+            fetch(url).then(r => r.json()).then(function(res) {
+                if (res.status === 'success') {
+                    setStatus('✅ Статус обновлён (' + currentStatusRows.length + ' шт.)', 'success');
+                    updateStatusesInDOM(currentStatusRows, status, reason);
+                    closeStatusModal();
+                }
+            });
+        }
+        function updateStatusesInDOM(rows, newStatus, reason) {
+            var statusEmojis = { 'В работе': '🟡', 'Годен': '🟢', 'Выдан': '✅', 'Ремонт': '🔧', 'Не годен': '🔴', 'Брак': '❌', 'Калибровка': '📐', 'Настройка': '⚙️' };
+            var emoji = statusEmojis[newStatus] || '🟡';
+            var els = document.querySelectorAll('.device-mini');
+            els.forEach(function(el) {
+                var rowAttr = el.getAttribute('data-row');
+                if (!rowAttr) return;
+                if (rows.indexOf(parseInt(rowAttr)) !== -1) {
+                    var statusSpan = el.querySelector('.dev-status');
+                    if (statusSpan) {
+                        statusSpan.textContent = newStatus;
+                        var html = el.innerHTML;
+                        html = html.replace(/🟡|🟢|✅|🔧|🔴|❌|📐|⚙️/, emoji);
+                        el.innerHTML = html;
+                    }
+                }
+            });
         }
 
         function openMessageModal(company, info) {
