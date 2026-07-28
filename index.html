@@ -269,7 +269,7 @@
             setStatus('<span class="spinner"></span> Загрузка...', 'loading');
             loadDictionaries(); loadAllTypesFromSheet(); addDevice(); initVoiceRecognition();
         }
-            var dictionariesLoaded = false;
+
         function loadDevices() {
             var search = document.getElementById('deviceSearch').value || '';
             fetch(SCRIPT_URL + '?action=getDevices&search=' + encodeURIComponent(search))
@@ -315,156 +315,39 @@
         }
 
         function createReturnAct(company, devices) {
-    var email = settings.email || '';
-    if (!email) { alert('Укажите email в настройках (⚙️)!'); return; }
-    if (!confirm('Сформировать акт возврата для «' + company + '» на ' + devices.length + ' приборов и отправить на ' + email + '?')) return;
-    
-    setStatus('📤 Формирование акта возврата...', 'loading');
-    
-    var employee = '';
-    try {
-        var saved = JSON.parse(localStorage.getItem('priemkaFormData') || '{}');
-        employee = saved.employee || '';
-    } catch(e) {}
-    if (!employee) employee = 'Сотрудник';
-    
-    var now = new Date();
-    var ds = ('0' + now.getDate()).slice(-2) + '.' + ('0' + (now.getMonth() + 1)).slice(-2) + '.' + now.getFullYear();
-    
-    // Упрощённый массив — только нужные поля
-    var devicesSimple = [];
-    for (var i = 0; i < devices.length; i++) {
-        var d = devices[i];
-        devicesSimple.push({
-            type: d.type || '',
-            name: d.name || '',
-            serial: d.serial || '',
-            address: d.address || '',
-            akb: d.akb || false,
-            note: d.note || d.repairReason || ''
-        });
-    }
-    
-    var form = document.createElement('form');
-    form.method = 'POST';
-    form.action = SCRIPT_URL;
-    form.target = 'hiddenFrame';
-    form.style.display = 'none';
-    
-    var params = [
-        ['date', ds],
-        ['company', company],
-        ['employee', employee],
-        ['devices', JSON.stringify(devicesSimple)],
-        ['email', email],
-        ['actType', 'Выдача']
-    ];
-    
-    for (var j = 0; j < params.length; j++) {
-        var input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = params[j][0];
-        input.value = params[j][1];
-        form.appendChild(input);
-    }
-    
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
-    
-    setTimeout(function() {
-        setStatus('✅ Акт возврата отправлен на ' + email, 'success');
-        if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
-        window.open('https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/export?format=pdf&size=A4&portrait=true&scale=4&fitw=true&gridlines=false&gid=1303750308', '_blank');
-    }, 3000);
-}
-        function createReturnAct(company, devices) {
-    console.log('=== createReturnAct ЗАПУЩЕН ===');
-    console.log('company:', company);
-    console.log('devices:', devices);
-    
-    var email = settings.email || '';
-    console.log('email:', email);
-    
-    if (!email) { 
-        alert('Укажите email в настройках (⚙️)!'); 
-        console.log('ОШИБКА: нет email');
-        return; 
-    }
-    
-    if (!confirm('Сформировать акт возврата для «' + company + '» на ' + devices.length + ' приборов и отправить на ' + email + '?')) {
-        console.log('ОТМЕНА: пользователь отказался');
-        return;
-    }
-    
-    console.log('Начинаем отправку...');
-    setStatus('📤 Формирование акта возврата...', 'loading');
-    
-    var employee = '';
-    try { 
-        var saved = JSON.parse(localStorage.getItem('priemkaFormData') || '{}'); 
-        employee = saved.employee || ''; 
-        console.log('employee из localStorage:', employee);
-    } catch(e) {
-        console.log('Ошибка чтения localStorage:', e);
-    }
-    if (!employee) employee = 'Сотрудник';
-    
-    var now = new Date();
-    var ds = ('0' + now.getDate()).slice(-2) + '.' + ('0' + (now.getMonth() + 1)).slice(-2) + '.' + now.getFullYear();
-    console.log('Дата:', ds);
-    
-    var devicesSimple = [];
-    for (var i = 0; i < devices.length; i++) {
-        var d = devices[i];
-        devicesSimple.push({ 
-            type: d.type || '', 
-            name: d.name || '', 
-            serial: d.serial || '', 
-            address: d.address || '', 
-            akb: d.akb || false, 
-            note: d.note || d.repairReason || '' 
-        });
-    }
-    console.log('devicesSimple:', devicesSimple);
-    
-    var form = document.createElement('form');
-    form.method = 'POST';
-    form.action = SCRIPT_URL;
-    form.target = 'hiddenFrame';
-    form.style.display = 'none';
-    
-    var params = [
-        ['date', ds],
-        ['company', company],
-        ['employee', employee],
-        ['devices', JSON.stringify(devicesSimple)],
-        ['email', email],
-        ['actType', 'Выдача']
-    ];
-    
-    for (var j = 0; j < params.length; j++) {
-        var input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = params[j][0];
-        input.value = params[j][1];
-        form.appendChild(input);
-        console.log('Параметр ' + params[j][0] + ':', params[j][1]);
-    }
-    
-    document.body.appendChild(form);
-    console.log('Форма добавлена в DOM, отправляю...');
-    form.submit();
-    document.body.removeChild(form);
-    console.log('Форма отправлена и удалена');
-    
-    setStatus('✅ Акт возврата отправлен на ' + email, 'success');
-    if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
-    
-    setTimeout(function() {
-        window.open('https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/export?format=pdf&size=A4&portrait=true&scale=4&fitw=true&gridlines=false&gid=1303750308', '_blank');
-    }, 3000);
-}
+            var email = settings.email || '';
+            if (!email) { alert('Укажите email в настройках (⚙️)!'); return; }
+            if (!confirm('Сформировать акт возврата для «' + company + '» на ' + devices.length + ' приборов и отправить на ' + email + '?')) return;
+            
+            setStatus('📤 Формирование акта возврата...', 'loading');
+            
+            var employee = '';
+            try { var saved = JSON.parse(localStorage.getItem('priemkaFormData') || '{}'); employee = saved.employee || ''; } catch(e) {}
+            if (!employee) employee = 'Сотрудник';
+            
+            var now = new Date();
+            var ds = ('0' + now.getDate()).slice(-2) + '.' + ('0' + (now.getMonth() + 1)).slice(-2) + '.' + now.getFullYear();
+            
+            var devicesSimple = [];
+            for (var i = 0; i < devices.length; i++) {
+                var d = devices[i];
+                devicesSimple.push({ type: d.type || '', name: d.name || '', serial: d.serial || '', address: d.address || '', akb: d.akb || false, note: d.note || d.repairReason || '' });
+            }
+            
+            var form = document.createElement('form');
+            form.method = 'POST'; form.action = SCRIPT_URL; form.target = 'hiddenFrame'; form.style.display = 'none';
+            [['date',ds],['company',company],['employee',employee],['devices',JSON.stringify(devicesSimple)],['email',email],['actType','Выдача']].forEach(function(p) {
+                var inp = document.createElement('input'); inp.type = 'hidden'; inp.name = p[0]; inp.value = p[1]; form.appendChild(inp);
+            });
+            document.body.appendChild(form); form.submit(); document.body.removeChild(form);
+            
+            setTimeout(function() {
+                setStatus('✅ Акт возврата отправлен на ' + email, 'success');
+                if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+                window.open('https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/export?format=pdf&size=A4&portrait=true&scale=4&fitw=true&gridlines=false&gid=1303750308', '_blank');
+            }, 3000);
+        }
+
         function openStatusModal(rows, name, serial) {
             currentStatusRows = rows;
             document.getElementById('statusDeviceInfo').textContent = name + ' | ' + (Array.isArray(rows) ? rows.length + ' шт.' : serial);
@@ -531,39 +414,7 @@
         function showSaved(){ var el=document.getElementById('savedIndicator'); if(el){el.style.display='block';setTimeout(function(){el.style.display='none';},2000);} }
         function loadFormData(){ try { var saved=JSON.parse(localStorage.getItem('priemkaFormData')||'{}'); if(!saved.devices||!saved.devices.length)return; if(saved.company)document.getElementById('companySelect').value=saved.company; if(saved.employee)document.getElementById('employeeSelect').value=saved.employee; document.getElementById('devicesContainer').innerHTML=''; deviceCounter=0; usedAddresses=[]; saved.devices.forEach(function(dev){ deviceCounter++; createDeviceBlock(deviceCounter); setTimeout(function(){ var n=deviceCounter; document.getElementById('nameField'+n).value=dev.name||''; document.getElementById('typeField'+n).value=dev.type||''; document.getElementById('noteField'+n).value=dev.note||''; if(dev.serial2){ document.getElementById('serialDual1_'+n).value=dev.serial||''; document.getElementById('serialDual2_'+n).value=dev.serial2||''; checkType(n); fixSerialLetter(n,1); } else document.getElementById('serialField'+n).value=dev.serial||''; if(dev.address){document.getElementById('addressField'+n).value=dev.address; if(usedAddresses.indexOf(dev.address)===-1)usedAddresses.push(dev.address);} if(dev.akb){var cb=document.getElementById('akbCheck'+n);if(cb)cb.checked=true;} },200); }); setStatus('✅ Данные восстановлены','success'); } catch(e){} }
         function clearFormData(){ localStorage.removeItem('priemkaFormData'); }
-        function loadDictionaries(){ 
-    if (dictionariesLoaded) {
-        var sk = document.getElementById('loadingSkeleton');
-        if(sk) sk.style.display = 'none';
-        var mc = document.getElementById('mainContent');
-        if(mc) mc.style.display = 'block';
-        setStatus('✅ Готов к работе','success');
-        setTimeout(loadFormData, 500);
-        return;
-    }
-    Promise.all([
-        fetch(CSV_BASE+GID_TYPES).then(r=>r.text()),
-        fetch(CSV_BASE+GID_COMPANIES).then(r=>r.text()),
-        fetch(CSV_BASE+GID_EMPLOYEES).then(r=>r.text())
-    ]).then(function(r){ 
-        typesData = parseCSV(r[0]); 
-        updateSelect('companySelect',parseCSV(r[1]),0); 
-        updateSelect('employeeSelect',parseCSV(r[2]),1); 
-        dictionariesLoaded = true;
-        var sk = document.getElementById('loadingSkeleton');
-        if(sk) sk.style.display = 'none';
-        var mc = document.getElementById('mainContent');
-        if(mc) mc.style.display = 'block';
-        setStatus('✅ Готов к работе','success');
-        setTimeout(loadFormData, 500); 
-    }).catch(function(){ 
-        setStatus('⚠️ Ошибка загрузки','error');
-        var sk = document.getElementById('loadingSkeleton');
-        if(sk) sk.style.display = 'none';
-        var mc = document.getElementById('mainContent');
-        if(mc) mc.style.display = 'block'; 
-    }); 
-}
+        function loadDictionaries(){ Promise.all([fetch(CSV_BASE+GID_TYPES).then(r=>r.text()),fetch(CSV_BASE+GID_COMPANIES).then(r=>r.text()),fetch(CSV_BASE+GID_EMPLOYEES).then(r=>r.text())]).then(function(r){ typesData=parseCSV(r[0]); updateSelect('companySelect',parseCSV(r[1]),0); updateSelect('employeeSelect',parseCSV(r[2]),1); var sk=document.getElementById('loadingSkeleton');if(sk)sk.style.display='none';var mc=document.getElementById('mainContent');if(mc)mc.style.display='block';setStatus('✅ Готов к работе','success');setTimeout(loadFormData,500); }).catch(function(){ setStatus('⚠️ Ошибка загрузки','error');var sk=document.getElementById('loadingSkeleton');if(sk)sk.style.display='none';var mc=document.getElementById('mainContent');if(mc)mc.style.display='block'; }); }
         function loadAllTypesFromSheet(){ fetch(CSV_BASE+GID_TYPES).then(r=>r.text()).then(function(csv){ var d=parseCSV(csv); allTypesFromSheet=[]; d.forEach(function(r){ for(var i=0;i<r.length;i++){ var v=(r[i]||'').trim(); if(v&&v.length>2&&allTypesFromSheet.indexOf(v)===-1)allTypesFromSheet.push(v); } }); }).catch(function(){}); }
         function parseCSV(csv){ var lines=csv.trim().split('\n'),result=[]; for(var i=1;i<lines.length;i++){ var cells=[],cur='',q=false; for(var j=0;j<lines[i].length;j++){ var c=lines[i][j]; if(c=='"')q=!q; else if(c===','&&!q){cells.push(cur.trim());cur='';} else cur+=c; } cells.push(cur.trim()); if(cells.some(function(c){return c.length>0;}))result.push(cells); } return result; }
         function updateSelect(id,data,col){ var sel=document.getElementById(id); if(!sel)return; sel.innerHTML='<option value="">-- Выберите --</option>'; var names=[]; data.forEach(function(r){ var v=r[col]||r[0]||''; if(v&&names.indexOf(v)===-1){names.push(v); sel.innerHTML+='<option value="'+esc(v)+'">'+esc(v)+'</option>';} }); }
