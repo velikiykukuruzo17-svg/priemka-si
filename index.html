@@ -61,6 +61,11 @@
         .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: #FFFFFF; border: 1px solid #E5E5EA; border-radius: 0 0 10px 10px; z-index: 100; display: none; list-style: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .autocomplete-list li { padding: 12px; cursor: pointer; font-size: 16px; border-bottom: 1px solid #F2F2F7; }
         .autocomplete-list li:active { background: #007AFF; color: white; }
+        .menu-card { background: #FFFFFF; border-radius: 16px; padding: 20px; margin-bottom: 14px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.06); transition: all 0.15s ease; display: flex; align-items: center; gap: 14px; }
+        .menu-card:active { transform: scale(0.98); background: #F2F2F7; }
+        .menu-icon { font-size: 40px; width: 60px; text-align: center; }
+        .menu-info h3 { font-size: 17px; font-weight: 600; }
+        .menu-info p { font-size: 12px; color: #8E8E93; margin-top: 2px; }
         #mainMenu, #priemkaMode, #devicesMode, #calendarMode, #archiveMode, #priceMode, #settingsPanel { display: none; }
         .tabs { display: flex; gap: 0; margin-bottom: 12px; background: #E5E5EA; border-radius: 10px; padding: 3px; }
         .tab { flex: 1; padding: 10px; text-align: center; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; color: #8E8E93; transition: all 0.2s; }
@@ -86,7 +91,7 @@
         .device-mini:last-child { border-bottom: none; }
         .employee-line { font-size: 11px; color: #8E8E93; margin-top: 2px; }
         .urgent-block { background: #FFF5F5; border: 1px solid #FF3B30; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
-        .urgent-block h3 { font-size: 14px; color: #FF3B30; margin-bottom: 6px; }
+        .urgent-block h3 { font-size: 14px; color: #FF3B30; margin-bottom: 6px; cursor: pointer; }
         .urgent-block .urgent-item { font-size: 11px; padding: 3px 0; border-bottom: 1px solid #FFE0E0; }
         .urgent-block .urgent-item:last-child { border-bottom: none; }
         #cameraOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; }
@@ -200,7 +205,7 @@
         document.getElementById('passwordInput').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
         function showMainMenu(){hideAllModes();document.getElementById('mainMenu').style.display='block';document.getElementById('menuUserName').textContent=currentUser||'';loadUrgentBlock();}
-        function loadUrgentBlock(){fetch(SCRIPT_URL+'?action=getDevices&search=').then(r=>r.json()).then(function(data){allDevicesCache=data.devices||[];var now=new Date();var urgent=allDevicesCache.filter(function(d){if(d.status==='Выдан')return false;var dl=getDeadline(d.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));return days<=3;});var block=document.getElementById('urgentBlock');if(urgent.length>0){var html='<div class="urgent-block"><h3>⚠️ Срочные поверки ('+urgent.length+')</h3>';urgent.slice(0,8).forEach(function(d){var dl=getDeadline(d.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));var emoji=days<=0?'🔴':(days<=1?'🟠':'🟡');html+='<div class="urgent-item">'+emoji+' <b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+esc(d.company||'')+' | до '+dl.toLocaleDateString()+'</div>';});html+='</div>';block.innerHTML=html;block.style.display='block';}else{block.style.display='none';}});}
+        function loadUrgentBlock(){fetch(SCRIPT_URL+'?action=getDevices&search=').then(r=>r.json()).then(function(data){allDevicesCache=data.devices||[];var now=new Date();var urgent=allDevicesCache.filter(function(d){if(d.status==='Выдан')return false;var dl=getDeadline(d.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));return days<=3;});var block=document.getElementById('urgentBlock');if(urgent.length>0){var html='<div class="urgent-block"><h3 onclick="var n=this.nextElementSibling;n.style.display=n.style.display===\'none\'?\'block\':\'none\';this.querySelector(\'span\').textContent=n.style.display===\'none\'?\'▶\':\'▼\'">⚠️ Срочные поверки ('+urgent.length+') <span>▶</span></h3><div style="display:none;">';urgent.slice(0,8).forEach(function(d){var dl=getDeadline(d.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));var emoji=days<=0?'🔴':(days<=1?'🟠':'🟡');html+='<div class="urgent-item">'+emoji+' <b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+esc(d.company||'')+' | до '+dl.toLocaleDateString()+'</div>';});html+='</div></div>';block.innerHTML=html;block.style.display='block';}else{block.style.display='none';}});}
         function getDeadline(dateStr){if(!dateStr)return new Date();var d;if(dateStr.includes('T')||dateStr.includes('Z')){d=new Date(dateStr);}else if(dateStr.includes('.')){var parts=dateStr.split('.');d=new Date(parseInt(parts[2]),parseInt(parts[1])-1,parseInt(parts[0]));}else if(dateStr.includes('-')){var parts=dateStr.split('-');d=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));}else{d=new Date(dateStr);}if(isNaN(d.getTime()))return new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate()+10);}
 
         function showMode(mode){hideAllModes();
