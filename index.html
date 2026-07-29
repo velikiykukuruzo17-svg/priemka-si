@@ -68,6 +68,9 @@
         .menu-info h3 { font-size: 17px; font-weight: 600; }
         .menu-info p { font-size: 12px; color: #8E8E93; margin-top: 2px; }
         #priemkaMode, #devicesMode, #archiveMode, #settingsPanel { display: none; }
+        .tabs { display: flex; gap: 0; margin-bottom: 12px; background: #E5E5EA; border-radius: 10px; padding: 3px; }
+        .tab { flex: 1; padding: 10px; text-align: center; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; color: #8E8E93; transition: all 0.2s; }
+        .tab.active { background: #FFFFFF; color: #007AFF; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .stats-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
         .stat-badge { padding: 5px 8px; border-radius: 15px; font-size: 11px; font-weight: 600; }
         .stat-badge.blue { background: #E3F2FD; color: #007AFF; }
@@ -84,6 +87,7 @@
         .group-card.expanded .group-actions { display: flex; }
         .toggle-icon { float: right; font-size: 12px; transition: transform 0.2s; }
         .group-card.expanded .toggle-icon { transform: rotate(90deg); }
+        .status-indicator { font-size: 13px; margin-top: 4px; letter-spacing: 2px; }
         .device-mini { font-size: 12px; padding: 6px 0; border-bottom: 1px solid #f0f0f0; }
         .device-mini:last-child { border-bottom: none; }
         #cameraOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; }
@@ -141,7 +145,17 @@
         </div>
 
         <div id="priemkaMode"><button class="btn-back" onclick="showMainMenu()">↩ Назад</button><div class="header"><div><h1>📝 Приёмка СИ</h1></div></div><div id="priemkaContent"></div></div>
-        <div id="devicesMode"><button class="btn-back" onclick="showMainMenu()">↩ Назад</button><div class="header"><div><h1>🔧 Управление СИ</h1></div></div><div class="stats-row" id="statsRow"></div><input type="text" id="deviceSearch" placeholder="🔍 Поиск по номеру или компании" style="width:100%;padding:10px;border:1px solid #E5E5EA;border-radius:10px;font-size:14px;margin-bottom:10px;" oninput="loadDevices()"><div id="devicesList" style="max-height:450px;overflow-y:auto;"></div></div>
+        <div id="devicesMode">
+            <button class="btn-back" onclick="showMainMenu()">↩ Назад</button>
+            <div class="header"><div><h1>🔧 Управление СИ</h1></div></div>
+            <div class="tabs">
+                <div class="tab active" id="tabWork" onclick="switchDeviceTab('work')">🟡 В работе</div>
+                <div class="tab" id="tabArchive" onclick="switchDeviceTab('archive')">✅ Архив</div>
+            </div>
+            <div class="stats-row" id="statsRow"></div>
+            <input type="text" id="deviceSearch" placeholder="🔍 Поиск по номеру или компании" style="width:100%;padding:10px;border:1px solid #E5E5EA;border-radius:10px;font-size:14px;margin-bottom:10px;" oninput="loadDevices()">
+            <div id="devicesList" style="max-height:450px;overflow-y:auto;"></div>
+        </div>
         <div id="archiveMode"><button class="btn-back" onclick="showMainMenu()">↩ Назад</button><div class="header"><div><h1>📂 Архив актов</h1></div></div><div id="archiveContent">Загрузка...</div></div>
         <div id="settingsPanel"><button class="btn-back" onclick="showMainMenu()">↩ Назад</button><div class="header"><div><h1>⚙️ Настройки</h1></div></div><label style="font-size:13px;font-weight:600;">📧 Email для отправки:</label><input type="email" id="settingsEmail" placeholder="ms-tcentr@mail.ru"><button class="btn-ios" onclick="saveSettings()" style="width:100%;">💾 Сохранить</button><div class="status" id="settingsStatus"></div></div>
     </div>
@@ -153,7 +167,7 @@
     <iframe name="hiddenFrame" style="display:none;"></iframe>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
-        var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxkTgJFQM4j9zTGzgydOGDTFO7k5LoAeu1quFekyCJS7W61DIw5Il1e636O1X807HXb/exec';
+        var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyEYNpy2NYJCP9vWkFd4khA5DElIDGFez5bbYCnOr2fXK_ovllR_RRz4THb67Glo0KZ/exec';
         var CSV_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJLJVjVpDuLsNRjFg9j7X2NHcDtOgmo4lhiC_CTx2S0ox97Hne91SXQ7XtJJxb9OberlzYUrSXijw6/pub?output=csv&gid=';
         var GID_TYPES = '441822937', GID_COMPANIES = '883764981';
         var SPREADSHEET_ID = '1nj6cd6fGp6WVNDcHpRPxT4OLL6iUYli5IO8l6TVzMLI';
@@ -166,6 +180,7 @@
         var allTypesFromSheet = [], saveTimeout = null;
         var loginAttempts = 0, currentUser = '';
         var currentStatusRows = [], deviceGroups = {}, companyListData = [];
+        var currentDeviceTab = 'work';
 
         window.addEventListener('load', function() { checkSession(); });
 
@@ -195,11 +210,18 @@
         function showMode(mode) {
             hideAllModes();
             if (mode === 'priemka') { document.getElementById('priemkaMode').style.display = 'block'; if (!document.getElementById('priemkaContent').innerHTML) initPriemkaMode(); }
-            else if (mode === 'devices') { document.getElementById('devicesMode').style.display = 'block'; loadDevices(); }
+            else if (mode === 'devices') { document.getElementById('devicesMode').style.display = 'block'; currentDeviceTab = 'work'; switchDeviceTab('work'); }
             else if (mode === 'archive') { document.getElementById('archiveMode').style.display = 'block'; loadArchive(); }
             else if (mode === 'settings') { document.getElementById('settingsPanel').style.display = 'block'; document.getElementById('settingsEmail').value = settings.email || ''; }
         }
         function hideAllModes() { document.getElementById('mainMenu').style.display = 'none'; document.getElementById('priemkaMode').style.display = 'none'; document.getElementById('devicesMode').style.display = 'none'; document.getElementById('archiveMode').style.display = 'none'; document.getElementById('settingsPanel').style.display = 'none'; }
+
+        function switchDeviceTab(tab) {
+            currentDeviceTab = tab;
+            document.getElementById('tabWork').classList.toggle('active', tab === 'work');
+            document.getElementById('tabArchive').classList.toggle('active', tab === 'archive');
+            loadDevices();
+        }
 
         function initPriemkaMode() {
             document.getElementById('priemkaContent').innerHTML = '<div id="loadingSkeleton"><div class="skeleton" style="height:24px;width:60%;margin:8px 0;"></div><div class="skeleton" style="height:14px;margin:8px 0;"></div><div class="skeleton" style="height:50px;border-radius:14px;"></div></div><div id="mainContent" style="display:none;"><div class="act-toolbar"><button class="btn-ios" onclick="newAct()" style="flex:1;">📝 Новый акт</button><button class="btn-ios-gray" onclick="openActsList()" style="flex:1;">📂 Выбрать акт</button></div><div class="field-group"><label>Компания-сдатчик:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="companyInput" placeholder="Введите компанию" autocomplete="off" oninput="filterCompanies(); saveFormData();" onblur="hideCompanyList()" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;"><ul class="autocomplete-list" id="companyList"></ul></div><button class="btn-ios-icon" onclick="addCompany()">➕</button></div></div><div class="section-title">Приборы:</div><div id="devicesContainer"></div><button class="btn-ios" onclick="addDevice()" style="width:100%;margin:8px 0;">➕ Добавить прибор</button><button class="btn-ios-green" id="submitBtn" onclick="submitAct()">📧 Сформировать акт и отправить</button><div id="printContainer"><button class="btn-ios-orange" id="printBtn" onclick="printAct()" style="display:none;">🖨️ Распечатать акт</button></div><div class="hint" id="emailHint"></div><div class="saved-indicator" id="savedIndicator">💾 Сохранено</div><div class="status" id="status"></div></div>';
@@ -208,34 +230,19 @@
             loadDictionaries(); loadAllTypesFromSheet(); addDevice(); initVoiceRecognition();
         }
 
-        function filterCompanies() {
-            var input = document.getElementById('companyInput'), list = document.getElementById('companyList');
-            if (!input || !list) return;
-            var filter = input.value.toLowerCase().trim();
-            list.innerHTML = '';
-            if (!filter) { list.style.display = 'none'; return; }
-            var matches = companyListData.filter(function(c) { return c.toLowerCase().includes(filter); });
-            if (matches.length === 0) { list.style.display = 'none'; return; }
-            matches.slice(0, 8).forEach(function(c) {
-                list.innerHTML += '<li onmousedown="selectCompany(\'' + esc(c) + '\')">' + esc(c) + '</li>';
-            });
-            list.style.display = 'block';
-        }
-        function selectCompany(name) {
-            document.getElementById('companyInput').value = name;
-            document.getElementById('companyList').style.display = 'none';
-            saveFormData();
-        }
-        function hideCompanyList() { setTimeout(function() { var list = document.getElementById('companyList'); if (list) list.style.display = 'none'; }, 200); }
-
         function loadDevices() {
             var search = document.getElementById('deviceSearch').value || '';
             fetch(SCRIPT_URL + '?action=getDevices&search=' + encodeURIComponent(search))
                 .then(r => r.json()).then(function(data) {
-                    var stats = data.stats || {};
-                    document.getElementById('statsRow').innerHTML = '<span class="stat-badge blue">🔵 В работе: ' + (stats.inWork||0) + '</span><span class="stat-badge green">🟢 Годен: ' + (stats.ready||0) + '</span><span class="stat-badge orange">🔧 Ремонт: ' + (stats.repair||0) + '</span><span class="stat-badge red">🔴 Не годен: ' + (stats.notGood||0) + '</span><span class="stat-badge gray">✅ Выдано: ' + (stats.issued||0) + '</span>';
+                    var allDevices = data.devices || [];
+                    var filtered = currentDeviceTab === 'archive' ? allDevices.filter(function(d){return d.status === 'Выдан';}) : allDevices.filter(function(d){return d.status !== 'Выдан';});
+                    var stats = { total: 0, inWork: 0, ready: 0, repair: 0, issued: 0, notGood: 0, calibration: 0, setup: 0, defect: 0 };
+                    filtered.forEach(function(d){ stats.total++;
+                        switch(d.status){ case 'В работе':stats.inWork++;break; case 'Годен':stats.ready++;break; case 'Выдан':stats.issued++;break; case 'Не годен':stats.notGood++;break; case 'Ремонт':stats.repair++;break; case 'Калибровка':stats.calibration++;break; case 'Настройка':stats.setup++;break; case 'Брак':stats.defect++;break; }
+                    });
+                    document.getElementById('statsRow').innerHTML = '<span class="stat-badge blue">🔵 В работе: '+(stats.inWork||0)+'</span><span class="stat-badge green">🟢 Годен: '+(stats.ready||0)+'</span><span class="stat-badge orange">🔧 Ремонт: '+(stats.repair||0)+'</span><span class="stat-badge red">🔴 Не годен: '+(stats.notGood||0)+'</span>'+(currentDeviceTab==='archive'?'<span class="stat-badge gray">✅ Выдано: '+(stats.issued||0)+'</span>':'');
                     deviceGroups = {};
-                    (data.devices||[]).forEach(function(d) {
+                    filtered.forEach(function(d) {
                         var key = (d.company||'') + '|' + (d.actDate||'') + '|' + (d.actNumber||'');
                         if (!deviceGroups[key]) deviceGroups[key] = { company: d.company, actDate: d.actDate, actNumber: d.actNumber, devices: [] };
                         deviceGroups[key].devices.push(d);
@@ -246,14 +253,19 @@
                     sortedGroups.forEach(function(group, gi) {
                         var groupId = 'group_' + gi;
                         var displayDate = group.actDate ? group.actDate.replace(/T.*/, '').split('-').reverse().join('.') : '';
-                        html += '<div class="group-card" id="' + groupId + '"><div class="company-name" onclick="var el=document.getElementById(\'' + groupId + '\');el.classList.toggle(\'expanded\');">🏢 ' + esc(group.company||'Нет компании') + ' <span class="toggle-icon">▶</span></div><div class="act-date">📅 ' + displayDate + (group.actNumber ? ' | Акт №' + esc(group.actNumber) : '') + ' (' + group.devices.length + ' прибора)</div><div class="devices-inner">';
+                        var statusCounts = {};
+                        group.devices.forEach(function(d){ var s = d.status || 'В работе'; statusCounts[s] = (statusCounts[s]||0) + 1; });
+                        var statusLine = Object.keys(statusCounts).map(function(s){ return (statusEmojis[s]||'') + '×' + statusCounts[s]; }).join(' ');
+                        html += '<div class="group-card" id="' + groupId + '"><div class="company-name" onclick="var el=document.getElementById(\'' + groupId + '\');el.classList.toggle(\'expanded\');">🏢 ' + esc(group.company||'Нет компании') + ' <span class="toggle-icon">▶</span></div><div class="act-date">📅 ' + displayDate + (group.actNumber ? ' | Акт №' + esc(group.actNumber) : '') + ' (' + group.devices.length + ' прибора)</div><div class="status-indicator">' + statusLine + '</div><div class="devices-inner">';
                         group.devices.forEach(function(d) {
                             var emoji = statusEmojis[d.status] || '🟡';
                             html += '<div class="device-mini" data-row="' + d.row + '">' + emoji + ' <b>' + esc(d.name||'') + '</b> | ' + esc(d.serial||'') + ' | <span class="dev-status">' + esc(d.status||'В работе') + '</span>';
                             if (d.repairReason) html += '<br><span style="color:#FF3B30;">Причина: ' + esc(d.repairReason) + '</span>';
                             html += ' <button class="btn-sm blue" onclick="openStatusModal([' + d.row + '],\'' + esc(d.name||'') + '\',\'' + esc(d.serial||'') + '\')">🔄</button> <button class="btn-sm gray" onclick="openMessageModal(\'' + esc(d.company||'') + '\',\'' + esc(d.name||'') + ' ' + esc(d.serial||'') + '\')">📧</button></div>';
                         });
-                        html += '</div><div class="group-actions"><button class="btn-sm green" onclick="openStatusModal(' + JSON.stringify(group.devices.map(function(d){return d.row;})) + ',\'ВСЕ\',\'' + group.devices.length + ' шт.\')">🔄 Статус всем</button> <button class="btn-sm orange" onclick="createReturnActByKey(\'' + gi + '\')">📧 Акт возврата</button> <button class="btn-sm gray" onclick="printAct()">🖨️ Печать</button> <button class="btn-sm gray" onclick="openGroupMessageModal(\'' + gi + '\')">📧 Написать</button></div></div>';
+                        html += '</div><div class="group-actions"><button class="btn-sm green" onclick="openStatusModal(' + JSON.stringify(group.devices.map(function(d){return d.row;})) + ',\'ВСЕ\',\'' + group.devices.length + ' шт.\')">🔄 Статус всем</button>';
+                        if (currentDeviceTab !== 'archive') { html += ' <button class="btn-sm orange" onclick="createReturnActByKey(\'' + gi + '\')">📧 Акт возврата</button>'; }
+                        html += ' <button class="btn-sm gray" onclick="printAct()">🖨️ Печать</button> <button class="btn-sm gray" onclick="openGroupMessageModal(\'' + gi + '\')">📧 Написать</button></div></div>';
                     });
                     document.getElementById('devicesList').innerHTML = html || 'Нет приборов';
                 });
@@ -325,6 +337,7 @@
                     updateStatusesInDOM(currentStatusRows, status, reason);
                     Object.keys(deviceGroups).forEach(function(key) { deviceGroups[key].devices.forEach(function(d) { if (currentStatusRows.indexOf(d.row) !== -1) { d.status = status; if (reason) d.repairReason = reason; } }); });
                     closeStatusModal();
+                    setTimeout(loadDevices, 500);
                 }
             });
         }
@@ -388,6 +401,19 @@
 
         function saveSettings() { settings.email = document.getElementById('settingsEmail').value.trim(); localStorage.setItem('appSettings', JSON.stringify(settings)); document.getElementById('settingsStatus').textContent = '✅ Настройки сохранены'; document.getElementById('settingsStatus').className = 'status success'; }
         function updateEmailHint() { var e = settings.email || ''; var el = document.getElementById('emailHint'); if (el) el.textContent = e ? '📧 Письмо уйдёт на ' + e : '⚠️ Укажите email в настройках'; }
+        function filterCompanies() {
+            var input = document.getElementById('companyInput'), list = document.getElementById('companyList');
+            if (!input || !list) return;
+            var filter = input.value.toLowerCase().trim();
+            list.innerHTML = '';
+            if (!filter) { list.style.display = 'none'; return; }
+            var matches = companyListData.filter(function(c) { return c.toLowerCase().includes(filter); });
+            if (matches.length === 0) { list.style.display = 'none'; return; }
+            matches.slice(0, 8).forEach(function(c) { list.innerHTML += '<li onmousedown="selectCompany(\'' + esc(c) + '\')">' + esc(c) + '</li>'; });
+            list.style.display = 'block';
+        }
+        function selectCompany(name) { document.getElementById('companyInput').value = name; document.getElementById('companyList').style.display = 'none'; saveFormData(); }
+        function hideCompanyList() { setTimeout(function() { var list = document.getElementById('companyList'); if (list) list.style.display = 'none'; }, 200); }
 
         function saveFormData() { clearTimeout(saveTimeout); saveTimeout = setTimeout(function() { var data = { company: document.getElementById('companyInput').value, devices: [] }; document.querySelectorAll('.device-block').forEach(function(b) { var n = b.id.replace('device', ''); var d = { type: document.getElementById('typeField'+n)?.value||'', name: document.getElementById('nameField'+n)?.value||'', serial: document.getElementById('serialField'+n)?.value||'', serial2: document.getElementById('serialDual2_'+n)?.value||'', address: document.getElementById('addressField'+n)?.value||'', akb: document.getElementById('akbCheck'+n)?.checked||false, note: document.getElementById('noteField'+n)?.value||'' }; if(d.name||d.type||d.serial) data.devices.push(d); }); if(data.company||data.devices.length>0){localStorage.setItem('priemkaFormData',JSON.stringify(data));showSaved();} }, 500); }
         function showSaved(){ var el=document.getElementById('savedIndicator'); if(el){el.style.display='block';setTimeout(function(){el.style.display='none';},2000);} }
@@ -427,16 +453,10 @@
         function hideAutocomplete(deviceNum){ setTimeout(function(){document.getElementById('autocompleteList'+deviceNum).style.display='none';},200); }
         function recognizeText(dataUrl,target,deviceNum){ setStatus('Распознавание...','loading'); Tesseract.recognize(dataUrl,'rus+eng',{logger:function(m){if(m.status==='recognizing text')setStatus('Распознавание: '+Math.round(m.progress*100)+'%','loading');}}).then(function(result){var text=result.data.text.replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g,' ').replace(/\s+/g,' ').trim();if(target==='name'){document.getElementById('nameField'+deviceNum).value=text;var ft=findTypeByName(text);if(ft){document.getElementById('typeField'+deviceNum).value=ft;checkType(deviceNum);}}else{document.getElementById('serialField'+deviceNum).value=text.match(/\d{3,}/)?.[0]||'';}saveFormData();}).catch(function(){setStatus('❌ Ошибка','error');}); }
         function addCompany() { 
-            var name = prompt('Введите название компании:');
-            if (!name || !name.trim()) return;
-            name = name.trim();
+            var name = prompt('Введите название компании:'); if (!name || !name.trim()) return; name = name.trim();
             var email = prompt('Введите email компании (необязательно):', '');
-            companyListData.push(name);
-            var inp = document.getElementById('companyInput');
-            if (inp) inp.value = name;
-            saveFormData();
-            var url = SCRIPT_URL + '?action=addCompany&name=' + encodeURIComponent(name);
-            if (email && email.trim()) { url += '&email=' + encodeURIComponent(email.trim()); }
+            companyListData.push(name); var inp = document.getElementById('companyInput'); if (inp) inp.value = name; saveFormData();
+            var url = SCRIPT_URL + '?action=addCompany&name=' + encodeURIComponent(name); if (email && email.trim()) { url += '&email=' + encodeURIComponent(email.trim()); }
             fetch(url).then(r => r.json()).then(function(res) { if (res.status === 'success') setStatus('✅ Компания сохранена', 'success'); }).catch(function(){});
         }
         function newAct() { if (confirm('Очистить все поля?')) { document.getElementById('devicesContainer').innerHTML = ''; deviceCounter = 0; usedAddresses = []; clearFormData(); addDevice(); setStatus('✅ Новый акт', 'success'); var pb = document.getElementById('printBtn'); if(pb)pb.style.display = 'none'; } }
@@ -445,15 +465,12 @@
         function loadActFromModal(actNum) { fetch(SCRIPT_URL + '?action=getAct&number=' + encodeURIComponent(actNum)).then(r => r.json()).then(function(act) { if (act.error) { alert(act.error); return; } loadActData(act); closeActsList(); setStatus('✅ Загружен акт №' + actNum, 'success'); var pb = document.getElementById('printBtn'); if(pb)pb.style.display = 'block'; }); }
         function printAct() { window.open('https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/export?format=pdf&size=A4&portrait=true&scale=4&fitw=true&gridlines=false&gid=1303750308', '_blank'); }
         function submitAct(){
-            var company = document.getElementById('companyInput').value.trim();
-            if (!company) { alert('Введите компанию'); return; }
-            var employee = currentUser || '';
-            if (!employee) { alert('Не определён сотрудник'); return; }
+            var company = document.getElementById('companyInput').value.trim(); if (!company) { alert('Введите компанию'); return; }
+            var employee = currentUser || ''; if (!employee) { alert('Не определён сотрудник'); return; }
             var devices = [], allValid = true;
             document.querySelectorAll('.device-block').forEach(function(b){ if(b.offsetParent===null)return; var n=b.id.replace('device',''); var t=document.getElementById('typeField'+n)?.value.trim()||'', nm=document.getElementById('nameField'+n)?.value.trim()||'', addr=document.getElementById('addressField'+n)?.value.trim()||'', akb=document.getElementById('akbCheck'+n)?.checked||false, nt=document.getElementById('noteField'+n)?.value.trim()||''; var serial=''; if(isDualSerialType(parseInt(n))){var s1=document.getElementById('serialDual1_'+n)?.value.trim()||'',s2=document.getElementById('serialDual2_'+n)?.value.trim()||''; serial=s1+(s2?'/'+s2:''); if(!s1){allValid=false;return;}}else{serial=document.getElementById('serialField'+n)?.value.trim()||''; if(!serial){allValid=false;return;}} if(!nm||!t){allValid=false;return;} devices.push({type:t,name:nm,serial:serial,address:addr,akb:akb,note:nt}); });
             if (!allValid || !devices.length) { alert('Заполните обязательные поля'); return; }
-            var email = settings.email || '';
-            if (!email) { alert('Укажите email в настройках!'); return; }
+            var email = settings.email || ''; if (!email) { alert('Укажите email в настройках!'); return; }
             var btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner spinner-white"></span> Отправка...'; setStatus('📤 Формирование акта...', 'loading');
             var now = new Date(), ds = ('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear();
             var form = document.createElement('form'); form.method = 'POST'; form.action = SCRIPT_URL; form.target = 'hiddenFrame'; form.style.display = 'none';
