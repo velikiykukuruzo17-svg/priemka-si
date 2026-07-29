@@ -228,7 +228,7 @@
                 document.getElementById('dashUrgent').innerHTML=urgentHtml||'✅ Нет срочных поверок';
             });
         }
-        function getDeadline(dateStr){if(!dateStr)return new Date();var parts=dateStr.split('.');if(parts.length===3){return new Date(parseInt(parts[2]),parseInt(parts[1])-1,parseInt(parts[0])+10);}return new Date();}
+        function getDeadline(dateStr){if(!dateStr)rfunction getDeadline(dateStr){if(!dateStr)return new Date();var d;if(dateStr.includes('T')||dateStr.includes('Z')){d=new Date(dateStr);}else if(dateStr.includes('.')){var parts=dateStr.split('.');d=new Date(parseInt(parts[2]),parseInt(parts[1])-1,parseInt(parts[0]));}else if(dateStr.includes('-')){var parts=dateStr.split('-');d=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));}else{d=new Date(dateStr);}if(isNaN(d.getTime()))return new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate()+10);}
 
         function showMainMenu(){hideAllModes();document.getElementById('mainMenu').style.display='block';document.getElementById('menuUserName').textContent=currentUser||'';}
         function showMode(mode){hideAllModes();
