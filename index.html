@@ -97,6 +97,8 @@
         .card-status.lab { background: #FFF3E0; color: #FF9500; }
         .card-status.done { background: #E8F5E9; color: #34C759; }
         .card-status.issued { background: #F2F2F7; color: #8E8E93; }
+        .progress-bar { height: 5px; background: #E5E5EA; border-radius: 3px; margin-top: 4px; overflow: hidden; }
+        .progress-bar .fill { height: 100%; border-radius: 3px; background: #34C759; transition: width 0.3s; }
         .repair-card { background: #FFF8F0; border-radius: 12px; padding: 12px; margin-bottom: 8px; border-left: 4px solid #FF9500; }
         .repair-card .device-mini { padding: 2px 0; border-bottom: none; }
         .month-group { background: #FFFFFF; border-radius: 12px; padding: 10px; margin-bottom: 8px; }
@@ -106,6 +108,9 @@
         .urgent-block h3 { font-size: 14px; color: #FF3B30; margin-bottom: 6px; cursor: pointer; }
         .urgent-block .urgent-item { font-size: 11px; padding: 3px 0; border-bottom: 1px solid #FFE0E0; }
         .urgent-block .urgent-item:last-child { border-bottom: none; }
+        .quick-replies { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+        .quick-replies button { font-size: 10px; padding: 4px 8px; border-radius: 10px; border: 1px solid #007AFF; background: #E3F2FD; color: #007AFF; cursor: pointer; }
+        .quick-replies button:active { background: #007AFF; color: #fff; }
         #cameraOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; }
         #cameraVideo { width: 100%; height: 100%; object-fit: cover; }
         #cameraCaptureBtn { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); width: 72px; height: 72px; background: #fff; border: 4px solid #34C759; border-radius: 50%; cursor: pointer; z-index: 10001; }
@@ -198,7 +203,15 @@
     </div>
     <div id="statusModal"><div class="modal-content"><h3>🔄 Изменить статус</h3><p id="statusDeviceInfo" style="font-size:13px;color:#8E8E93;margin-bottom:10px;"></p><select id="newStatus"><option value="В работе">🟡 В работе</option><option value="Годен">🟢 Годен</option><option value="Выдан">✅ Выдан</option><option value="Не годен">🔴 Не годен</option><option value="Ремонт">🔧 Ремонт</option><option value="Калибровка">📐 Калибровка</option><option value="Настройка">⚙️ Настройка</option><option value="Брак">❌ Брак</option></select><input type="text" id="statusReason" placeholder="Причина"><button class="btn-ios" onclick="saveNewStatus()" style="width:100%;">✅ Сохранить</button><button class="btn-ios-gray" onclick="closeStatusModal()" style="width:100%;margin-top:6px;">Отмена</button></div></div>
     <div id="repairStatusModal"><div class="modal-content"><h3>🔧 Статус ремонта</h3><p id="repairDeviceInfo" style="font-size:13px;color:#8E8E93;margin-bottom:10px;"></p><select id="newRepairStatus"><option value="В ремонте">🔧 В ремонте</option><option value="Сделан">✅ Сделан</option><option value="Неремонтопригоден">❌ Неремонтопригоден</option></select><input type="text" id="repairNote" placeholder="Примечание" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:14px;margin-bottom:10px;"><button class="btn-ios" onclick="saveRepairStatus()" style="width:100%;">✅ Сохранить</button><button class="btn-ios-gray" onclick="closeRepairStatusModal()" style="width:100%;margin-top:6px;">Отмена</button></div></div>
-    <div id="messageModal"><div class="modal-content"><h3>📧 Отправить клиенту</h3><p id="msgDeviceInfo" style="font-size:13px;color:#8E8E93;margin-bottom:10px;"></p><label style="font-size:13px;font-weight:600;">Email:</label><input type="email" id="msgEmail" placeholder="Email клиента"><label style="font-size:13px;font-weight:600;">Тема:</label><input type="text" id="msgSubject" value="Статус приборов"><label style="font-size:13px;font-weight:600;">Сообщение:</label><textarea id="msgBody" rows="8"></textarea><button class="btn-ios" onclick="sendMsg()" style="width:100%;">📧 Отправить</button><button class="btn-ios-gray" onclick="closeMessageModal()" style="width:100%;margin-top:6px;">Отмена</button></div></div>
+    <div id="messageModal"><div class="modal-content"><h3>📧 Отправить клиенту</h3><p id="msgDeviceInfo" style="font-size:13px;color:#8E8E93;margin-bottom:10px;"></p>
+        <div class="quick-replies">
+            <button onclick="setMsgBody('Ваши приборы готовы, можете забирать.')">✅ Готовы</button>
+            <button onclick="setMsgBody('Один или несколько приборов требуют ремонта. Подробности уточняйте по телефону.')">🔧 Ремонт</button>
+            <button onclick="setMsgBody('Срок поверки продлён. Ожидайте дополнительную информацию.')">📅 Продлён срок</button>
+            <button onclick="setMsgBody('Приборы признаны негодными. Подробности в акте.')">❌ Не годен</button>
+            <button onclick="setMsgBody('Стоимость работ согласована. Ждём подтверждения для начала работ.')">💰 Согласование</button>
+        </div>
+        <label style="font-size:13px;font-weight:600;">Email:</label><input type="email" id="msgEmail" placeholder="Email клиента"><label style="font-size:13px;font-weight:600;">Тема:</label><input type="text" id="msgSubject" value="Статус приборов"><label style="font-size:13px;font-weight:600;">Сообщение:</label><textarea id="msgBody" rows="8"></textarea><button class="btn-ios" onclick="sendMsg()" style="width:100%;">📧 Отправить</button><button class="btn-ios-gray" onclick="closeMessageModal()" style="width:100%;margin-top:6px;">Отмена</button></div></div>
     <div id="cameraOverlay"><video id="cameraVideo" autoplay playsinline></video><button id="cameraCloseBtn" onclick="closeCamera()">✕</button><button id="cameraCaptureBtn" onclick="captureFromCamera()"></button></div>
     <div id="actsModal"><div class="modal-content"><h3>📂 Существующие акты</h3><div id="actsList">Загрузка...</div><button class="btn-ios" onclick="closeActsList()" style="width:100%;margin-top:12px;">Закрыть</button></div></div>
     <iframe name="hiddenFrame" style="display:none;"></iframe>
@@ -214,6 +227,7 @@
         var currentStatusRows=[],deviceGroups={},companyListData=[],currentDeviceTab='work';
         var allDevicesCache=[],calYear,calMonth,calSelectedDate=null;
         var currentRepairRow=null;
+        var companyColors={},colorPalette=['#007AFF','#34C759','#FF9500','#FF3B30','#AF52DE','#FF2D55','#00C7BE','#FFCC00','#8E8E93','#0A84FF'];
 
         window.addEventListener('load',function(){checkSession();});
         function checkSession(){var s=JSON.parse(localStorage.getItem('priemkaSession')||'{}');if(s.date===new Date().toDateString()&&s.user){currentUser=s.user;showApp();}else{showLogin();}}
@@ -223,9 +237,13 @@
         function doLogout(){localStorage.removeItem('priemkaSession');currentUser='';location.reload();}
         document.getElementById('passwordInput').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
+        function getCompanyColor(company){if(!company)return'#007AFF';if(!companyColors[company]){var used=Object.values(companyColors);var available=colorPalette.filter(function(c){return used.indexOf(c)===-1;});if(available.length===0)available=colorPalette;companyColors[company]=available[Object.keys(companyColors).length%available.length];}return companyColors[company];}
+
         function showMainMenu(){hideAllModes();document.getElementById('mainMenu').style.display='block';document.getElementById('menuUserName').textContent=currentUser||'';loadUrgentBlock();}
         function loadUrgentBlock(){fetch(SCRIPT_URL+'?action=getDevices&search=').then(r=>r.json()).then(function(data){allDevicesCache=data.devices||[];var now=new Date();var urgent=allDevicesCache.filter(function(d){if(d.status==='Выдан'||d.status==='Ремонт')return false;var dl=getDeadline(d.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));return days<=3;});var block=document.getElementById('urgentBlock');if(urgent.length>0){var html='<div class="urgent-block"><h3 onclick="var n=this.nextElementSibling;n.style.display=n.style.display===\'none\'?\'block\':\'none\';this.querySelector(\'span\').textContent=n.style.display===\'none\'?\'▶\':\'▼\'">⚠️ Срочные поверки ('+urgent.length+') <span>▶</span></h3><div style="display:none;">';urgent.slice(0,8).forEach(function(d){var dl=getDeadline(d.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));var emoji=days<=0?'🔴':(days<=1?'🟠':'🟡');html+='<div class="urgent-item">'+emoji+' <b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+esc(d.company||'')+' | до '+dl.toLocaleDateString()+'</div>';});html+='</div></div>';block.innerHTML=html;block.style.display='block';}else{block.style.display='none';}});}
         function getDeadline(dateStr){if(!dateStr)return new Date();var d;if(dateStr.includes('T')||dateStr.includes('Z')){d=new Date(dateStr);}else if(dateStr.includes('.')){var parts=dateStr.split('.');d=new Date(parseInt(parts[2]),parseInt(parts[1])-1,parseInt(parts[0]));}else if(dateStr.includes('-')){var parts=dateStr.split('-');d=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));}else{d=new Date(dateStr);}if(isNaN(d.getTime()))return new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate()+10);}
+
+        function setMsgBody(text){document.getElementById('msgBody').value=text;}
 
         function showMode(mode){hideAllModes();
             if(mode==='priemka'){document.getElementById('priemkaMode').style.display='block';if(!document.getElementById('priemkaContent').innerHTML)initPriemkaMode();}
@@ -246,10 +264,12 @@
             deviceGroups={};filtered.forEach(function(d){var key=(d.company||'')+'|'+(d.actDate||'')+'|'+(d.actNumber||'');if(!deviceGroups[key])deviceGroups[key]={company:d.company,actDate:d.actDate,actNumber:d.actNumber,employee:d.employee,cardStatus:d.cardStatus||'lab',devices:[]};deviceGroups[key].devices.push(d);});
             var sortedGroups=Object.values(deviceGroups).sort(function(a,b){return(b.actDate||'').localeCompare(a.actDate||'');});
             var html='';var statusEmojis={'В работе':'🟡','Годен':'🟢','Выдан':'✅','Ремонт':'🔧','Не годен':'🔴','Брак':'❌','Калибровка':'📐','Настройка':'⚙️'};
-            sortedGroups.forEach(function(group,gi){var groupId='group_'+gi;var displayDate=group.actDate?group.actDate.replace(/T.*/,'').split('-').reverse().join('.'):'';var statusCounts={};group.devices.forEach(function(d){var s=d.status||'В работе';statusCounts[s]=(statusCounts[s]||0)+1;});var statusLine=Object.keys(statusCounts).map(function(s){return(statusEmojis[s]||'')+'×'+statusCounts[s];}).join(' ');
+            sortedGroups.forEach(function(group,gi){var groupId='group_'+gi;var displayDate=group.actDate?group.actDate.replace(/T.*/,'').split('-').reverse().join('.'):'';var statusCounts={};var doneCount=0;group.devices.forEach(function(d){var s=d.status||'В работе';statusCounts[s]=(statusCounts[s]||0)+1;if(s==='Годен'||s==='Не годен'||s==='Брак'||s==='Выдан')doneCount++;});var statusLine=Object.keys(statusCounts).map(function(s){return(statusEmojis[s]||'')+'×'+statusCounts[s];}).join(' ');
+                var progressPercent=Math.round((doneCount/group.devices.length)*100);
+                var cardColor=getCompanyColor(group.company);
                 var cardStatusText=group.cardStatus==='issued'?'✅ Выдана':(group.cardStatus==='done'?'🟢 Готова':'🟡 В лаборатории');
                 var cardStatusCls=group.cardStatus==='issued'?'issued':(group.cardStatus==='done'?'done':'lab');
-                html+='<div class="group-card" id="'+groupId+'"><div class="company-name" onclick="var el=document.getElementById(\''+groupId+'\');el.classList.toggle(\'expanded\');">🏢 '+esc(group.company||'Нет компании')+' <span class="toggle-icon">▶</span></div><div class="act-date">📅 '+displayDate+(group.actNumber?' | Акт №'+esc(group.actNumber):'')+' ('+group.devices.length+' прибора)</div><div class="employee-line">👤 '+(group.employee||'—')+'</div><div class="status-indicator">'+statusLine+'</div><div class="card-status '+cardStatusCls+'">📋 '+cardStatusText+'</div>';
+                html+='<div class="group-card" id="'+groupId+'" style="border-left-color:'+cardColor+'"><div class="company-name" onclick="var el=document.getElementById(\''+groupId+'\');el.classList.toggle(\'expanded\');">🏢 '+esc(group.company||'Нет компании')+' <span class="toggle-icon">▶</span></div><div class="act-date">📅 '+displayDate+(group.actNumber?' | Акт №'+esc(group.actNumber):'')+' ('+group.devices.length+' прибора)</div><div class="employee-line">👤 '+(group.employee||'—')+'</div><div class="progress-bar"><div class="fill" style="width:'+progressPercent+'%;background:'+cardColor+'"></div></div><div style="font-size:10px;color:#8E8E93;margin-top:2px;">Готово: '+doneCount+'/'+group.devices.length+'</div><div class="status-indicator">'+statusLine+'</div><div class="card-status '+cardStatusCls+'">📋 '+cardStatusText+'</div>';
                 if(currentDeviceTab==='work'&&group.cardStatus!=='issued'){html+=' <button class="btn-sm green" onclick="issueCard(\''+groupId+'\')">✅ Выдать</button>';}
                 html+='<div class="devices-inner">';
                 group.devices.forEach(function(d){var emoji=statusEmojis[d.status]||'🟡';html+='<div class="device-mini" data-row="'+d.row+'">'+emoji+' <b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | <span class="dev-status">'+esc(d.status||'В работе')+'</span>';if(d.repairReason)html+='<br><span style="color:#FF3B30;">Причина: '+esc(d.repairReason)+'</span>';
