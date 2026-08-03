@@ -38,7 +38,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .btn-sm.blue { background: #007AFF; color: white; } .btn-sm.gray { background: #8E8E93; color: white; }
 .btn-sm.green { background: #34C759; color: white; } .btn-sm.orange { background: #FF9500; color: white; }
 .btn-sm.red { background: #FF3B30; color: white; }
-.btn-sm.yellow { background: #FFCC00; color: #000; }
 .field-group { margin-bottom: 12px; } .field-group label { display: block; font-size: 13px; font-weight: 600; color: #3C3C43; margin-bottom: 4px; }
 .field-row { display: flex; gap: 8px; align-items: center; }
 .field-row input, .field-row select { flex: 1; padding: 12px; border: 1px solid #E5E5EA; border-radius: 10px; font-size: 16px; background: #FFFFFF; color: #000; }
@@ -346,7 +345,17 @@ fetch(SCRIPT_URL+'?action=getDevices&search='+encodeURIComponent(search||''))
 .then(r=>r.json())
 .then(function(data){
 if(data.devices){
+// Сохраняем старые cardStatus из кеша
+var oldStatuses={};
+allDevicesCache.forEach(function(d){
+if(d.cardStatus)oldStatuses[d.row]=d.cardStatus;
+});
+// Обновляем кеш
 allDevicesCache=data.devices;
+// Восстанавливаем cardStatus из старого кеша (чтобы сервер не перезаписал)
+allDevicesCache.forEach(function(d){
+if(oldStatuses[d.row])d.cardStatus=oldStatuses[d.row];
+});
 localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
 renderDevicesFromCache(search);
 }
@@ -465,9 +474,10 @@ html+=' <button class="btn-sm gray" onclick="event.stopPropagation();openGroupMe
 document.getElementById('devicesList').innerHTML=html||'Нет приборов';
 }
 
-// ============ СТАТУС КАРТОЧКИ (независимо от приборов) ============
+// ============ СТАТУС КАРТОЧКИ ============
 function openCardStatusModal(groupId){
-currentCardStatusKey=Object.keys(deviceGroups).find(function(k){return'group_'+Object.keys(deviceGroups).indexOf(k)===groupId;});
+var keys=Object.keys(deviceGroups);
+currentCardStatusKey=keys.find(function(k){return'group_'+keys.indexOf(k)===groupId;});
 if(!currentCardStatusKey||!deviceGroups[currentCardStatusKey])return;
 var cs=deviceGroups[currentCardStatusKey].cardStatus||'lab';
 document.getElementById('cardStatusInfo').textContent='🏢 '+(deviceGroups[currentCardStatusKey].company||'Нет компании');
@@ -483,44 +493,46 @@ currentCardStatusKey=null;
 function saveCardStatus(){
 if(!currentCardStatusKey)return;
 var newCS=document.getElementById('newCardStatus').value;
-// Обновляем кеш
-deviceGroups[currentCardStatusKey].cardStatus=newCS;
-// Обновляем все приборы этой карточки
 var group=deviceGroups[currentCardStatusKey];
+// Обновляем cardStatus в кеше для всех приборов этой группы
+group.cardStatus=newCS;
 group.devices.forEach(function(d){
 var cached=allDevicesCache.find(function(c){return c.row===d.row;});
 if(cached)cached.cardStatus=newCS;
 });
+// Сохраняем кеш мгновенно
 localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
+var savedCS=newCS;
 closeCardStatusModal();
-// Сохраняем на сервер
-var rows=group.devices.map(function(d){return d.row;});
-fetch(SCRIPT_URL+'?action=updateCardStatus&rows='+encodeURIComponent(JSON.stringify(rows))+'&cardStatus='+encodeURIComponent(newCS));
-// Если поставили "Выдана" и мы на вкладке "В работе" — переключаем на "Архив" или обновляем
-if(newCS==='issued'&&currentDeviceTab==='work'){
-setStatus('✅ Карточка выдана. Перемещена в архив.','success');
-}
+// Перерисовываем сразу из кеша
 loadDevices();
+setStatus('✅ Статус карточки: '+(savedCS==='issued'?'Выдана':savedCS==='done'?'Готова':'В лаборатории'),'success');
+// Отправляем на сервер в фоне
+var rows=group.devices.map(function(d){return d.row;});
+fetch(SCRIPT_URL+'?action=updateCardStatus&rows='+encodeURIComponent(JSON.stringify(rows))+'&cardStatus='+encodeURIComponent(savedCS))
+.then(function(r){return r.json();})
+.catch(function(){});
 }
 
 // Выдача карточки (меняем ТОЛЬКО статус карточки)
 function issueCard(groupId){
-if(!confirm('Выдать заказ? Статус карточки изменится на "Выдана". Приборы останутся со своими статусами.'))return;
-var key=Object.keys(deviceGroups).find(function(k){return'group_'+Object.keys(deviceGroups).indexOf(k)===groupId;});
+if(!confirm('Выдать заказ? Статус карточки изменится на "Выдана".'))return;
+var keys=Object.keys(deviceGroups);
+var key=keys.find(function(k){return'group_'+keys.indexOf(k)===groupId;});
 if(!key||!deviceGroups[key])return;
-// Меняем статус карточки на issued
-deviceGroups[key].cardStatus='issued';
 var group=deviceGroups[key];
+group.cardStatus='issued';
 group.devices.forEach(function(d){
 var cached=allDevicesCache.find(function(c){return c.row===d.row;});
 if(cached)cached.cardStatus='issued';
 });
 localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
-// На сервер
-var rows=group.devices.map(function(d){return d.row;});
-fetch(SCRIPT_URL+'?action=updateCardStatus&rows='+encodeURIComponent(JSON.stringify(rows))+'&cardStatus=issued');
 setStatus('✅ Карточка выдана','success');
 loadDevices();
+// На сервер в фоне
+var rows=group.devices.map(function(d){return d.row;});
+fetch(SCRIPT_URL+'?action=updateCardStatus&rows='+encodeURIComponent(JSON.stringify(rows))+'&cardStatus=issued')
+.catch(function(){});
 }
 
 // ============ ПРИБОРЫ В РЕМОНТЕ ============
