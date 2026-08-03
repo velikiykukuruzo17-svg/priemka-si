@@ -77,7 +77,7 @@
         .stat-badge.orange { background: #FFF3E0; color: #FF9500; } .stat-badge.red { background: #FFEBEE; color: #FF3B30; }
         .stat-badge.gray { background: #F2F2F7; color: #8E8E93; }
         .group-card { background: #F9F9F9; border-radius: 12px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #007AFF; }
-        .group-card.issued-card { border-left-color: #8E8E93; }
+        .group-card.issued-card { border-left-color: #8E8E93; background: #F5F5F5; }
         .group-card .company-name { font-weight: 700; font-size: 15px; cursor: pointer; }
         .group-card .act-date { font-size: 12px; color: #8E8E93; margin-bottom: 6px; }
         .group-card .devices-inner { margin-top: 6px; padding-left: 8px; border-left: 2px solid #E5E5EA; display: none; }
@@ -312,7 +312,7 @@
         function loadUrgentBlock(){
             var now=new Date();
             var urgent=allDevicesCache.filter(function(d){
-                if(d.status==='Выдан'||d.status==='Ремонт')return false;
+                if(d.status==='Выдан'||d.status==='Ремонт'||d.status==='Не годен'||d.status==='Брак'||d.status==='Годен')return false;
                 var dl=getDeadline(d.actDate);
                 var days=Math.ceil((dl-now)/(1000*60*60*24));
                 return days<=3;
@@ -389,8 +389,8 @@
                 });
             }
             if(currentDeviceTab==='repair'){filtered=filtered.filter(function(d){return d.status==='Ремонт';});renderRepairTab(filtered);return;}
-            if(currentDeviceTab==='archive'){filtered=filtered.filter(function(d){return d.status==='Выдан';});}
-            else{filtered=filtered.filter(function(d){return d.status!=='Выдан';});}
+            if(currentDeviceTab==='archive'){filtered=filtered.filter(function(d){return d.cardStatus==='issued';});}
+            else{filtered=filtered.filter(function(d){return d.cardStatus!=='issued';});}
             var stats={inWork:0,ready:0,repair:0,notGood:0,issued:0};
             filtered.forEach(function(d){
                 if(d.status==='В работе')stats.inWork++;
@@ -426,10 +426,8 @@
                     cardStatusCls='issued';
                     cardBorder=' issued-card';
                 }else{
-                    var allReady=group.devices.every(function(d){return d.status==='Годен';});
                     var allDone=group.devices.every(function(d){return d.status==='Годен'||d.status==='Выдан';});
                     if(allDone){cardStatusText='🟢 Готова к выдаче';cardStatusCls='done';}
-                    else if(allReady){cardStatusText='🟢 Всё годно';cardStatusCls='done';}
                     else{cardStatusText='🟡 В лаборатории';cardStatusCls='lab';}
                 }
                 html+='<div class="group-card'+cardBorder+'" id="'+groupId+'">';
@@ -578,7 +576,7 @@
             var daysInMonth=new Date(calYear,calMonth+1,0).getDate();
             var now=new Date();var today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
             var deadlineMap={};
-            allDevicesCache.filter(function(d){return d.status!=='Выдан';}).forEach(function(d){
+            allDevicesCache.filter(function(d){return d.status!=='Выдан'&&d.status!=='Годен'&&d.status!=='Не годен'&&d.status!=='Брак'&&d.status!=='Ремонт';}).forEach(function(d){
                 var dl=getDeadline(d.actDate);var key=dl.getFullYear()+'-'+dl.getMonth()+'-'+dl.getDate();
                 if(!deadlineMap[key])deadlineMap[key]=[];deadlineMap[key].push(d);
             });
@@ -602,7 +600,10 @@
             var ds=('0'+day).slice(-2)+'.'+('0'+(calMonth+1)).slice(-2)+'.'+calYear;
             document.getElementById('calDayInfo').textContent='📅 '+ds;
             var dlDate=new Date(calYear,calMonth,day);var dlKey=dlDate.getFullYear()+'-'+dlDate.getMonth()+'-'+dlDate.getDate();
-            var devices=allDevicesCache.filter(function(d){if(d.status==='Выдан')return false;var dl=getDeadline(d.actDate);var k=dl.getFullYear()+'-'+dl.getMonth()+'-'+dl.getDate();return k===dlKey;});
+            var devices=allDevicesCache.filter(function(d){
+                if(d.status==='Выдан'||d.status==='Годен'||d.status==='Не годен'||d.status==='Брак'||d.status==='Ремонт')return false;
+                var dl=getDeadline(d.actDate);var k=dl.getFullYear()+'-'+dl.getMonth()+'-'+dl.getDate();return k===dlKey;
+            });
             var html='';
             if(devices.length===0){html='<div style="text-align:center;color:#8E8E93;padding:20px;">Нет приборов на эту дату</div>';}
             else{
