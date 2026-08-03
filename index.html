@@ -219,130 +219,57 @@
         var currentRepairRow=null;
         var pendingChanges=[],isOnline=!0;
 
-        // ============ ОФЛАЙН-РЕЖИМ ============
+        // ============ ОФЛАЙН ============
         function updateOnlineStatus(){
             isOnline=navigator.onLine;
             var badge=document.getElementById('offlineBadge');
             if(isOnline){
-                badge.textContent='📡 Онлайн';
-                badge.className='offline-badge online';
+                badge.textContent='📡 Онлайн';badge.className='offline-badge online';
                 setTimeout(function(){badge.style.display='none';},2000);
                 syncPendingChanges();
             }else{
-                badge.textContent='📡 Офлайн';
-                badge.className='offline-badge';
-                badge.style.display='flex';
+                badge.textContent='📡 Офлайн';badge.className='offline-badge';badge.style.display='flex';
             }
         }
-
-        window.addEventListener('online',updateOnlineStatus);
-        window.addEventListener('offline',updateOnlineStatus);
+        window.addEventListener('online',updateOnlineStatus);window.addEventListener('offline',updateOnlineStatus);
         window.addEventListener('load',function(){
             updateOnlineStatus();
             var cachedDevices=localStorage.getItem('cache_devices');
             if(cachedDevices){try{allDevicesCache=JSON.parse(cachedDevices);}catch(e){}}
             var pending=localStorage.getItem('pendingChanges');
             if(pending){try{pendingChanges=JSON.parse(pending);}catch(e){pendingChanges=[];}}
-            updatePendingBadge();
-            checkSession();
-            loadDictionariesCache();
+            updatePendingBadge();checkSession();loadDictionariesCache();
         });
-
-        function loadDictionariesCache(){
-            var ct=localStorage.getItem('cache_types');
-            var cc=localStorage.getItem('cache_companies');
-            if(ct)try{typesData=JSON.parse(ct);}catch(e){}
-            if(cc)try{companyListData=JSON.parse(cc);}catch(e){}
-        }
-
-        function addPendingChange(change){
-            change.id=Date.now()+'_'+Math.random().toString(36).substr(2,9);
-            change.timestamp=Date.now();
-            pendingChanges.push(change);
-            localStorage.setItem('pendingChanges',JSON.stringify(pendingChanges));
-            updatePendingBadge();
-            if(isOnline)syncPendingChanges();
-        }
-
-        function updatePendingBadge(){
-            var badge=document.getElementById('pendingCount');
-            if(pendingChanges.length>0){
-                badge.textContent=pendingChanges.length;
-                badge.style.display='inline';
-            }else{
-                badge.style.display='none';
-            }
-        }
-
-        function syncPendingChanges(){
-            if(!isOnline||pendingChanges.length===0)return;
-            var changes=[...pendingChanges];
-            fetch(SCRIPT_URL+'?action=batchUpdate',{method:'POST',body:JSON.stringify({changes:changes})})
-                .then(function(r){return r.json();}).then(function(res){
-                    if(res.status==='success'){
-                        pendingChanges=[];
-                        localStorage.setItem('pendingChanges','[]');
-                        updatePendingBadge();
-                    }
-                }).catch(function(){});
-        }
-
+        function loadDictionariesCache(){var ct=localStorage.getItem('cache_types');var cc=localStorage.getItem('cache_companies');if(ct)try{typesData=JSON.parse(ct);}catch(e){}if(cc)try{companyListData=JSON.parse(cc);}catch(e){}}
+        function addPendingChange(change){change.id=Date.now()+'_'+Math.random().toString(36).substr(2,9);change.timestamp=Date.now();pendingChanges.push(change);localStorage.setItem('pendingChanges',JSON.stringify(pendingChanges));updatePendingBadge();if(isOnline)syncPendingChanges();}
+        function updatePendingBadge(){var badge=document.getElementById('pendingCount');if(pendingChanges.length>0){badge.textContent=pendingChanges.length;badge.style.display='inline';}else{badge.style.display='none';}}
+        function syncPendingChanges(){if(!isOnline||pendingChanges.length===0)return;var changes=[...pendingChanges];fetch(SCRIPT_URL+'?action=batchUpdate',{method:'POST',body:JSON.stringify({changes:changes})}).then(function(r){return r.json();}).then(function(res){if(res.status==='success'){pendingChanges=[];localStorage.setItem('pendingChanges','[]');updatePendingBadge();}}).catch(function(){});}
         setInterval(syncPendingChanges,30000);
 
-        function checkSession(){
-            var s=JSON.parse(localStorage.getItem('priemkaSession')||'{}');
-            if(s.user){currentUser=s.user;showApp();}
-            else{showLogin();}
-        }
-
+        function checkSession(){var s=JSON.parse(localStorage.getItem('priemkaSession')||'{}');if(s.user){currentUser=s.user;showApp();}else{showLogin();}}
         function showLogin(){document.getElementById('loginScreen').style.display='flex';document.getElementById('appContent').style.display='none';}
         function showApp(){document.getElementById('loginScreen').style.display='none';document.getElementById('appContent').style.display='block';showMainMenu();}
-
-        function doLogin(){
-            var l=document.getElementById('loginInput').value.trim(),p=document.getElementById('passwordInput').value.trim();
-            if(!l||!p){document.getElementById('loginError').textContent='Введите логин и пароль';return;}
-            currentUser=l;
-            localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,date:new Date().toDateString()}));
-            showApp();
-            if(isOnline){
-                fetch(SCRIPT_URL+'?action=checkLogin&login='+encodeURIComponent(l)+'&password='+encodeURIComponent(p))
-                    .then(r=>r.json()).then(function(res){
-                        if(res.status==='success'){currentUser=res.name||l;localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,date:new Date().toDateString()}));document.getElementById('menuUserName').textContent=currentUser;}
-                    }).catch(function(){});
-            }
-        }
-
+        function doLogin(){var l=document.getElementById('loginInput').value.trim(),p=document.getElementById('passwordInput').value.trim();if(!l||!p){document.getElementById('loginError').textContent='Введите логин и пароль';return;}currentUser=l;localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,date:new Date().toDateString()}));showApp();if(isOnline){fetch(SCRIPT_URL+'?action=checkLogin&login='+encodeURIComponent(l)+'&password='+encodeURIComponent(p)).then(r=>r.json()).then(function(res){if(res.status==='success'){currentUser=res.name||l;localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,date:new Date().toDateString()}));document.getElementById('menuUserName').textContent=currentUser;}}).catch(function(){});}}
         function doLogout(){localStorage.removeItem('priemkaSession');currentUser='';location.reload();}
         document.getElementById('passwordInput').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
-        function refreshAllData(){
-            if(!isOnline){setStatusGlobal('❌ Нет интернета. Работаем офлайн.','error');return;}
-            var refreshBtn=document.getElementById('refreshBtn');
-            if(refreshBtn){refreshBtn.classList.add('refreshing');setTimeout(function(){refreshBtn.classList.remove('refreshing');},800);}
-            Promise.all([
-                fetch(SCRIPT_URL+'?action=getDevices&search=').then(r=>r.json()).then(function(data){if(data.devices){mergeWithCache(data.devices);}}).catch(function(){}),
-                fetch(CSV_BASE+GID_TYPES).then(r=>r.text()).then(function(csv){typesData=parseCSV(csv);localStorage.setItem('cache_types',JSON.stringify(typesData));allTypesFromSheet=[];typesData.forEach(function(r){for(var i=0;i<r.length;i++){var v=(r[i]||'').trim();if(v&&v.length>2&&allTypesFromSheet.indexOf(v)===-1)allTypesFromSheet.push(v);}});}).catch(function(){}),
-                fetch(CSV_BASE+GID_COMPANIES).then(r=>r.text()).then(function(csv){companyListData=parseCSV(csv).map(function(row){return row[0]||'';}).filter(function(v){return v;});localStorage.setItem('cache_companies',JSON.stringify(companyListData));}).catch(function(){})
-            ]).then(function(){
-                loadUrgentBlock();
-                if(navigator.vibrate)navigator.vibrate([30,50,30]);
-                setStatusGlobal('✅ Данные обновлены','success');
-            }).catch(function(){setStatusGlobal('❌ Ошибка обновления','error');});
-        }
+        function refreshAllData(){if(!isOnline){setStatusGlobal('❌ Нет интернета','error');return;}var refreshBtn=document.getElementById('refreshBtn');if(refreshBtn){refreshBtn.classList.add('refreshing');setTimeout(function(){refreshBtn.classList.remove('refreshing');},800);}Promise.all([fetch(SCRIPT_URL+'?action=getDevices&search=').then(r=>r.json()).then(function(data){if(data.devices){mergeWithCache(data.devices);}}).catch(function(){}),fetch(CSV_BASE+GID_TYPES).then(r=>r.text()).then(function(csv){typesData=parseCSV(csv);localStorage.setItem('cache_types',JSON.stringify(typesData));allTypesFromSheet=[];typesData.forEach(function(r){for(var i=0;i<r.length;i++){var v=(r[i]||'').trim();if(v&&v.length>2&&allTypesFromSheet.indexOf(v)===-1)allTypesFromSheet.push(v);}});}).catch(function(){}),fetch(CSV_BASE+GID_COMPANIES).then(r=>r.text()).then(function(csv){companyListData=parseCSV(csv).map(function(row){return row[0]||'';}).filter(function(v){return v;});localStorage.setItem('cache_companies',JSON.stringify(companyListData));}).catch(function(){})]).then(function(){loadUrgentBlock();if(navigator.vibrate)navigator.vibrate([30,50,30]);setStatusGlobal('✅ Данные обновлены','success');}).catch(function(){setStatusGlobal('❌ Ошибка','error');});}
 
         function mergeWithCache(serverDevices){
+            // Сначала создаём карту локальных cardStatus
+            var localCardStatus={};
+            allDevicesCache.forEach(function(d){var key=(d.company||'')+'|'+(d.actDate||'')+'|'+(d.actNumber||'');if(!localCardStatus[key])localCardStatus[key]=d.cardStatus||'lab';});
             serverDevices.forEach(function(sd){
                 var existing=allDevicesCache.findIndex(function(cd){return cd.row===sd.row;});
+                var gk=(sd.company||'')+'|'+(sd.actDate||'')+'|'+(sd.actNumber||'');
+                // Приоритет: локальный cardStatus > серверный
+                sd.cardStatus=localCardStatus[gk]||sd.cardStatus||'lab';
                 if(existing>=0){
                     var cached=allDevicesCache[existing];
-                    sd.cardStatus=cached.cardStatus||sd.cardStatus||'lab';
                     sd.repairNote=cached.repairNote||sd.repairNote||'';
                     sd.repairStatus=cached.repairStatus||sd.repairStatus||'';
                     allDevicesCache[existing]=sd;
-                }else{
-                    sd.cardStatus=sd.cardStatus||'lab';
-                    allDevicesCache.push(sd);
-                }
+                }else{sd.cardStatus=sd.cardStatus||'lab';allDevicesCache.push(sd);}
             });
             localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
         }
@@ -351,8 +278,10 @@
 
         function loadUrgentBlock(){
             var now=new Date();
+            var skipStatuses=['Выдан','Ремонт','Не годен','Брак','Годен','Калибровка','Настройка'];
             var urgent=allDevicesCache.filter(function(d){
-                if(d.status==='Выдан'||d.status==='Ремонт'||d.status==='Не годен'||d.status==='Брак'||d.status==='Годен')return false;
+                if(skipStatuses.indexOf(d.status)!==-1)return false;
+                if(d.cardStatus==='issued')return false;
                 var dl=getDeadline(d.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));return days<=3;
             });
             var block=document.getElementById('urgentBlock');
@@ -361,63 +290,37 @@
                 urgent.slice(0,8).forEach(function(d){var dl=getDeadline(d.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));var emoji=days<=0?'🔴':(days<=1?'🟠':'🟡');html+='<div class="urgent-item">'+emoji+' <b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+esc(d.company||'')+' | до '+dl.toLocaleDateString()+'</div>';});
                 html+='</div></div>';block.innerHTML=html;block.style.display='block';
             }else{block.style.display='none';}
-            if(isOnline){
-                fetch(SCRIPT_URL+'?action=getDevices&search=').then(r=>r.json()).then(function(data){if(data.devices){mergeWithCache(data.devices);}}).catch(function(){});
-            }
+            if(isOnline){fetch(SCRIPT_URL+'?action=getDevices&search=').then(r=>r.json()).then(function(data){if(data.devices){mergeWithCache(data.devices);}}).catch(function(){});}
         }
 
-        function getDeadline(dateStr){
-            if(!dateStr)return new Date();var d;
-            if(dateStr.includes('T')||dateStr.includes('Z')){d=new Date(dateStr);}
-            else if(dateStr.includes('.')){var parts=dateStr.split('.');d=new Date(parseInt(parts[2]),parseInt(parts[1])-1,parseInt(parts[0]));}
-            else if(dateStr.includes('-')){var parts=dateStr.split('-');d=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));}
-            else{d=new Date(dateStr);}
-            if(isNaN(d.getTime()))return new Date();
-            return new Date(d.getFullYear(),d.getMonth(),d.getDate()+10);
-        }
-
-        function showMode(mode){
-            hideAllModes();
-            if(mode==='priemka'){document.getElementById('priemkaMode').style.display='block';if(!document.getElementById('priemkaContent').innerHTML)initPriemkaMode();}
-            else if(mode==='devices'){document.getElementById('devicesMode').style.display='block';currentDeviceTab='work';switchDeviceTab('work');}
-            else if(mode==='calendar'){document.getElementById('calendarMode').style.display='block';initCalendar();}
-            else if(mode==='price'){document.getElementById('priceMode').style.display='block';if(!document.getElementById('priceContent').innerHTML)renderPrice();}
-            else if(mode==='archive'){document.getElementById('archiveMode').style.display='block';loadArchive();}
-            else if(mode==='settings'){document.getElementById('settingsPanel').style.display='block';document.getElementById('settingsEmail').value=settings.email||'';}
-        }
-
+        function getDeadline(dateStr){if(!dateStr)return new Date();var d;if(dateStr.includes('T')||dateStr.includes('Z')){d=new Date(dateStr);}else if(dateStr.includes('.')){var parts=dateStr.split('.');d=new Date(parseInt(parts[2]),parseInt(parts[1])-1,parseInt(parts[0]));}else if(dateStr.includes('-')){var parts=dateStr.split('-');d=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));}else{d=new Date(dateStr);}if(isNaN(d.getTime()))return new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate()+10);}
+        function showMode(mode){hideAllModes();if(mode==='priemka'){document.getElementById('priemkaMode').style.display='block';if(!document.getElementById('priemkaContent').innerHTML)initPriemkaMode();}else if(mode==='devices'){document.getElementById('devicesMode').style.display='block';currentDeviceTab='work';switchDeviceTab('work');}else if(mode==='calendar'){document.getElementById('calendarMode').style.display='block';initCalendar();}else if(mode==='price'){document.getElementById('priceMode').style.display='block';if(!document.getElementById('priceContent').innerHTML)renderPrice();}else if(mode==='archive'){document.getElementById('archiveMode').style.display='block';loadArchive();}else if(mode==='settings'){document.getElementById('settingsPanel').style.display='block';document.getElementById('settingsEmail').value=settings.email||'';}}
         function hideAllModes(){['mainMenu','priemkaMode','devicesMode','calendarMode','priceMode','archiveMode','settingsPanel'].forEach(function(id){document.getElementById(id).style.display='none';});}
-
-        function switchDeviceTab(tab){
-            currentDeviceTab=tab;
-            document.getElementById('tabWork').classList.toggle('active',tab==='work');
-            document.getElementById('tabRepair').classList.toggle('active',tab==='repair');
-            document.getElementById('tabArchive').classList.toggle('active',tab==='archive');
-            loadDevices();
-        }
+        function switchDeviceTab(tab){currentDeviceTab=tab;document.getElementById('tabWork').classList.toggle('active',tab==='work');document.getElementById('tabRepair').classList.toggle('active',tab==='repair');document.getElementById('tabArchive').classList.toggle('active',tab==='archive');loadDevices();}
 
         function loadDevices(){
             var search=(document.getElementById('deviceSearch')?.value||'').toLowerCase();
             renderDevicesFromCache(search);
-            if(isOnline){
-                setTimeout(function(){
-                    fetch(SCRIPT_URL+'?action=getDevices&search='+encodeURIComponent(search||''))
-                        .then(r=>r.json()).then(function(data){if(data.devices){mergeWithCache(data.devices);renderDevicesFromCache(search);}}).catch(function(){});
-                },2000);
-            }
+            if(isOnline){setTimeout(function(){fetch(SCRIPT_URL+'?action=getDevices&search='+encodeURIComponent(search||'')).then(r=>r.json()).then(function(data){if(data.devices){mergeWithCache(data.devices);renderDevicesFromCache(search);}}).catch(function(){});},2000);}
         }
 
         function renderDevicesFromCache(search){
             var filtered=allDevicesCache;
             if(search){filtered=allDevicesCache.filter(function(d){return (d.name&&d.name.toLowerCase().includes(search))||(d.serial&&d.serial.toLowerCase().includes(search))||(d.company&&d.company.toLowerCase().includes(search));});}
+            // Вкладка Ремонт
             if(currentDeviceTab==='repair'){filtered=filtered.filter(function(d){return d.status==='Ремонт';});renderRepairTab(filtered);return;}
-            if(currentDeviceTab==='archive'){filtered=filtered.filter(function(d){return d.cardStatus==='issued';});}
+            // Вкладка Архив - группируем по cardStatus===issued, исключаем ремонт
+            if(currentDeviceTab==='archive'){filtered=filtered.filter(function(d){return d.cardStatus==='issued'&&d.status!=='Ремонт';});}
+            // Вкладка В работе - исключаем выданные и ремонт
             else{filtered=filtered.filter(function(d){return d.cardStatus!=='issued'&&d.status!=='Ремонт';});}
             var stats={inWork:0,ready:0,repair:0,notGood:0,issued:0};
             filtered.forEach(function(d){if(d.status==='В работе')stats.inWork++;else if(d.status==='Годен')stats.ready++;else if(d.status==='Ремонт')stats.repair++;else if(d.status==='Не годен'||d.status==='Брак')stats.notGood++;else if(d.status==='Выдан')stats.issued++;});
             document.getElementById('statsRow').innerHTML='<span class="stat-badge blue">🔵 В работе: '+(stats.inWork||0)+'</span><span class="stat-badge green">🟢 Годен: '+(stats.ready||0)+'</span><span class="stat-badge orange">🔧 Ремонт: '+(stats.repair||0)+'</span><span class="stat-badge red">🔴 Не годен: '+(stats.notGood||0)+'</span>'+(currentDeviceTab==='archive'?'<span class="stat-badge gray">✅ Выдано: '+(stats.issued||0)+'</span>':'');
             deviceGroups={};
+            // Группировка: НЕ учитываем cardStatus в ключе
             filtered.forEach(function(d){var key=(d.company||'')+'|'+(d.actDate||'')+'|'+(d.actNumber||'');if(!deviceGroups[key])deviceGroups[key]={company:d.company,actDate:d.actDate,actNumber:d.actNumber,employee:d.employee,cardStatus:d.cardStatus||'lab',devices:[]};deviceGroups[key].devices.push(d);});
+            // Определяем cardStatus группы по большинству
+            Object.keys(deviceGroups).forEach(function(key){var g=deviceGroups[key];var issuedCount=g.devices.filter(function(d){return d.cardStatus==='issued';}).length;g.cardStatus=issuedCount>g.devices.length/2?'issued':(g.devices[0].cardStatus||'lab');});
             var sortedGroups=Object.values(deviceGroups).sort(function(a,b){return(b.actDate||'').localeCompare(a.actDate||'');});
             var html='';var statusEmojis={'В работе':'🟡','Годен':'🟢','Выдан':'✅','Ремонт':'🔧','Не годен':'🔴','Брак':'❌','Калибровка':'📐','Настройка':'⚙️'};
             sortedGroups.forEach(function(group,gi){
@@ -437,14 +340,7 @@
                 if(currentDeviceTab==='work'&&group.cardStatus!=='issued'){html+=' <button class="btn-sm green" onclick="issueCard(\''+groupId+'\')">✅ Выдать заказ</button>';}
                 if(currentDeviceTab==='archive'){html+=' <button class="btn-sm orange" onclick="returnCardToLab(\''+groupId+'\')">↩ Вернуть в работу</button>';}
                 html+='<div class="devices-inner">';
-                group.devices.forEach(function(d){
-                    var emoji=statusEmojis[d.status]||'🟡';
-                    html+='<div class="device-mini" data-row="'+d.row+'">'+emoji+' <b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | <span class="dev-status">'+esc(d.status||'В работе')+'</span>';
-                    if(d.repairReason)html+='<br><span style="color:#FF3B30;">Причина: '+esc(d.repairReason)+'</span>';
-                    html+='<div class="device-note"><input type="text" id="note_'+d.row+'" value="'+esc(d.repairNote||'')+'" placeholder="Примечание"><button onclick="saveDeviceNote('+d.row+')">💾</button></div>';
-                    if(currentDeviceTab==='work'){html+=' <button class="btn-sm blue" onclick="openStatusModal(['+d.row+'],\''+esc(d.name||'')+'\',\''+esc(d.serial||'')+'\')">🔄</button>';}
-                    html+=' <button class="btn-sm gray" onclick="openMessageModal(\''+esc(d.company||'')+'\',\''+esc(d.name||'')+' '+esc(d.serial||'')+'\')">📧</button></div>';
-                });
+                group.devices.forEach(function(d){var emoji=statusEmojis[d.status]||'🟡';html+='<div class="device-mini" data-row="'+d.row+'">'+emoji+' <b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | <span class="dev-status">'+esc(d.status||'В работе')+'</span>';if(d.repairReason)html+='<br><span style="color:#FF3B30;">Причина: '+esc(d.repairReason)+'</span>';html+='<div class="device-note"><input type="text" id="note_'+d.row+'" value="'+esc(d.repairNote||'')+'" placeholder="Примечание"><button onclick="saveDeviceNote('+d.row+')">💾</button></div>';if(currentDeviceTab==='work'){html+=' <button class="btn-sm blue" onclick="openStatusModal(['+d.row+'],\''+esc(d.name||'')+'\',\''+esc(d.serial||'')+'\')">🔄</button>';}html+=' <button class="btn-sm gray" onclick="openMessageModal(\''+esc(d.company||'')+'\',\''+esc(d.name||'')+' '+esc(d.serial||'')+'\')">📧</button></div>';});
                 html+='</div>';
                 if(currentDeviceTab==='work'){html+='<div class="group-actions"><button class="btn-sm green" onclick="openStatusModal('+JSON.stringify(group.devices.map(function(d){return d.row;}))+',\'ВСЕ\',\''+group.devices.length+' шт.\')">🔄 Статус всем</button> <button class="btn-sm orange" onclick="createReturnActByKey(\''+gi+'\')">📧 Акт возврата</button> <button class="btn-sm gray" onclick="printAct()">🖨️ Печать</button> <button class="btn-sm gray" onclick="openGroupMessageModal(\''+gi+'\')">📧 Написать</button></div>';}
                 html+='</div>';
@@ -459,15 +355,19 @@
             var key=Object.keys(deviceGroups).find(function(k){return'group_'+Object.keys(deviceGroups).indexOf(k)===groupId;});
             if(!key||!deviceGroups[key])return;
             var group=deviceGroups[key];
-            var rows=group.devices.map(function(d){return d.row;});
-            // Обновляем ВСЕ приборы с таким же ключом группы
-            allDevicesCache.forEach(function(d){
-                var dk=(d.company||'')+'|'+(d.actDate||'')+'|'+(d.actNumber||'');
-                if(dk===key){d.status='Выдан';d.cardStatus='issued';}
+            var allRows=[];
+            // Обновляем ВСЕ приборы с таким же ключом группы во ВСЕХ группах
+            Object.keys(deviceGroups).forEach(function(k){
+                if(k===key||(deviceGroups[k].company===group.company&&deviceGroups[k].actDate===group.actDate&&deviceGroups[k].actNumber===group.actNumber)){
+                    deviceGroups[k].devices.forEach(function(d){allRows.push(d.row);});
+                }
             });
+            // Убираем дубликаты
+            allRows=allRows.filter(function(v,i,a){return a.indexOf(v)===i;});
+            allRows.forEach(function(row){var d=allDevicesCache.find(function(d){return d.row===row;});if(d){d.status='Выдан';d.cardStatus='issued';}});
             localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
             loadDevices();setStatusGlobal('✅ Заказ выдан','success');
-            addPendingChange({action:'updateStatusBulk',rows:rows,status:'Выдан',cardStatus:'issued',reason:''});
+            addPendingChange({action:'updateStatusBulk',rows:allRows,status:'Выдан',cardStatus:'issued',reason:''});
         }
 
         function returnCardToLab(groupId){
@@ -475,15 +375,17 @@
             var key=Object.keys(deviceGroups).find(function(k){return'group_'+Object.keys(deviceGroups).indexOf(k)===groupId;});
             if(!key||!deviceGroups[key])return;
             var group=deviceGroups[key];
-            var rows=group.devices.map(function(d){return d.row;});
-            // Обновляем ВСЕ приборы с таким же ключом группы
-            allDevicesCache.forEach(function(d){
-                var dk=(d.company||'')+'|'+(d.actDate||'')+'|'+(d.actNumber||'');
-                if(dk===key){d.status='В работе';d.cardStatus='lab';}
+            var allRows=[];
+            Object.keys(deviceGroups).forEach(function(k){
+                if(k===key||(deviceGroups[k].company===group.company&&deviceGroups[k].actDate===group.actDate&&deviceGroups[k].actNumber===group.actNumber)){
+                    deviceGroups[k].devices.forEach(function(d){allRows.push(d.row);});
+                }
             });
+            allRows=allRows.filter(function(v,i,a){return a.indexOf(v)===i;});
+            allRows.forEach(function(row){var d=allDevicesCache.find(function(d){return d.row===row;});if(d){d.status='В работе';d.cardStatus='lab';}});
             localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
             loadDevices();setStatusGlobal('✅ Заказ возвращён в работу','success');
-            addPendingChange({action:'updateStatusBulk',rows:rows,status:'В работе',cardStatus:'lab',reason:''});
+            addPendingChange({action:'updateStatusBulk',rows:allRows,status:'В работе',cardStatus:'lab',reason:''});
         }
 
         function renderRepairTab(devices){
@@ -501,8 +403,8 @@
 
         function initCalendar(){var now=new Date();calYear=now.getFullYear();calMonth=now.getMonth();calSelectedDate=null;document.getElementById('calDayInfo').textContent='Выберите дату';document.getElementById('calDevices').innerHTML='';renderCalendar();}
         function changeCalendarMonth(delta){calMonth+=delta;if(calMonth<0){calMonth=11;calYear--;}if(calMonth>11){calMonth=0;calYear++;}calSelectedDate=null;document.getElementById('calDayInfo').textContent='Выберите дату';document.getElementById('calDevices').innerHTML='';renderCalendar();}
-        function renderCalendar(){var months=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];document.getElementById('calMonthLabel').textContent=months[calMonth]+' '+calYear;var firstDay=new Date(calYear,calMonth,1).getDay();if(firstDay===0)firstDay=7;var daysInMonth=new Date(calYear,calMonth+1,0).getDate();var now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());var deadlineMap={};allDevicesCache.filter(function(d){return d.status!=='Выдан'&&d.status!=='Годен'&&d.status!=='Не годен'&&d.status!=='Брак'&&d.status!=='Ремонт';}).forEach(function(d){var dl=getDeadline(d.actDate);var key=dl.getFullYear()+'-'+dl.getMonth()+'-'+dl.getDate();if(!deadlineMap[key])deadlineMap[key]=[];deadlineMap[key].push(d);});var html='<div class="day-name">Пн</div><div class="day-name">Вт</div><div class="day-name">Ср</div><div class="day-name">Чт</div><div class="day-name">Пт</div><div class="day-name">Сб</div><div class="day-name">Вс</div>';for(var i=1;i<firstDay;i++)html+='<div class="day other"></div>';for(var d=1;d<=daysInMonth;d++){var date=new Date(calYear,calMonth,d);var cls='day';var key=calYear+'-'+calMonth+'-'+d;if(date.getTime()===today.getTime())cls+=' today';if(deadlineMap[key]){var minDays=999;deadlineMap[key].forEach(function(dd){var dl=getDeadline(dd.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));if(days<minDays)minDays=days;});if(minDays<=0)cls+=' urgent';else if(minDays<=3)cls+=' soon';else if(minDays<=5)cls+=' warning';else cls+=' normal';}html+='<div class="'+cls+'" onclick="selectCalDate('+d+')">'+d+'</div>';}document.getElementById('calGrid').innerHTML=html;}
-        function selectCalDate(day){calSelectedDate=new Date(calYear,calMonth,day);var ds=('0'+day).slice(-2)+'.'+('0'+(calMonth+1)).slice(-2)+'.'+calYear;document.getElementById('calDayInfo').textContent='📅 '+ds;var dlDate=new Date(calYear,calMonth,day),dlKey=dlDate.getFullYear()+'-'+dlDate.getMonth()+'-'+dlDate.getDate();var devices=allDevicesCache.filter(function(d){if(d.status==='Выдан'||d.status==='Годен'||d.status==='Не годен'||d.status==='Брак'||d.status==='Ремонт')return false;var dl=getDeadline(d.actDate);var k=dl.getFullYear()+'-'+dl.getMonth()+'-'+dl.getDate();return k===dlKey;});var html='';if(devices.length===0){html='<div style="text-align:center;color:#8E8E93;padding:20px;">Нет приборов на эту дату</div>';}else{var groups={};devices.forEach(function(d){var k=(d.company||'')+'|'+(d.actDate||'');if(!groups[k])groups[k]={company:d.company,devices:[]};groups[k].devices.push(d);});Object.values(groups).forEach(function(g){html+='<div class="group-card"><div class="company-name">🏢 '+esc(g.company||'Нет компании')+' ('+g.devices.length+' прибора)</div>';g.devices.forEach(function(d){html+='<div class="device-mini"><b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+esc(d.status||'В работе')+'</div>';});html+='</div>';});}document.getElementById('calDevices').innerHTML=html;}
+        function renderCalendar(){var months=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];document.getElementById('calMonthLabel').textContent=months[calMonth]+' '+calYear;var firstDay=new Date(calYear,calMonth,1).getDay();if(firstDay===0)firstDay=7;var daysInMonth=new Date(calYear,calMonth+1,0).getDate();var now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());var deadlineMap={};var skipStatuses=['Выдан','Ремонт','Не годен','Брак','Годен','Калибровка','Настройка'];allDevicesCache.filter(function(d){return skipStatuses.indexOf(d.status)===-1&&d.cardStatus!=='issued';}).forEach(function(d){var dl=getDeadline(d.actDate);var key=dl.getFullYear()+'-'+dl.getMonth()+'-'+dl.getDate();if(!deadlineMap[key])deadlineMap[key]=[];deadlineMap[key].push(d);});var html='<div class="day-name">Пн</div><div class="day-name">Вт</div><div class="day-name">Ср</div><div class="day-name">Чт</div><div class="day-name">Пт</div><div class="day-name">Сб</div><div class="day-name">Вс</div>';for(var i=1;i<firstDay;i++)html+='<div class="day other"></div>';for(var d=1;d<=daysInMonth;d++){var date=new Date(calYear,calMonth,d);var cls='day';var key=calYear+'-'+calMonth+'-'+d;if(date.getTime()===today.getTime())cls+=' today';if(deadlineMap[key]){var minDays=999;deadlineMap[key].forEach(function(dd){var dl=getDeadline(dd.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));if(days<minDays)minDays=days;});if(minDays<=0)cls+=' urgent';else if(minDays<=3)cls+=' soon';else if(minDays<=5)cls+=' warning';else cls+=' normal';}html+='<div class="'+cls+'" onclick="selectCalDate('+d+')">'+d+'</div>';}document.getElementById('calGrid').innerHTML=html;}
+        function selectCalDate(day){calSelectedDate=new Date(calYear,calMonth,day);var ds=('0'+day).slice(-2)+'.'+('0'+(calMonth+1)).slice(-2)+'.'+calYear;document.getElementById('calDayInfo').textContent='📅 '+ds;var dlDate=new Date(calYear,calMonth,day),dlKey=dlDate.getFullYear()+'-'+dlDate.getMonth()+'-'+dlDate.getDate();var skipStatuses=['Выдан','Ремонт','Не годен','Брак','Годен','Калибровка','Настройка'];var devices=allDevicesCache.filter(function(d){if(skipStatuses.indexOf(d.status)!==-1||d.cardStatus==='issued')return false;var dl=getDeadline(d.actDate);var k=dl.getFullYear()+'-'+dl.getMonth()+'-'+dl.getDate();return k===dlKey;});var html='';if(devices.length===0){html='<div style="text-align:center;color:#8E8E93;padding:20px;">Нет приборов на эту дату</div>';}else{var groups={};devices.forEach(function(d){var k=(d.company||'')+'|'+(d.actDate||'');if(!groups[k])groups[k]={company:d.company,devices:[]};groups[k].devices.push(d);});Object.values(groups).forEach(function(g){html+='<div class="group-card"><div class="company-name">🏢 '+esc(g.company||'Нет компании')+' ('+g.devices.length+' прибора)</div>';g.devices.forEach(function(d){html+='<div class="device-mini"><b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+esc(d.status||'В работе')+'</div>';});html+='</div>';});}document.getElementById('calDevices').innerHTML=html;}
 
         function initPriemkaMode(){document.getElementById('priemkaContent').innerHTML='<div id="loadingSkeleton"><div class="spinner"></div> Загрузка справочников...</div><div id="mainContent" style="display:none;"><div class="act-toolbar"><button class="btn-ios" onclick="newAct()" style="flex:1;">📝 Новый акт</button><button class="btn-ios-gray" onclick="openActsList()" style="flex:1;">📂 Выбрать акт</button></div><div class="field-group"><label>Компания-сдатчик:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="companyInput" placeholder="Введите компанию" autocomplete="off" oninput="filterCompanies(); saveFormData();" onblur="hideCompanyList()" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;"><ul class="autocomplete-list" id="companyList"></ul></div><button class="btn-ios-icon" onclick="addCompany()">➕</button></div></div><div class="section-title">Приборы:</div><div id="devicesContainer"></div><button class="btn-ios" onclick="addDevice()" style="width:100%;margin:8px 0;">➕ Добавить прибор</button><button class="btn-ios-green" id="submitBtn" onclick="submitAct()">📧 Сформировать акт и отправить</button><div id="printContainer"><button class="btn-ios-orange" id="printBtn" onclick="printAct()" style="display:none;">🖨️ Распечатать акт</button></div><div class="hint" id="emailHint"></div><div class="saved-indicator" id="savedIndicator">💾 Сохранено</div><div class="status" id="status"></div></div>';updateEmailHint();loadDictionaries();addDevice();initVoiceRecognition();}
 
