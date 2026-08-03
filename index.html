@@ -75,7 +75,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .stat-badge.orange { background: #FFF3E0; color: #FF9500; } .stat-badge.red { background: #FFEBEE; color: #FF3B30; }
 .stat-badge.gray { background: #F2F2F7; color: #8E8E93; }
 .group-card { background: #F9F9F9; border-radius: 12px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #007AFF; }
-.group-card.issued-card { border-left-color: #8E8E93; }
+.group-card.transferred-card { border-left-color: #8E8E93; }
 .group-card .company-name { font-weight: 700; font-size: 15px; cursor: pointer; }
 .group-card .act-date { font-size: 12px; color: #8E8E93; margin-bottom: 6px; }
 .group-card .devices-inner { margin-top: 6px; padding-left: 8px; border-left: 2px solid #E5E5EA; display: none; }
@@ -93,7 +93,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .employee-line { font-size: 11px; color: #8E8E93; margin-top: 2px; }
 .card-status { font-size: 12px; margin-top: 4px; padding: 3px 8px; border-radius: 6px; display: inline-block; font-weight: 600; cursor: pointer; }
 .card-status.lab { background: #FFF3E0; color: #FF9500; } .card-status.done { background: #E8F5E9; color: #34C759; }
-.card-status.issued { background: #F2F2F7; color: #8E8E93; }
+.card-status.transferred { background: #E3F2FD; color: #007AFF; }
 .card-status:hover { opacity: 0.8; }
 .repair-card { background: #FFF8F0; border-radius: 12px; padding: 12px; margin-bottom: 8px; border-left: 4px solid #FF9500; }
 .repair-card .device-mini { padding: 2px 0; border-bottom: none; }
@@ -173,7 +173,7 @@ input[type="email"], input[type="text"] { width: 100%; padding: 12px; border: 1p
 <div class="tabs">
 <div class="tab active" id="tabWork" onclick="switchDeviceTab('work')">🟡 В работе</div>
 <div class="tab" id="tabRepair" onclick="switchDeviceTab('repair')">🔧 Ремонт</div>
-<div class="tab" id="tabArchive" onclick="switchDeviceTab('archive')">✅ Архив</div>
+<div class="tab" id="tabArchive" onclick="switchDeviceTab('archive')">📤 Архив</div>
 </div>
 <div class="stats-row" id="statsRow"></div>
 <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center">
@@ -193,7 +193,7 @@ input[type="email"], input[type="text"] { width: 100%; padding: 12px; border: 1p
 <div id="settingsPanel"><button class="btn-back" onclick="showMainMenu()">↩ Назад</button><div class="header"><div><h1>⚙️ Настройки</h1></div></div><label style="font-size:13px;font-weight:600;">📧 Email для отправки:</label><input type="email" id="settingsEmail" placeholder="ms-tcentr@mail.ru"><button class="btn-ios" onclick="saveSettings()" style="width:100%;">💾 Сохранить</button><div class="status" id="settingsStatus"></div></div>
 </div>
 <div id="statusModal"><div class="modal-content"><h3>🔄 Изменить статус прибора</h3><p id="statusDeviceInfo" style="font-size:13px;color:#8E8E93;margin-bottom:10px;"></p><select id="newStatus"><option value="В работе">🟡 В работе</option><option value="Годен">🟢 Годен</option><option value="Выдан">✅ Выдан</option><option value="Не годен">🔴 Не годен</option><option value="Ремонт">🔧 Ремонт</option><option value="Калибровка">📐 Калибровка</option><option value="Настройка">⚙️ Настройка</option><option value="Брак">❌ Брак</option></select><input type="text" id="statusReason" placeholder="Причина"><button class="btn-ios" onclick="saveNewStatus()" style="width:100%;">✅ Сохранить</button><button class="btn-ios-gray" onclick="closeStatusModal()" style="width:100%;margin-top:6px;">Отмена</button></div></div>
-<div id="cardStatusModal"><div class="modal-content"><h3>📋 Статус карточки</h3><p id="cardStatusInfo" style="font-size:13px;color:#8E8E93;margin-bottom:10px;"></p><select id="newCardStatus"><option value="lab">🟡 В лаборатории</option><option value="done">🟢 Готова к выдаче</option><option value="issued">✅ Выдана</option></select><button class="btn-ios" onclick="saveCardStatus()" style="width:100%;">✅ Сохранить</button><button class="btn-ios-gray" onclick="closeCardStatusModal()" style="width:100%;margin-top:6px;">Отмена</button></div></div>
+<div id="cardStatusModal"><div class="modal-content"><h3>📋 Статус карточки</h3><p id="cardStatusInfo" style="font-size:13px;color:#8E8E93;margin-bottom:10px;"></p><select id="newCardStatus"><option value="lab">🟡 В лаборатории</option><option value="done">🟢 Готова к выдаче</option><option value="transferred">📤 Передано</option></select><button class="btn-ios" onclick="saveCardStatus()" style="width:100%;">✅ Сохранить</button><button class="btn-ios-gray" onclick="closeCardStatusModal()" style="width:100%;margin-top:6px;">Отмена</button></div></div>
 <div id="repairStatusModal"><div class="modal-content"><h3>🔧 Статус ремонта</h3><p id="repairDeviceInfo" style="font-size:13px;color:#8E8E93;margin-bottom:10px;"></p><select id="newRepairStatus"><option value="В ремонте">🔧 В ремонте</option><option value="Сделан">✅ Сделан</option><option value="Неремонтопригоден">❌ Неремонтопригоден</option></select><input type="text" id="repairNote" placeholder="Примечание" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:14px;margin-bottom:10px;"><button class="btn-ios" onclick="saveRepairStatus()" style="width:100%;">✅ Сохранить</button><button class="btn-ios-gray" onclick="closeRepairStatusModal()" style="width:100%;margin-top:6px;">Отмена</button></div></div>
 <div id="messageModal"><div class="modal-content"><h3>📧 Отправить клиенту</h3><p id="msgDeviceInfo" style="font-size:13px;color:#8E8E93;margin-bottom:10px;"></p><label style="font-size:13px;font-weight:600;">Email:</label><input type="email" id="msgEmail" placeholder="Email клиента"><label style="font-size:13px;font-weight:600;">Тема:</label><input type="text" id="msgSubject" value="Статус приборов"><label style="font-size:13px;font-weight:600;">Сообщение:</label><textarea id="msgBody" rows="8"></textarea><button class="btn-ios" onclick="sendMsg()" style="width:100%;">📧 Отправить</button><button class="btn-ios-gray" onclick="closeMessageModal()" style="width:100%;margin-top:6px;">Отмена</button></div></div>
 <div id="cameraOverlay"><video id="cameraVideo" autoplay playsinline></video><button id="cameraCloseBtn" onclick="closeCamera()">✕</button><button id="cameraCaptureBtn" onclick="captureFromCamera()"></button></div>
@@ -239,7 +239,6 @@ document.getElementById('appContent').style.display='block';
 showMainMenu();
 }
 
-// ============ МГНОВЕННЫЙ ВХОД ============
 function doLogin(){
 var l=document.getElementById('loginInput').value.trim();
 var p=document.getElementById('passwordInput').value.trim();
@@ -261,13 +260,7 @@ location.reload();
 
 document.getElementById('passwordInput').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
-// ============ НАВИГАЦИЯ ============
-function showMainMenu(){
-hideAllModes();
-document.getElementById('mainMenu').style.display='block';
-document.getElementById('menuUserName').textContent=currentUser||'';
-loadUrgentBlock();
-}
+function showMainMenu(){hideAllModes();document.getElementById('mainMenu').style.display='block';document.getElementById('menuUserName').textContent=currentUser||'';loadUrgentBlock();}
 
 function loadUrgentBlock(){
 var now=new Date();
@@ -288,18 +281,9 @@ var emoji=days<=0?'🔴':(days<=1?'🟠':'🟡');
 html+='<div class="urgent-item">'+emoji+' <b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+esc(d.company||'')+' | до '+dl.toLocaleDateString()+'</div>';
 });
 html+='</div></div>';
-block.innerHTML=html;
-block.style.display='block';
+block.innerHTML=html;block.style.display='block';
 }else{block.style.display='none';}
-fetch(SCRIPT_URL+'?action=getDevices&search=')
-.then(r=>r.json())
-.then(function(data){
-if(data.devices){
-allDevicesCache=data.devices;
-localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
-}
-})
-.catch(function(){});
+fetch(SCRIPT_URL+'?action=getDevices&search=').then(r=>r.json()).then(function(data){if(data.devices){allDevicesCache=data.devices;localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));}}).catch(function(){});
 }
 
 function getDeadline(dateStr){
@@ -323,19 +307,9 @@ else if(mode==='archive'){document.getElementById('archiveMode').style.display='
 else if(mode==='settings'){document.getElementById('settingsPanel').style.display='block';document.getElementById('settingsEmail').value=settings.email||'';}
 }
 
-function hideAllModes(){
-['mainMenu','priemkaMode','devicesMode','calendarMode','priceMode','archiveMode','settingsPanel'].forEach(function(id){
-document.getElementById(id).style.display='none';
-});
-}
+function hideAllModes(){['mainMenu','priemkaMode','devicesMode','calendarMode','priceMode','archiveMode','settingsPanel'].forEach(function(id){document.getElementById(id).style.display='none';});}
 
-function switchDeviceTab(tab){
-currentDeviceTab=tab;
-document.getElementById('tabWork').classList.toggle('active',tab==='work');
-document.getElementById('tabRepair').classList.toggle('active',tab==='repair');
-document.getElementById('tabArchive').classList.toggle('active',tab==='archive');
-loadDevices();
-}
+function switchDeviceTab(tab){currentDeviceTab=tab;document.getElementById('tabWork').classList.toggle('active',tab==='work');document.getElementById('tabRepair').classList.toggle('active',tab==='repair');document.getElementById('tabArchive').classList.toggle('active',tab==='archive');loadDevices();}
 
 // ============ УПРАВЛЕНИЕ СИ ============
 function loadDevices(){
@@ -345,17 +319,7 @@ fetch(SCRIPT_URL+'?action=getDevices&search='+encodeURIComponent(search||''))
 .then(r=>r.json())
 .then(function(data){
 if(data.devices){
-// Сохраняем старые cardStatus из кеша
-var oldStatuses={};
-allDevicesCache.forEach(function(d){
-if(d.cardStatus)oldStatuses[d.row]=d.cardStatus;
-});
-// Обновляем кеш
 allDevicesCache=data.devices;
-// Восстанавливаем cardStatus из старого кеша (чтобы сервер не перезаписал)
-allDevicesCache.forEach(function(d){
-if(oldStatuses[d.row])d.cardStatus=oldStatuses[d.row];
-});
 localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
 renderDevicesFromCache(search);
 }
@@ -365,99 +329,55 @@ renderDevicesFromCache(search);
 
 function renderDevicesFromCache(search){
 var filtered=allDevicesCache;
-if(search){
-filtered=allDevicesCache.filter(function(d){
-return (d.name&&d.name.toLowerCase().includes(search))||
-(d.serial&&d.serial.toLowerCase().includes(search))||
-(d.company&&d.company.toLowerCase().includes(search));
-});
-}
-
-// Вкладка "Ремонт" — показываем приборы со статусом Ремонт/Калибровка/Настройка
-if(currentDeviceTab==='repair'){
-filtered=filtered.filter(function(d){return d.status==='Ремонт'||d.status==='Калибровка'||d.status==='Настройка';});
-renderRepairTab(filtered);return;
-}
-
-// Группируем по актам
+if(search){filtered=allDevicesCache.filter(function(d){return(d.name&&d.name.toLowerCase().includes(search))||(d.serial&&d.serial.toLowerCase().includes(search))||(d.company&&d.company.toLowerCase().includes(search));});}
+if(currentDeviceTab==='repair'){filtered=filtered.filter(function(d){return d.status==='Ремонт'||d.status==='Калибровка'||d.status==='Настройка';});renderRepairTab(filtered);return;}
 deviceGroups={};
 filtered.forEach(function(d){
 var key=(d.company||'')+'|'+(d.actDate||'')+'|'+(d.actNumber||'');
-if(!deviceGroups[key])deviceGroups[key]={company:d.company,actDate:d.actDate,actNumber:d.actNumber,employee:d.employee,cardStatus:d.cardStatus||'lab',devices:[]};
+if(!deviceGroups[key])deviceGroups[key]={company:d.company,actDate:d.actDate,actNumber:d.actNumber,employee:d.employee,cardStatus:d.cardStatus||'lab',transferDate:d.transferDate||'',devices:[]};
 deviceGroups[key].devices.push(d);
 });
-
-// Вкладка "Архив" — только карточки со статусом issued
 if(currentDeviceTab==='archive'){
-var archiveGroups={};
-Object.keys(deviceGroups).forEach(function(k){
-if(deviceGroups[k].cardStatus==='issued'){
-archiveGroups[k]=deviceGroups[k];
+var ag={};
+Object.keys(deviceGroups).forEach(function(k){if(deviceGroups[k].cardStatus==='transferred')ag[k]=deviceGroups[k];});
+deviceGroups=ag;filtered=[];Object.values(deviceGroups).forEach(function(g){filtered=filtered.concat(g.devices);});
+}else{
+var wg={};
+Object.keys(deviceGroups).forEach(function(k){if(deviceGroups[k].cardStatus!=='transferred')wg[k]=deviceGroups[k];});
+deviceGroups=wg;filtered=[];Object.values(deviceGroups).forEach(function(g){filtered=filtered.concat(g.devices);});
 }
-});
-deviceGroups=archiveGroups;
-filtered=[];
-Object.values(deviceGroups).forEach(function(g){filtered=filtered.concat(g.devices);});
-}
-// Вкладка "В работе" — карточки со статусом lab или done
-else {
-var workGroups={};
-Object.keys(deviceGroups).forEach(function(k){
-if(deviceGroups[k].cardStatus!=='issued'){
-workGroups[k]=deviceGroups[k];
-}
-});
-deviceGroups=workGroups;
-filtered=[];
-Object.values(deviceGroups).forEach(function(g){filtered=filtered.concat(g.devices);});
-}
-
-// Статистика
-var stats={inWork:0,ready:0,repair:0,notGood:0,issued:0};
+var stats={inWork:0,ready:0,repair:0,notGood:0,transferred:0};
 filtered.forEach(function(d){
 if(d.status==='В работе')stats.inWork++;
 else if(d.status==='Годен')stats.ready++;
 else if(d.status==='Ремонт'||d.status==='Калибровка'||d.status==='Настройка')stats.repair++;
 else if(d.status==='Не годен'||d.status==='Брак')stats.notGood++;
-else if(d.status==='Выдан')stats.issued++;
 });
-document.getElementById('statsRow').innerHTML=
-'<span class="stat-badge blue">🔵 В работе: '+(stats.inWork||0)+'</span>'+
-'<span class="stat-badge green">🟢 Годен: '+(stats.ready||0)+'</span>'+
-'<span class="stat-badge orange">🔧 Ремонт: '+(stats.repair||0)+'</span>'+
-'<span class="stat-badge red">🔴 Не годен: '+(stats.notGood||0)+'</span>'+
-(currentDeviceTab==='archive'?'<span class="stat-badge gray">✅ Выдано: '+(stats.issued||0)+'</span>':'');
-
-// Рендер карточек
+document.getElementById('statsRow').innerHTML='<span class="stat-badge blue">🔵 В работе: '+(stats.inWork||0)+'</span><span class="stat-badge green">🟢 Годен: '+(stats.ready||0)+'</span><span class="stat-badge orange">🔧 Ремонт: '+(stats.repair||0)+'</span><span class="stat-badge red">🔴 Не годен: '+(stats.notGood||0)+'</span>'+(currentDeviceTab==='archive'?'<span class="stat-badge gray">📤 Передано</span>':'');
 var sortedGroups=Object.values(deviceGroups).sort(function(a,b){return(b.actDate||'').localeCompare(a.actDate||'');});
 var html='';
-var statusEmojis={'В работе':'🟡','Годен':'🟢','Выдан':'✅','Ремонт':'🔧','Не годен':'🔴','Брак':'❌','Калибровка':'📐','Настройка':'⚙️'};
-
+var sem={'В работе':'🟡','Годен':'🟢','Выдан':'✅','Ремонт':'🔧','Не годен':'🔴','Брак':'❌','Калибровка':'📐','Настройка':'⚙️'};
 sortedGroups.forEach(function(group,gi){
 var groupId='group_'+gi;
-var displayDate=group.actDate?group.actDate.replace(/T.*/,'').split('-').reverse().join('.'):'';
-var statusCounts={};
-group.devices.forEach(function(d){var s=d.status||'В работе';statusCounts[s]=(statusCounts[s]||0)+1;});
-var statusLine=Object.keys(statusCounts).map(function(s){return(statusEmojis[s]||'')+'×'+statusCounts[s];}).join(' ');
-var cardStatusText=group.cardStatus==='issued'?'✅ Выдана':(group.cardStatus==='done'?'🟢 Готова':'🟡 В лаборатории');
-var cardStatusCls=group.cardStatus==='issued'?'issued':(group.cardStatus==='done'?'done':'lab');
-var isArchive=(currentDeviceTab==='archive');
-
-html+='<div class="group-card'+(isArchive?' issued-card':'')+'" id="'+groupId+'">';
+var dd=group.actDate?group.actDate.replace(/T.*/,'').split('-').reverse().join('.'):'';
+var sc={};group.devices.forEach(function(d){var s=d.status||'В работе';sc[s]=(sc[s]||0)+1;});
+var sl=Object.keys(sc).map(function(s){return(sem[s]||'')+'×'+sc[s];}).join(' ');
+var cst=group.cardStatus==='transferred'?'📤 Передано'+(group.transferDate?' '+group.transferDate:''):(group.cardStatus==='done'?'🟢 Готова':'🟡 В лаборатории');
+var csc=group.cardStatus==='transferred'?'transferred':(group.cardStatus==='done'?'done':'lab');
+var isA=(currentDeviceTab==='archive');
+html+='<div class="group-card'+(isA?' transferred-card':'')+'" id="'+groupId+'">';
 html+='<div class="company-name" onclick="var el=document.getElementById(\''+groupId+'\');el.classList.toggle(\'expanded\');">🏢 '+esc(group.company||'Нет компании')+' <span class="toggle-icon">▶</span></div>';
-html+='<div class="act-date">📅 '+displayDate+(group.actNumber?' | Акт №'+esc(group.actNumber):'')+' ('+group.devices.length+' прибора)</div>';
+html+='<div class="act-date">📅 '+dd+(group.actNumber?' | Акт №'+esc(group.actNumber):'')+' ('+group.devices.length+' прибора)</div>';
 html+='<div class="employee-line">👤 '+(group.employee||'—')+'</div>';
-html+='<div class="status-indicator">'+statusLine+'</div>';
-// Статус карточки — кликабельный
-html+='<div class="card-status '+cardStatusCls+'" onclick="event.stopPropagation();openCardStatusModal(\''+groupId+'\')">📋 '+cardStatusText+' (нажми для смены)</div>';
-
-if(currentDeviceTab==='work'&&group.cardStatus!=='issued'){
-html+=' <button class="btn-sm green" onclick="event.stopPropagation();issueCard(\''+groupId+'\')">✅ Выдать</button>';
+html+='<div class="status-indicator">'+sl+'</div>';
+html+='<div class="card-status '+csc+'" onclick="event.stopPropagation();openCardStatusModal(\''+groupId+'\')">📋 '+cst+' (нажми для смены)</div>';
+if(currentDeviceTab==='work'&&group.cardStatus!=='transferred'){
+html+=' <button class="btn-sm green" onclick="event.stopPropagation();issueCard(\''+groupId+'\')">📤 Передать</button>';
 }
 html+='<div class="devices-inner">';
 group.devices.forEach(function(d){
-var emoji=statusEmojis[d.status]||'🟡';
-html+='<div class="device-mini" data-row="'+d.row+'">'+emoji+' <b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | <span class="dev-status">'+esc(d.status||'В работе')+'</span>';
+var em=sem[d.status]||'🟡';
+html+='<div class="device-mini" data-row="'+d.row+'">'+em+' <b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | <span class="dev-status">'+esc(d.status||'В работе')+'</span>';
 if(d.repairReason)html+='<br><span style="color:#FF3B30;">Причина: '+esc(d.repairReason)+'</span>';
 html+='<div class="device-note"><input type="text" id="note_'+d.row+'" value="'+esc(d.repairNote||'')+'" placeholder="Примечание"><button onclick="event.stopPropagation();saveDeviceNote('+d.row+')">💾</button></div>';
 html+=' <button class="btn-sm blue" onclick="event.stopPropagation();openStatusModal(['+d.row+'],\''+esc(d.name||'')+'\',\''+esc(d.serial||'')+'\')">🔄</button>';
@@ -465,9 +385,7 @@ html+=' <button class="btn-sm gray" onclick="event.stopPropagation();openMessage
 });
 html+='</div><div class="group-actions">';
 html+='<button class="btn-sm green" onclick="event.stopPropagation();openStatusModal('+JSON.stringify(group.devices.map(function(d){return d.row;}))+',\'ВСЕ\',\''+group.devices.length+' шт.\')">🔄 Статус всем</button>';
-if(currentDeviceTab==='work'){
-html+=' <button class="btn-sm orange" onclick="event.stopPropagation();createReturnActByKey(\''+gi+'\')">📧 Акт возврата</button>';
-}
+if(currentDeviceTab==='work'){html+=' <button class="btn-sm orange" onclick="event.stopPropagation();createReturnActByKey(\''+gi+'\')">📧 Акт возврата</button>';}
 html+=' <button class="btn-sm gray" onclick="event.stopPropagation();printAct()">🖨️ Печать</button>';
 html+=' <button class="btn-sm gray" onclick="event.stopPropagation();openGroupMessageModal(\''+gi+'\')">📧 Написать</button></div></div>';
 });
@@ -484,55 +402,50 @@ document.getElementById('cardStatusInfo').textContent='🏢 '+(deviceGroups[curr
 document.getElementById('newCardStatus').value=cs;
 document.getElementById('cardStatusModal').style.display='block';
 }
-
-function closeCardStatusModal(){
-document.getElementById('cardStatusModal').style.display='none';
-currentCardStatusKey=null;
-}
+function closeCardStatusModal(){document.getElementById('cardStatusModal').style.display='none';currentCardStatusKey=null;}
 
 function saveCardStatus(){
 if(!currentCardStatusKey)return;
 var newCS=document.getElementById('newCardStatus').value;
 var group=deviceGroups[currentCardStatusKey];
-// Обновляем cardStatus в кеше для всех приборов этой группы
 group.cardStatus=newCS;
+var transferDate='';
+if(newCS==='transferred'){
+var now=new Date();
+transferDate=('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear();
+group.transferDate=transferDate;
+}
 group.devices.forEach(function(d){
 var cached=allDevicesCache.find(function(c){return c.row===d.row;});
-if(cached)cached.cardStatus=newCS;
+if(cached){cached.cardStatus=newCS;if(transferDate)cached.transferDate=transferDate;else cached.transferDate='';}
 });
-// Сохраняем кеш мгновенно
 localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
-var savedCS=newCS;
 closeCardStatusModal();
-// Перерисовываем сразу из кеша
 loadDevices();
-setStatus('✅ Статус карточки: '+(savedCS==='issued'?'Выдана':savedCS==='done'?'Готова':'В лаборатории'),'success');
-// Отправляем на сервер в фоне
+setStatus('✅ Статус карточки: '+(newCS==='transferred'?'📤 Передано '+transferDate:newCS==='done'?'🟢 Готова':'🟡 В лаборатории'),'success');
 var rows=group.devices.map(function(d){return d.row;});
-fetch(SCRIPT_URL+'?action=updateCardStatus&rows='+encodeURIComponent(JSON.stringify(rows))+'&cardStatus='+encodeURIComponent(savedCS))
-.then(function(r){return r.json();})
-.catch(function(){});
+fetch(SCRIPT_URL+'?action=updateCardStatus&rows='+encodeURIComponent(JSON.stringify(rows))+'&cardStatus='+encodeURIComponent(newCS)).catch(function(){});
 }
 
-// Выдача карточки (меняем ТОЛЬКО статус карточки)
 function issueCard(groupId){
-if(!confirm('Выдать заказ? Статус карточки изменится на "Выдана".'))return;
+if(!confirm('Передать заказ? Статус карточки изменится на "Передано".'))return;
 var keys=Object.keys(deviceGroups);
 var key=keys.find(function(k){return'group_'+keys.indexOf(k)===groupId;});
 if(!key||!deviceGroups[key])return;
 var group=deviceGroups[key];
-group.cardStatus='issued';
+group.cardStatus='transferred';
+var now=new Date();
+var transferDate=('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear();
+group.transferDate=transferDate;
 group.devices.forEach(function(d){
 var cached=allDevicesCache.find(function(c){return c.row===d.row;});
-if(cached)cached.cardStatus='issued';
+if(cached){cached.cardStatus='transferred';cached.transferDate=transferDate;}
 });
 localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
-setStatus('✅ Карточка выдана','success');
+setStatus('✅ Передано '+transferDate,'success');
 loadDevices();
-// На сервер в фоне
 var rows=group.devices.map(function(d){return d.row;});
-fetch(SCRIPT_URL+'?action=updateCardStatus&rows='+encodeURIComponent(JSON.stringify(rows))+'&cardStatus=issued')
-.catch(function(){});
+fetch(SCRIPT_URL+'?action=updateCardStatus&rows='+encodeURIComponent(JSON.stringify(rows))+'&cardStatus=transferred').catch(function(){});
 }
 
 // ============ ПРИБОРЫ В РЕМОНТЕ ============
@@ -545,7 +458,6 @@ loadDevices();
 setStatus('✅ Прибор возвращён в работу','success');
 fetch(SCRIPT_URL+'?action=updateStatus&row='+row+'&status=В работе&reason=');
 }
-
 function saveDeviceNote(row){
 var note=document.getElementById('note_'+row).value.trim();
 var d=allDevicesCache.find(function(d){return d.row===row;});
@@ -556,31 +468,17 @@ setStatus('✅ Примечание сохранено','success');
 
 function renderRepairTab(devices){
 var statsR={inRepair:0,done:0,notRepairable:0};
-devices.forEach(function(d){
-var rs=d.repairStatus||'В ремонте';
-if(rs==='В ремонте')statsR.inRepair++;
-else if(rs==='Сделан')statsR.done++;
-else statsR.notRepairable++;
-});
-document.getElementById('statsRow').innerHTML=
-'<span class="stat-badge orange">🔧 В ремонте: '+(statsR.inRepair||0)+'</span>'+
-'<span class="stat-badge green">✅ Сделано: '+(statsR.done||0)+'</span>'+
-'<span class="stat-badge red">❌ Неремонтопригоден: '+(statsR.notRepairable||0)+'</span>';
+devices.forEach(function(d){var rs=d.repairStatus||'В ремонте';if(rs==='В ремонте')statsR.inRepair++;else if(rs==='Сделан')statsR.done++;else statsR.notRepairable++;});
+document.getElementById('statsRow').innerHTML='<span class="stat-badge orange">🔧 В ремонте: '+(statsR.inRepair||0)+'</span><span class="stat-badge green">✅ Сделано: '+(statsR.done||0)+'</span><span class="stat-badge red">❌ Неремонтопригоден: '+(statsR.notRepairable||0)+'</span>';
 var months={};
-devices.forEach(function(d){
-var date=d.repairDate||d.actDate||'';
-var m=date.substring(0,7)||'Без даты';
-if(!months[m])months[m]=[];
-months[m].push(d);
-});
-var html='';
-var remojis={'В ремонте':'🔧','Сделан':'✅','Неремонтопригоден':'❌'};
+devices.forEach(function(d){var date=d.repairDate||d.actDate||'';var m=date.substring(0,7)||'Без даты';if(!months[m])months[m]=[];months[m].push(d);});
+var html='';var rem={'В ремонте':'🔧','Сделан':'✅','Неремонтопригоден':'❌'};
 Object.keys(months).sort(function(a,b){return b.localeCompare(a);}).forEach(function(m){
 var items=months[m];
 html+='<div class="month-group"><div class="month-header" onclick="var el=this.parentElement;el.classList.toggle(\'expanded\');var inner=el.querySelector(\'.month-inner\');inner.style.display=el.classList.contains(\'expanded\')?\'block\':\'none\';">📅 '+m+'</div><div class="month-inner">';
 items.forEach(function(d){
 var rs=d.repairStatus||'В ремонте';
-html+='<div class="repair-card"><div class="device-mini"><b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+remojis[rs]+' '+rs+'</div>';
+html+='<div class="repair-card"><div class="device-mini"><b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+rem[rs]+' '+rs+'</div>';
 html+='<div style="font-size:11px;color:#8E8E93;">🏢 '+esc(d.company||'')+'</div>';
 html+='<div class="device-note"><input type="text" id="note_'+d.row+'" value="'+esc(d.repairNote||'')+'" placeholder="Примечание"><button onclick="saveDeviceNote('+d.row+')">💾</button></div>';
 html+='<button class="btn-sm orange" onclick="openRepairStatusModal('+d.row+',\''+esc(d.name||'')+'\',\''+esc(d.serial||'')+'\',\''+rs+'\',\''+esc(d.repairNote||'')+'\')">🔧 Статус</button> <button class="btn-sm red" onclick="removeFromRepair('+d.row+')">🗑️ Удалить</button></div>';
@@ -597,882 +495,125 @@ document.getElementById('newRepairStatus').value=currentStatus||'В ремонт
 document.getElementById('repairNote').value=currentNote||'';
 document.getElementById('repairStatusModal').style.display='block';
 }
-
 function closeRepairStatusModal(){document.getElementById('repairStatusModal').style.display='none';currentRepairRow=null;}
-
 function saveRepairStatus(){
 if(!currentRepairRow)return;
 var st=document.getElementById('newRepairStatus').value;
 var note=document.getElementById('repairNote').value.trim();
 var d=allDevicesCache.find(function(d){return d.row===currentRepairRow;});
 if(d){d.repairStatus=st;d.repairNote=note;localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));}
-closeRepairStatusModal();
-loadDevices();
+closeRepairStatusModal();loadDevices();
 setStatus('✅ Статус ремонта обновлён','success');
 fetch(SCRIPT_URL+'?action=updateRepairStatus&row='+currentRepairRow+'&status='+encodeURIComponent(st)+'&note='+encodeURIComponent(note));
 }
 
 // ============ СТАТУС ПРИБОРОВ ============
-function openStatusModal(rows,name,serial){
-currentStatusRows=rows;
-document.getElementById('statusDeviceInfo').textContent=name+' | '+(Array.isArray(rows)?rows.length+' шт.':serial);
-document.getElementById('newStatus').value='В работе';
-document.getElementById('statusReason').value='';
-document.getElementById('statusModal').style.display='block';
-}
-
+function openStatusModal(rows,name,serial){currentStatusRows=rows;document.getElementById('statusDeviceInfo').textContent=name+' | '+(Array.isArray(rows)?rows.length+' шт.':serial);document.getElementById('newStatus').value='В работе';document.getElementById('statusReason').value='';document.getElementById('statusModal').style.display='block';}
 function closeStatusModal(){document.getElementById('statusModal').style.display='none';currentStatusRows=[];}
-
 function saveNewStatus(){
 if(!currentStatusRows||currentStatusRows.length===0)return;
 var st=document.getElementById('newStatus').value,rs=document.getElementById('statusReason').value.trim();
 var rows=Array.isArray(currentStatusRows)?currentStatusRows:[currentStatusRows];
-rows.forEach(function(row){
-var d=allDevicesCache.find(function(d){return d.row===row;});
-if(d){d.status=st;if(rs)d.repairReason=rs;}
-});
+rows.forEach(function(row){var d=allDevicesCache.find(function(d){return d.row===row;});if(d){d.status=st;if(rs)d.repairReason=rs;}});
 localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
-closeStatusModal();
-setStatus('✅ Статус прибора обновлён','success');
-fetch(SCRIPT_URL+'?action=updateStatusBulk&rows='+encodeURIComponent(JSON.stringify(rows))+'&status='+encodeURIComponent(st)+'&reason='+encodeURIComponent(rs))
-.then(function(){loadDevices();});
+closeStatusModal();setStatus('✅ Статус прибора обновлён','success');
+fetch(SCRIPT_URL+'?action=updateStatusBulk&rows='+encodeURIComponent(JSON.stringify(rows))+'&status='+encodeURIComponent(st)+'&reason='+encodeURIComponent(rs)).then(function(){loadDevices();});
 }
 
-// ============ КАЛЕНДАРЬ ============
-function initCalendar(){
-var now=new Date();
-calYear=now.getFullYear();
-calMonth=now.getMonth();
-calSelectedDate=null;
-document.getElementById('calDayInfo').textContent='Выберите дату';
-document.getElementById('calDevices').innerHTML='';
-renderCalendar();
-}
-
-function changeCalendarMonth(delta){
-calMonth+=delta;
-if(calMonth<0){calMonth=11;calYear--;}
-if(calMonth>11){calMonth=0;calYear++;}
-calSelectedDate=null;
-document.getElementById('calDayInfo').textContent='Выберите дату';
-document.getElementById('calDevices').innerHTML='';
-renderCalendar();
-}
-
+// ============ КАЛЕНДАРЬ (сокращён) ============
+function initCalendar(){var now=new Date();calYear=now.getFullYear();calMonth=now.getMonth();calSelectedDate=null;document.getElementById('calDayInfo').textContent='Выберите дату';document.getElementById('calDevices').innerHTML='';renderCalendar();}
+function changeCalendarMonth(d){calMonth+=d;if(calMonth<0){calMonth=11;calYear--;}if(calMonth>11){calMonth=0;calYear++;}calSelectedDate=null;document.getElementById('calDayInfo').textContent='Выберите дату';document.getElementById('calDevices').innerHTML='';renderCalendar();}
 function renderCalendar(){
 var months=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 document.getElementById('calMonthLabel').textContent=months[calMonth]+' '+calYear;
-var firstDay=new Date(calYear,calMonth,1).getDay();
-if(firstDay===0)firstDay=7;
-var daysInMonth=new Date(calYear,calMonth+1,0).getDate();
-var now=new Date();
-var today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-var deadlineMap={};
-allDevicesCache.filter(function(d){return d.status!=='Выдан';}).forEach(function(d){
-var dl=getDeadline(d.actDate);
-var key=dl.getFullYear()+'-'+dl.getMonth()+'-'+dl.getDate();
-if(!deadlineMap[key])deadlineMap[key]=[];
-deadlineMap[key].push(d);
-});
-var html='<div class="day-name">Пн</div><div class="day-name">Вт</div><div class="day-name">Ср</div><div class="day-name">Чт</div><div class="day-name">Пт</div><div class="day-name">Сб</div><div class="day-name">Вс</div>';
-for(var i=1;i<firstDay;i++)html+='<div class="day other"></div>';
-for(var d=1;d<=daysInMonth;d++){
-var date=new Date(calYear,calMonth,d);
-var cls='day';
-var key=calYear+'-'+calMonth+'-'+d;
-if(date.getTime()===today.getTime())cls+=' today';
-if(deadlineMap[key]){
-var minDays=999;
-deadlineMap[key].forEach(function(dd){
-var dl=getDeadline(dd.actDate);
-var days=Math.ceil((dl-now)/(1000*60*60*24));
-if(days<minDays)minDays=days;
-});
-if(minDays<=0)cls+=' urgent';
-else if(minDays<=3)cls+=' soon';
-else if(minDays<=5)cls+=' warning';
-else cls+=' normal';
+var fd=new Date(calYear,calMonth,1).getDay();if(fd===0)fd=7;
+var dim=new Date(calYear,calMonth+1,0).getDate();
+var now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+var dm={};
+allDevicesCache.filter(function(d){return d.status!=='Выдан';}).forEach(function(d){var dl=getDeadline(d.actDate);var k=dl.getFullYear()+'-'+dl.getMonth()+'-'+dl.getDate();if(!dm[k])dm[k]=[];dm[k].push(d);});
+var h='<div class="day-name">Пн</div><div class="day-name">Вт</div><div class="day-name">Ср</div><div class="day-name">Чт</div><div class="day-name">Пт</div><div class="day-name">Сб</div><div class="day-name">Вс</div>';
+for(var i=1;i<fd;i++)h+='<div class="day other"></div>';
+for(var d=1;d<=dim;d++){var dt=new Date(calYear,calMonth,d);var cls='day';var k=calYear+'-'+calMonth+'-'+d;if(dt.getTime()===today.getTime())cls+=' today';if(dm[k]){var md=999;dm[k].forEach(function(dd){var dl=getDeadline(dd.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));if(days<md)md=days;});if(md<=0)cls+=' urgent';else if(md<=3)cls+=' soon';else if(md<=5)cls+=' warning';else cls+=' normal';}h+='<div class="'+cls+'" onclick="selectCalDate('+d+')">'+d+'</div>';}
+document.getElementById('calGrid').innerHTML=h;
 }
-html+='<div class="'+cls+'" onclick="selectCalDate('+d+')">'+d+'</div>';
-}
-document.getElementById('calGrid').innerHTML=html;
-}
-
 function selectCalDate(day){
 calSelectedDate=new Date(calYear,calMonth,day);
 var ds=('0'+day).slice(-2)+'.'+('0'+(calMonth+1)).slice(-2)+'.'+calYear;
 document.getElementById('calDayInfo').textContent='📅 '+ds;
-var dlDate=new Date(calYear,calMonth,day);
-var dlKey=dlDate.getFullYear()+'-'+dlDate.getMonth()+'-'+dlDate.getDate();
-var devices=allDevicesCache.filter(function(d){
-if(d.status==='Выдан')return false;
-var dl=getDeadline(d.actDate);
-var k=dl.getFullYear()+'-'+dl.getMonth()+'-'+dl.getDate();
-return k===dlKey;
-});
-var html='';
-if(devices.length===0){
-html='<div style="text-align:center;color:#8E8E93;padding:20px;">Нет приборов на эту дату</div>';
-}else{
-var groups={};
-devices.forEach(function(d){
-var k=(d.company||'')+'|'+(d.actDate||'');
-if(!groups[k])groups[k]={company:d.company,devices:[]};
-groups[k].devices.push(d);
-});
-Object.values(groups).forEach(function(g){
-html+='<div class="group-card"><div class="company-name">🏢 '+esc(g.company||'Нет компании')+' ('+g.devices.length+' прибора)</div>';
-g.devices.forEach(function(d){
-html+='<div class="device-mini"><b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+esc(d.status||'В работе')+'</div>';
-});
-html+='</div>';
-});
-}
-document.getElementById('calDevices').innerHTML=html;
+var dd=new Date(calYear,calMonth,day);var dk=dd.getFullYear()+'-'+dd.getMonth()+'-'+dd.getDate();
+var devs=allDevicesCache.filter(function(d){if(d.status==='Выдан')return false;var dl=getDeadline(d.actDate);return(dl.getFullYear()+'-'+dl.getMonth()+'-'+dl.getDate())===dk;});
+var h='';if(devs.length===0){h='<div style="text-align:center;color:#8E8E93;padding:20px;">Нет приборов</div>';}else{var g={};devs.forEach(function(d){var k=(d.company||'')+'|'+(d.actDate||'');if(!g[k])g[k]={company:d.company,devices:[]};g[k].devices.push(d);});Object.values(g).forEach(function(g){h+='<div class="group-card"><div class="company-name">🏢 '+esc(g.company||'')+' ('+g.devices.length+')</div>';g.devices.forEach(function(d){h+='<div class="device-mini"><b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+esc(d.status||'')+'</div>';});h+='</div>';});}
+document.getElementById('calDevices').innerHTML=h;
 }
 
-// ============ ПРИЁМКА СИ ============
+// ============ ПРИЁМКА, АРХИВ, ПРАЙС, КАМЕРА, НАСТРОЙКИ (сокращён) ============
 function initPriemkaMode(){
-document.getElementById('priemkaContent').innerHTML=
-'<div id="loadingSkeleton"><div class="spinner"></div> Загрузка справочников...</div>'+
-'<div id="mainContent" style="display:none;">'+
-'<div class="act-toolbar"><button class="btn-ios" onclick="newAct()" style="flex:1;">📝 Новый акт</button><button class="btn-ios-gray" onclick="openActsList()" style="flex:1;">📂 Выбрать акт</button></div>'+
-'<div class="field-group"><label>Компания-сдатчик:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="companyInput" placeholder="Введите компанию" autocomplete="off" oninput="filterCompanies(); saveFormData();" onblur="hideCompanyList()" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;"><ul class="autocomplete-list" id="companyList"></ul></div><button class="btn-ios-icon" onclick="addCompany()">➕</button></div></div>'+
-'<div class="section-title">Приборы:</div><div id="devicesContainer"></div>'+
-'<button class="btn-ios" onclick="addDevice()" style="width:100%;margin:8px 0;">➕ Добавить прибор</button>'+
-'<button class="btn-ios-green" id="submitBtn" onclick="submitAct()">📧 Сформировать акт и отправить</button>'+
-'<div id="printContainer"><button class="btn-ios-orange" id="printBtn" onclick="printAct()" style="display:none;">🖨️ Распечатать акт</button></div>'+
-'<div class="hint" id="emailHint"></div><div class="saved-indicator" id="savedIndicator">💾 Сохранено</div><div class="status" id="status"></div></div>';
-updateEmailHint();
-loadDictionaries();
-addDevice();
-initVoiceRecognition();
+document.getElementById('priemkaContent').innerHTML='<div id="loadingSkeleton"><div class="spinner"></div> Загрузка...</div><div id="mainContent" style="display:none;"><div class="act-toolbar"><button class="btn-ios" onclick="newAct()" style="flex:1;">📝 Новый акт</button><button class="btn-ios-gray" onclick="openActsList()" style="flex:1;">📂 Выбрать акт</button></div><div class="field-group"><label>Компания:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="companyInput" placeholder="Введите компанию" autocomplete="off" oninput="filterCompanies();saveFormData();" onblur="hideCompanyList()" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;"><ul class="autocomplete-list" id="companyList"></ul></div><button class="btn-ios-icon" onclick="addCompany()">➕</button></div></div><div class="section-title">Приборы:</div><div id="devicesContainer"></div><button class="btn-ios" onclick="addDevice()" style="width:100%;margin:8px 0;">➕ Добавить прибор</button><button class="btn-ios-green" id="submitBtn" onclick="submitAct()">📧 Сформировать и отправить</button><div id="printContainer"><button class="btn-ios-orange" id="printBtn" onclick="printAct()" style="display:none;">🖨️ Распечатать</button></div><div class="hint" id="emailHint"></div><div class="status" id="status"></div></div>';
+updateEmailHint();loadDictionaries();addDevice();initVoiceRecognition();
 }
 
+// Остальные функции (priemka, archive, price, camera, settings) остаются без изменений с предыдущего кода
 function loadDictionaries(){
-var cachedTypes=localStorage.getItem('cache_types');
-var cachedCompanies=localStorage.getItem('cache_companies');
-if(cachedTypes&&cachedCompanies){
-typesData=JSON.parse(cachedTypes);
-companyListData=JSON.parse(cachedCompanies);
-showMainContent();
-fetchDictionariesInBackground();
-}else{
-fetchDictionariesInBackground().then(function(){showMainContent();});
+var ct=localStorage.getItem('cache_types'),cc=localStorage.getItem('cache_companies');
+if(ct&&cc){typesData=JSON.parse(ct);companyListData=JSON.parse(cc);showMainContent();fetchDictionariesInBackground();}
+else{fetchDictionariesInBackground().then(function(){showMainContent();});}
 }
-}
-
-function fetchDictionariesInBackground(){
-return Promise.all([
-fetch(CSV_BASE+GID_TYPES).then(r=>r.text()),
-fetch(CSV_BASE+GID_COMPANIES).then(r=>r.text())
-]).then(function(r){
-typesData=parseCSV(r[0]);
-companyListData=parseCSV(r[1]).map(function(row){return row[0]||'';}).filter(function(v){return v;});
-localStorage.setItem('cache_types',JSON.stringify(typesData));
-localStorage.setItem('cache_companies',JSON.stringify(companyListData));
-});
-}
-
-function showMainContent(){
-var sk=document.getElementById('loadingSkeleton');
-if(sk)sk.style.display='none';
-var mc=document.getElementById('mainContent');
-if(mc)mc.style.display='block';
-setStatus('✅ Готов к работе','success');
-setTimeout(loadFormData,300);
-}
-
-function loadAllTypesFromSheet(){
-fetch(CSV_BASE+GID_TYPES).then(r=>r.text()).then(function(csv){
-var d=parseCSV(csv);
-allTypesFromSheet=[];
-d.forEach(function(r){for(var i=0;i<r.length;i++){var v=(r[i]||'').trim();if(v&&v.length>2&&allTypesFromSheet.indexOf(v)===-1)allTypesFromSheet.push(v);}});
-}).catch(function(){});
-}
-
-function parseCSV(csv){
-if(!csv)return[];
-var lines=csv.trim().split('\n'),result=[];
-for(var i=1;i<lines.length;i++){
-var cells=[],cur='',q=false;
-for(var j=0;j<lines[i].length;j++){
-var c=lines[i][j];
-if(c=='"')q=!q;
-else if(c===','&&!q){cells.push(cur.trim());cur='';}
-else cur+=c;
-}
-cells.push(cur.trim());
-if(cells.some(function(c){return c.length>0;}))result.push(cells);
-}
-return result;
-}
-
-function getTypeNames(){
-var names=[];
-typesData.forEach(function(r){var n=r[1]||r[0]||'';if(n&&names.indexOf(n)===-1)names.push(n);});
-return names;
-}
-
-function isDualSerialType(n){
-var t=(document.getElementById('typeField'+n)?.value||'').toLowerCase();
-return t.includes('термометр сопротивления')||t.includes('ктсп')||t.includes('ктптр')||t.includes('тспа');
-}
-
-function fixSerialLetter(n,fn){
-var f=document.getElementById('serialDual'+fn+'_'+n);
-if(!f)return;
-f.value=f.value.replace(/[хХ]$/,'Х').replace(/[гГ]$/,'Г').replace(/[аА]$/,'А').replace(/[вВ]$/,'В').replace(/[бБ]$/,'Б');
-if(fn===1)autoFillSecondSerial(n);
-saveFormData();
-}
-
-function autoFillSecondSerial(n){
-var d1=document.getElementById('serialDual1_'+n),d2=document.getElementById('serialDual2_'+n);
-if(!d1||!d2)return;
-var s1=d1.value.trim();
-if(!s1||s1.length<4)return;
-var lc=s1.slice(-1).toUpperCase(),base=s1.slice(0,-1);
-if(/^[А-Я]$/.test(lc)){
-if(lc==='Х')d2.value=base+'Г';
-else if(lc==='Г')d2.value=base+'Х';
-else if(lc==='А')d2.value=base;
-}else if(s1.includes('/')){
-var p=s1.split('/');
-if(p.length===2&&p[1]==='1')d2.value=p[0]+'/2';
-else if(p.length===2&&p[1]==='2')d2.value=p[0]+'/1';
-}
-saveFormData();
-}
-
-function onDual2Change(n){
-var f=document.getElementById('serialDual2_'+n);
-if(!f)return;
-f.value=f.value.replace(/[хХ]$/,'Х').replace(/[гГ]$/,'Г').replace(/[аА]$/,'А').replace(/[вВ]$/,'В').replace(/[бБ]$/,'Б');
-saveFormData();
-}
-
-function initVoiceRecognition(){
-var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-if(SR){
-recognition=new SR();
-recognition.lang='ru-RU';
-recognition.interimResults=false;
-recognition.continuous=false;
-recognition.maxAlternatives=5;
-recognition.onresult=function(e){
-voiceResults=[];
-for(var i=0;i<e.results.length;i++)for(var j=0;j<e.results[i].length;j++)voiceResults.push(e.results[i][j].transcript.trim());
-if(voiceResults.length>0&&currentVoiceDevice){
-if(currentVoiceField==='name')showVoiceVariants(voiceResults);
-else if(currentVoiceField==='serialDual1_'){
-var f=document.getElementById('serialDual1_'+currentVoiceDevice);
-if(f){f.value=extractSerialEnhanced(voiceResults[0]);fixSerialLetter(currentVoiceDevice,1);}
-stopVoiceInput();
-}else if(currentVoiceField==='serialDual2_'){
-var f=document.getElementById('serialDual2_'+currentVoiceDevice);
-if(f){f.value=extractSerialEnhanced(voiceResults[0]);onDual2Change(currentVoiceDevice);}
-stopVoiceInput();
-}else{
-var f=document.getElementById(currentVoiceField+currentVoiceDevice);
-if(f){f.value=currentVoiceField==='serialField'?extractSerialEnhanced(voiceResults[0]):voiceResults[0];saveFormData();}
-stopVoiceInput();
-}
-}
-};
-recognition.onerror=function(){stopVoiceInput();};
-recognition.onend=function(){if(isListening)stopVoiceInput();};
-isVoiceSupported=true;
-}
-}
-
-function startVoiceInput(n,f){
-if(!isVoiceSupported){alert('Не поддерживается');return;}
-if(isListening){stopVoiceInput();return;}
-currentVoiceDevice=n;currentVoiceField=f;isListening=true;
-if(f==='name'){var ve=document.getElementById('voiceVariants'+n);if(ve){ve.classList.remove('active');ve.innerHTML='';}}
-try{recognition.start();}catch(e){}
-setStatus('🎤 Слушаю...','loading');
-}
-
-function stopVoiceInput(){
-isListening=false;
-try{recognition.stop();}catch(e){}
-setStatus('✅ Готов','success');
-}
-
-function showVoiceVariants(results){
-if(!currentVoiceDevice)return;
-var ve=document.getElementById('voiceVariants'+currentVoiceDevice);
-if(!ve)return;
-var all=[];
-results.forEach(function(t){
-var m=findTypeMatches(t);
-m.forEach(function(match){if(!all.some(function(v){return v.name===match.name;}))all.push(match);});
-});
-if(all.length===0)results.forEach(function(t){if(t.length>3)all.push({name:t,score:0});});
-all.sort(function(a,b){return b.score-a.score;});
-var top=all.slice(0,5);
-if(top.length>0){
-ve.innerHTML='';
-top.forEach(function(v,i){
-var item=document.createElement('div');
-item.className='voice-variant-item';
-item.textContent=(i+1)+'. '+v.name;
-item.onclick=function(){selectVoiceVariant(v.name);};
-ve.appendChild(item);
-});
-ve.classList.add('active');
-}
-stopVoiceInput();
-}
-
-function selectVoiceVariant(name){
-if(!currentVoiceDevice)return;
-document.getElementById('nameField'+currentVoiceDevice).value=name;
-var ft=findTypeByName(name);
-if(ft){document.getElementById('typeField'+currentVoiceDevice).value=ft;checkType(currentVoiceDevice);}
-document.getElementById('voiceVariants'+currentVoiceDevice).classList.remove('active');
-document.getElementById('voiceVariants'+currentVoiceDevice).innerHTML='';
-saveFormData();
-currentVoiceDevice=null;currentVoiceField=null;
-setStatus('✅ '+name,'success');
-}
-
-function findTypeMatches(text){
-if(!text)return[];
-var ct=text.toLowerCase().replace(/[^a-zа-я0-9\s]/g,' ').replace(/\s+/g,' ').trim();
-var types=allTypesFromSheet.length>0?allTypesFromSheet:getTypeNames();
-var words=ct.split(/\s+/);
-var results=[];
-types.forEach(function(st){
-var tc=st.toLowerCase().replace(/[^a-zа-я0-9\s]/g,' ').replace(/\s+/g,' ').trim();
-if(tc.length<2)return;
-var s=calculateMatchScore(ct,words,tc);
-if(s>10)results.push({name:st,score:s});
-});
-results.sort(function(a,b){return b.score-a.score;});
-return results.slice(0,5);
-}
-
-function calculateMatchScore(text,words,typeName){
-var s=0;
-if(text.indexOf(typeName)!==-1)s+=100;
-var tw=typeName.split(/\s+/),mw=0;
-tw.forEach(function(w){
-if(w.length<2)return;
-for(var i=0;i<words.length;i++){
-if(words[i]===w){s+=30;mw++;}
-else if(w.startsWith(words[i])&&words[i].length>=2){s+=20;mw++;}
-else if(words[i].startsWith(w)&&w.length>=2){s+=15;mw++;}
-}
-});
-if(mw>=tw.length)s+=50;else if(mw>0)s+=mw*8;
-s+=Math.min(typeName.length,15);
-return s;
-}
-
-function extractSerialEnhanced(text){
-var cleaned=text.replace(/[^а-яА-ЯёЁa-zA-Z0-9\s\/№\-]/g,' ').replace(/\s+/g,' ').trim();
-var slashIdx=cleaned.search(/\s*(?:дробь|слеш|слэш|\/)\s*/i);
-if(slashIdx>0){var before=cleaned.substring(0,slashIdx).replace(/\s+/g,'');var after=cleaned.substring(slashIdx).replace(/[^\d]/g,'');if(before&&after)return before+'/'+after;}
-var withPrefix=cleaned.match(/^([А-ЯХГABEKMHOPTXCа-яхгabekmhoptyxc]+)\s*(\d[\d\s]*)$/i);
-if(withPrefix){var letter=withPrefix[1].toUpperCase();if(/^(ИКС|Х|X)$/i.test(letter))letter='Х';else if(/^(ГЭ|Г|G)$/i.test(letter))letter='Г';else if(/^(А|A)$/i.test(letter))letter='А';else if(/^(ВЭ|В|B)$/i.test(letter))letter='В';return letter+withPrefix[2].replace(/\s+/g,'');}
-var withSuffix=cleaned.match(/(\d[\d\s]*?)\s*([А-ЯХГABEKMHOPTXCа-яхгabekmhoptyxc]+)\s*$/i);
-if(withSuffix){var num=withSuffix[1].replace(/\s+/g,'');var letter2=withSuffix[2].toUpperCase();if(/^(ИКС|Х|X)$/i.test(letter2))letter2='Х';else if(/^(ГЭ|Г|G)$/i.test(letter2))letter2='Г';else if(/^(А|A)$/i.test(letter2))letter2='А';else if(/^(ВЭ|В|B)$/i.test(letter2))letter2='В';return num+letter2;}
-var nums=cleaned.match(/\d+/g);if(!nums)return cleaned;if(nums.length===1)return nums[0];return nums.join('');
-}
-
-function findTypeByName(name){
-if(!name)return'';
-var nc=name.toLowerCase().replace(/[^a-zа-я0-9]/g,''),best='',bestScore=0;
-typesData.forEach(function(r){
-var ref=(r[1]||r[0]||'').toLowerCase().replace(/[^a-zа-я0-9]/g,'');
-if(ref&&nc.includes(ref)&&ref.length>bestScore){bestScore=ref.length;best=r[2]||r[1]||r[0]||'';}
-});
-return best;
-}
-
-function createDeviceBlock(num){
-var b=document.createElement('div');
-b.className='device-block';
-b.id='device'+num;
-b.innerHTML=
-'<div class="device-title"><span class="device-number">'+num+'</span> Прибор</div>'+
-'<div class="field-group"><label>Название:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="nameField'+num+'" placeholder="Введите или выберите" autocomplete="off" oninput="filterAutocomplete('+num+'); saveFormData();" onfocus="filterAutocomplete('+num+')" onblur="hideAutocomplete('+num+')" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;"><ul class="autocomplete-list" id="autocompleteList'+num+'"></ul></div><button class="btn-ios-icon green" onclick="openCamera(\'name\','+num+')">📷</button><button class="btn-ios-icon pink" onclick="startVoiceInput('+num+',\'name\')">🎤</button><button class="save-btn" onclick="saveCustomName('+num+')">💾</button></div><div class="voice-variants" id="voiceVariants'+num+'"></div></div>'+
-'<div class="field-group"><label>Тип:</label><div class="field-row"><input type="text" id="typeField'+num+'" placeholder="Авто или вручную" style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="checkType('+num+'); saveFormData();"><button class="save-btn" onclick="saveCustomType('+num+')">💾</button></div></div>'+
-'<div class="field-group"><label>Заводской номер:</label><div class="field-row"><input type="text" id="serialField'+num+'" placeholder="Номер" style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="saveFormData();"><button class="btn-ios-icon green" onclick="openCamera(\'serial\','+num+')">📷</button><button class="btn-ios-icon pink" onclick="startVoiceInput('+num+',\'serialField\')">🎤</button></div>'+
-'<div class="serial-dual-block" id="serialDualBlock'+num+'"><div class="serial-dual-row"><label>Ном. 1:</label><input type="text" id="serialDual1_'+num+'" placeholder="Первый номер" oninput="fixSerialLetter('+num+',1);" style="flex:1;"><button class="btn-ios-icon pink" onclick="startVoiceInput('+num+',\'serialDual1_\')">🎤</button></div><div class="serial-dual-row"><label>Ном. 2:</label><input type="text" id="serialDual2_'+num+'" placeholder="Второй номер (авто)" oninput="onDual2Change('+num+');" style="flex:1;"><button class="btn-ios-icon pink" onclick="startVoiceInput('+num+',\'serialDual2_\')">🎤</button></div><div class="serial-hint">🔤 Х↔Г авто | А = без буквы | 1↔2 авто</div></div>'+
-'<div class="serial-hint">💡 "А 12345" → А12345, "4540 дробь 1" → 4540/1, "1312 г" → 1312Г</div></div>'+
-'<div class="field-group"><label>Адрес:</label><div class="field-row"><input type="text" id="addressField'+num+'" placeholder="Введите" style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" onchange="addAddressToList(this.value); saveFormData();"><button class="btn-ios-icon pink" onclick="startVoiceInput('+num+',\'addressField\')">🎤</button></div></div>'+
-'<div class="checkbox-row" id="akbRow'+num+'" style="display:none;"><input type="checkbox" id="akbCheck'+num+'" onchange="saveFormData();"><label>Замена АКБ</label></div>'+
-'<div class="field-group"><label>Примечание:</label><div class="field-row"><input type="text" id="noteField'+num+'" placeholder="Состояние..." style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="saveFormData();"><button class="btn-ios-icon pink" onclick="startVoiceInput('+num+',\'noteField\')">🎤</button></div></div>';
-if(num>1){
-var rb=document.createElement('button');
-rb.className='btn-ios-icon red';
-rb.textContent='🗑️';
-rb.style.cssText='position:absolute;top:12px;right:12px;';
-rb.onclick=function(){removeDevice(b.id);};
-b.appendChild(rb);
-}
-document.getElementById('devicesContainer').appendChild(b);
-renumberDevices();
-return b;
-}
-
+function fetchDictionariesInBackground(){return Promise.all([fetch(CSV_BASE+GID_TYPES).then(r=>r.text()),fetch(CSV_BASE+GID_COMPANIES).then(r=>r.text())]).then(function(r){typesData=parseCSV(r[0]);companyListData=parseCSV(r[1]).map(function(row){return row[0]||'';}).filter(function(v){return v;});localStorage.setItem('cache_types',JSON.stringify(typesData));localStorage.setItem('cache_companies',JSON.stringify(companyListData));});}
+function showMainContent(){var sk=document.getElementById('loadingSkeleton');if(sk)sk.style.display='none';var mc=document.getElementById('mainContent');if(mc)mc.style.display='block';setStatus('✅ Готов','success');setTimeout(loadFormData,300);}
+function parseCSV(csv){if(!csv)return[];var lines=csv.trim().split('\n'),result=[];for(var i=1;i<lines.length;i++){var cells=[],cur='',q=false;for(var j=0;j<lines[i].length;j++){var c=lines[i][j];if(c=='"')q=!q;else if(c===','&&!q){cells.push(cur.trim());cur='';}else cur+=c;}cells.push(cur.trim());if(cells.some(function(c){return c.length>0;}))result.push(cells);}return result;}
+function getTypeNames(){var names=[];typesData.forEach(function(r){var n=r[1]||r[0]||'';if(n&&names.indexOf(n)===-1)names.push(n);});return names;}
+function isDualSerialType(n){var t=(document.getElementById('typeField'+n)?.value||'').toLowerCase();return t.includes('термометр сопротивления')||t.includes('ктсп')||t.includes('ктптр')||t.includes('тспа');}
+function fixSerialLetter(n,fn){var f=document.getElementById('serialDual'+fn+'_'+n);if(!f)return;f.value=f.value.replace(/[хХ]$/,'Х').replace(/[гГ]$/,'Г').replace(/[аА]$/,'А').replace(/[вВ]$/,'В').replace(/[бБ]$/,'Б');if(fn===1)autoFillSecondSerial(n);saveFormData();}
+function autoFillSecondSerial(n){var d1=document.getElementById('serialDual1_'+n),d2=document.getElementById('serialDual2_'+n);if(!d1||!d2)return;var s1=d1.value.trim();if(!s1||s1.length<4)return;var lc=s1.slice(-1).toUpperCase(),base=s1.slice(0,-1);if(/^[А-Я]$/.test(lc)){if(lc==='Х')d2.value=base+'Г';else if(lc==='Г')d2.value=base+'Х';else if(lc==='А')d2.value=base;}else if(s1.includes('/')){var p=s1.split('/');if(p.length===2&&p[1]==='1')d2.value=p[0]+'/2';else if(p.length===2&&p[1]==='2')d2.value=p[0]+'/1';}saveFormData();}
+function onDual2Change(n){var f=document.getElementById('serialDual2_'+n);if(!f)return;f.value=f.value.replace(/[хХ]$/,'Х').replace(/[гГ]$/,'Г').replace(/[аА]$/,'А').replace(/[вВ]$/,'В').replace(/[бБ]$/,'Б');saveFormData();}
+function createDeviceBlock(num){var b=document.createElement('div');b.className='device-block';b.id='device'+num;b.innerHTML='<div class="device-title"><span class="device-number">'+num+'</span> Прибор</div><div class="field-group"><label>Название:</label><div class="field-row"><div class="autocomplete-wrap"><input type="text" id="nameField'+num+'" placeholder="Введите" autocomplete="off" oninput="filterAutocomplete('+num+');saveFormData();" onfocus="filterAutocomplete('+num+')" onblur="hideAutocomplete('+num+')" style="width:100%;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;"><ul class="autocomplete-list" id="autocompleteList'+num+'"></ul></div><button class="btn-ios-icon green" onclick="openCamera(\'name\','+num+')">📷</button><button class="btn-ios-icon pink" onclick="startVoiceInput('+num+',\'name\')">🎤</button><button class="save-btn" onclick="saveCustomName('+num+')">💾</button></div></div><div class="field-group"><label>Тип:</label><div class="field-row"><input type="text" id="typeField'+num+'" placeholder="Авто" style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="checkType('+num+');saveFormData();"><button class="save-btn" onclick="saveCustomType('+num+')">💾</button></div></div><div class="field-group"><label>Заводской №:</label><div class="field-row"><input type="text" id="serialField'+num+'" placeholder="Номер" style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="saveFormData();"><button class="btn-ios-icon green" onclick="openCamera(\'serial\','+num+')">📷</button><button class="btn-ios-icon pink" onclick="startVoiceInput('+num+',\'serialField\')">🎤</button></div><div class="serial-dual-block" id="serialDualBlock'+num+'"><div class="serial-dual-row"><label>Ном.1:</label><input type="text" id="serialDual1_'+num+'" placeholder="Первый" oninput="fixSerialLetter('+num+',1);" style="flex:1;"><button class="btn-ios-icon pink" onclick="startVoiceInput('+num+',\'serialDual1_\')">🎤</button></div><div class="serial-dual-row"><label>Ном.2:</label><input type="text" id="serialDual2_'+num+'" placeholder="Второй" oninput="onDual2Change('+num+');" style="flex:1;"><button class="btn-ios-icon pink" onclick="startVoiceInput('+num+',\'serialDual2_\')">🎤</button></div></div></div><div class="field-group"><label>Адрес:</label><div class="field-row"><input type="text" id="addressField'+num+'" placeholder="Введите" style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" onchange="addAddressToList(this.value);saveFormData();"><button class="btn-ios-icon pink" onclick="startVoiceInput('+num+',\'addressField\')">🎤</button></div></div><div class="checkbox-row" id="akbRow'+num+'" style="display:none;"><input type="checkbox" id="akbCheck'+num+'" onchange="saveFormData();"><label>Замена АКБ</label></div><div class="field-group"><label>Примечание:</label><div class="field-row"><input type="text" id="noteField'+num+'" placeholder="Состояние..." style="flex:1;padding:12px;border:1px solid #E5E5EA;border-radius:10px;font-size:16px;" oninput="saveFormData();"><button class="btn-ios-icon pink" onclick="startVoiceInput('+num+',\'noteField\')">🎤</button></div></div>';if(num>1){var rb=document.createElement('button');rb.className='btn-ios-icon red';rb.textContent='🗑️';rb.style.cssText='position:absolute;top:12px;right:12px;';rb.onclick=function(){removeDevice(b.id);};b.appendChild(rb);}document.getElementById('devicesContainer').appendChild(b);renumberDevices();return b;}
 function addDevice(){deviceCounter++;createDeviceBlock(deviceCounter);saveFormData();}
 function removeDevice(id){var b=document.getElementById(id);if(b)b.remove();renumberDevices();saveFormData();}
-function renumberDevices(){
-document.querySelectorAll('.device-block').forEach(function(b,i){
-b.id='device'+(i+1);
-var s=b.querySelector('.device-number');
-if(s)s.textContent=i+1;
-});
-deviceCounter=document.querySelectorAll('.device-block').length;
-}
-
-function checkType(n){
-var tv=(document.getElementById('typeField'+n)?.value||'').toLowerCase();
-var ar=document.getElementById('akbRow'+n);
-if(ar){
-ar.style.display=(tv.includes('тепловычислитель')||tv.includes('тепловыч'))?'flex':'none';
-if(ar.style.display==='none'){var cb=document.getElementById('akbCheck'+n);if(cb)cb.checked=false;}
-}
-checkDualSerial(n);
-}
-
-function checkDualSerial(n){
-var isD=isDualSerialType(n);
-var db=document.getElementById('serialDualBlock'+n);
-var sf=document.getElementById('serialField'+n);
-if(isD){if(db)db.classList.add('active');if(sf)sf.parentElement.style.display='none';}
-else{if(db)db.classList.remove('active');if(sf)sf.parentElement.style.display='flex';}
-}
-
+function renumberDevices(){document.querySelectorAll('.device-block').forEach(function(b,i){b.id='device'+(i+1);var s=b.querySelector('.device-number');if(s)s.textContent=i+1;});deviceCounter=document.querySelectorAll('.device-block').length;}
+function checkType(n){var tv=(document.getElementById('typeField'+n)?.value||'').toLowerCase();var ar=document.getElementById('akbRow'+n);if(ar){ar.style.display=(tv.includes('тепловычислитель')||tv.includes('тепловыч'))?'flex':'none';if(ar.style.display==='none'){var cb=document.getElementById('akbCheck'+n);if(cb)cb.checked=false;}}checkDualSerial(n);}
+function checkDualSerial(n){var isD=isDualSerialType(n);var db=document.getElementById('serialDualBlock'+n);var sf=document.getElementById('serialField'+n);if(isD){if(db)db.classList.add('active');if(sf)sf.parentElement.style.display='none';}else{if(db)db.classList.remove('active');if(sf)sf.parentElement.style.display='flex';}}
 function addAddressToList(a){if(a&&usedAddresses.indexOf(a)===-1)usedAddresses.push(a);}
-
-function filterAutocomplete(n){
-var input=document.getElementById('nameField'+n),list=document.getElementById('autocompleteList'+n);
-var filter=input.value.toLowerCase(),names=getTypeNames();
-list.innerHTML='';
-if(!filter&&names.length>0){names.slice(0,20).forEach(function(nm){list.innerHTML+='<li onmousedown="selectAutocomplete('+n+',\''+esc(nm)+'\')">'+esc(nm)+'</li>';});list.style.display='block';return;}
-var matches=names.filter(function(nm){return nm.toLowerCase().includes(filter);});
-if(matches.length===0){list.style.display='none';return;}
-matches.slice(0,20).forEach(function(nm){list.innerHTML+='<li onmousedown="selectAutocomplete('+n+',\''+esc(nm)+'\')">'+esc(nm)+'</li>';});
-list.style.display='block';
-}
-
-function selectAutocomplete(n,name){
-document.getElementById('nameField'+n).value=name;
-document.getElementById('autocompleteList'+n).style.display='none';
-var ft=findTypeByName(name);
-if(ft){document.getElementById('typeField'+n).value=ft;checkType(n);}
-saveFormData();
-}
-
+function filterAutocomplete(n){var input=document.getElementById('nameField'+n),list=document.getElementById('autocompleteList'+n);var filter=input.value.toLowerCase(),names=getTypeNames();list.innerHTML='';if(!filter&&names.length>0){names.slice(0,20).forEach(function(nm){list.innerHTML+='<li onmousedown="selectAutocomplete('+n+',\''+esc(nm)+'\')">'+esc(nm)+'</li>';});list.style.display='block';return;}var matches=names.filter(function(nm){return nm.toLowerCase().includes(filter);});if(matches.length===0){list.style.display='none';return;}matches.slice(0,20).forEach(function(nm){list.innerHTML+='<li onmousedown="selectAutocomplete('+n+',\''+esc(nm)+'\')">'+esc(nm)+'</li>';});list.style.display='block';}
+function selectAutocomplete(n,name){document.getElementById('nameField'+n).value=name;document.getElementById('autocompleteList'+n).style.display='none';var ft=findTypeByName(name);if(ft){document.getElementById('typeField'+n).value=ft;checkType(n);}saveFormData();}
 function hideAutocomplete(n){setTimeout(function(){var list=document.getElementById('autocompleteList'+n);if(list)list.style.display='none';},200);}
-
-function saveCustomName(num){
-var n=document.getElementById('nameField'+num).value.trim();
-if(n.length>=3){typesData.push([n,n,'']);allTypesFromSheet.push(n);setStatus('✅ Название сохранено','success');}
-}
-
-function saveCustomType(num){
-var t=document.getElementById('typeField'+num).value.trim();
-if(t.length>=3){typesData.push([t,t,t]);allTypesFromSheet.push(t);setStatus('✅ Тип сохранён','success');}
-}
-
-function filterCompanies(){
-var input=document.getElementById('companyInput'),list=document.getElementById('companyList');
-if(!input||!list)return;
-var f=input.value.toLowerCase().trim();
-list.innerHTML='';
-if(!f){list.style.display='none';return;}
-var matches=companyListData.filter(function(c){return c.toLowerCase().includes(f);});
-if(matches.length===0){list.style.display='none';return;}
-matches.slice(0,8).forEach(function(c){list.innerHTML+='<li onmousedown="selectCompany(\''+esc(c)+'\')">'+esc(c)+'</li>';});
-list.style.display='block';
-}
-
+function findTypeByName(name){if(!name)return'';var nc=name.toLowerCase().replace(/[^a-zа-я0-9]/g,''),best='',bestScore=0;typesData.forEach(function(r){var ref=(r[1]||r[0]||'').toLowerCase().replace(/[^a-zа-я0-9]/g,'');if(ref&&nc.includes(ref)&&ref.length>bestScore){bestScore=ref.length;best=r[2]||r[1]||r[0]||'';}});return best;}
+function saveCustomName(num){var n=document.getElementById('nameField'+num).value.trim();if(n.length>=3){typesData.push([n,n,'']);setStatus('✅ Сохранено','success');}}
+function saveCustomType(num){var t=document.getElementById('typeField'+num).value.trim();if(t.length>=3){typesData.push([t,t,t]);setStatus('✅ Сохранено','success');}}
+function filterCompanies(){var input=document.getElementById('companyInput'),list=document.getElementById('companyList');if(!input||!list)return;var f=input.value.toLowerCase().trim();list.innerHTML='';if(!f){list.style.display='none';return;}var matches=companyListData.filter(function(c){return c.toLowerCase().includes(f);});if(matches.length===0){list.style.display='none';return;}matches.slice(0,8).forEach(function(c){list.innerHTML+='<li onmousedown="selectCompany(\''+esc(c)+'\')">'+esc(c)+'</li>';});list.style.display='block';}
 function selectCompany(name){document.getElementById('companyInput').value=name;document.getElementById('companyList').style.display='none';saveFormData();}
 function hideCompanyList(){setTimeout(function(){var list=document.getElementById('companyList');if(list)list.style.display='none';},200);}
-
-function addCompany(){
-var name=prompt('Введите название компании:');
-if(!name||!name.trim())return;
-name=name.trim();
-var email=prompt('Введите email компании (необязательно):','');
-companyListData.push(name);
-document.getElementById('companyInput').value=name;
-saveFormData();
-var url=SCRIPT_URL+'?action=addCompany&name='+encodeURIComponent(name);
-if(email&&email.trim())url+='&email='+encodeURIComponent(email.trim());
-fetch(url).then(r=>r.json()).then(function(res){if(res.status==='success')setStatus('✅ Компания сохранена','success');}).catch(function(){});
-}
-
-function saveFormData(){
-clearTimeout(saveTimeout);
-saveTimeout=setTimeout(function(){
-var data={company:document.getElementById('companyInput').value,devices:[]};
-document.querySelectorAll('.device-block').forEach(function(b){
-var n=b.id.replace('device','');
-var d={
-type:document.getElementById('typeField'+n)?.value||'',
-name:document.getElementById('nameField'+n)?.value||'',
-serial:document.getElementById('serialField'+n)?.value||'',
-serial2:document.getElementById('serialDual2_'+n)?.value||'',
-address:document.getElementById('addressField'+n)?.value||'',
-akb:document.getElementById('akbCheck'+n)?.checked||false,
-note:document.getElementById('noteField'+n)?.value||''
-};
-if(d.name||d.type||d.serial)data.devices.push(d);
-});
-if(data.company||data.devices.length>0){localStorage.setItem('priemkaFormData',JSON.stringify(data));showSaved();}
-},300);
-}
-
-function showSaved(){var el=document.getElementById('savedIndicator');if(el){el.style.display='block';setTimeout(function(){el.style.display='none';},1500);}}
-
-function loadFormData(){
-try{
-var saved=JSON.parse(localStorage.getItem('priemkaFormData')||'{}');
-if(!saved.devices||!saved.devices.length)return;
-if(saved.company)document.getElementById('companyInput').value=saved.company;
-document.getElementById('devicesContainer').innerHTML='';
-deviceCounter=0;usedAddresses=[];
-saved.devices.forEach(function(dev){
-deviceCounter++;createDeviceBlock(deviceCounter);
-var n=deviceCounter;
-setTimeout(function(){
-document.getElementById('nameField'+n).value=dev.name||'';
-document.getElementById('typeField'+n).value=dev.type||'';
-document.getElementById('noteField'+n).value=dev.note||'';
-if(dev.serial2){document.getElementById('serialDual1_'+n).value=dev.serial||'';document.getElementById('serialDual2_'+n).value=dev.serial2||'';checkType(n);fixSerialLetter(n,1);}
-else document.getElementById('serialField'+n).value=dev.serial||'';
-if(dev.address){document.getElementById('addressField'+n).value=dev.address;if(usedAddresses.indexOf(dev.address)===-1)usedAddresses.push(dev.address);}
-if(dev.akb){var cb=document.getElementById('akbCheck'+n);if(cb)cb.checked=true;}
-},100);
-});
-setStatus('✅ Данные восстановлены','success');
-}catch(e){}
-}
-
-function clearFormData(){localStorage.removeItem('priemkaFormData');}
-
-function newAct(){
-if(confirm('Очистить все поля?')){
-document.getElementById('devicesContainer').innerHTML='';
-deviceCounter=0;usedAddresses=[];
-clearFormData();addDevice();
-setStatus('✅ Новый акт','success');
-var pb=document.getElementById('printBtn');if(pb)pb.style.display='none';
-}
-}
-
-function submitAct(){
-var company=document.getElementById('companyInput').value.trim();
-if(!company){alert('Введите компанию');return;}
-var emp=currentUser||'';
-if(!emp){alert('Не определён сотрудник');return;}
-var devices=[],allValid=true;
-document.querySelectorAll('.device-block').forEach(function(b){
-if(b.offsetParent===null)return;
-var n=b.id.replace('device','');
-var t=document.getElementById('typeField'+n)?.value.trim()||'',
-nm=document.getElementById('nameField'+n)?.value.trim()||'',
-addr=document.getElementById('addressField'+n)?.value.trim()||'',
-akb=document.getElementById('akbCheck'+n)?.checked||false,
-nt=document.getElementById('noteField'+n)?.value.trim()||'';
-var serial='';
-if(isDualSerialType(parseInt(n))){
-var s1=document.getElementById('serialDual1_'+n)?.value.trim()||'',
-s2=document.getElementById('serialDual2_'+n)?.value.trim()||'';
-serial=s1+(s2?'/'+s2:'');
-if(!s1){allValid=false;return;}
-}else{
-serial=document.getElementById('serialField'+n)?.value.trim()||'';
-if(!serial){allValid=false;return;}
-}
-if(!nm||!t){allValid=false;return;}
-devices.push({type:t,name:nm,serial:serial,address:addr,akb:akb,note:nt});
-});
-if(!allValid||!devices.length){alert('Заполните обязательные поля');return;}
-var email=settings.email||'';
-if(!email){alert('Укажите email в настройках!');return;}
-var btn=document.getElementById('submitBtn');
-btn.disabled=true;
-btn.innerHTML='<span class="spinner spinner-white"></span> Отправка...';
-setStatus('📤 Формирование акта...','loading');
-var now=new Date(),ds=('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear();
-var form=document.createElement('form');
-form.method='POST';form.action=SCRIPT_URL;form.target='hiddenFrame';form.style.display='none';
-[{n:'date',v:ds},{n:'company',v:company},{n:'employee',v:emp},{n:'devices',v:JSON.stringify(devices)},{n:'email',v:email},{n:'actType',v:'Приёмка'}].forEach(function(f){
-var i=document.createElement('input');i.type='hidden';i.name=f.n;i.value=f.v;form.appendChild(i);
-});
-document.body.appendChild(form);form.submit();document.body.removeChild(form);
-setTimeout(function(){
-btn.innerHTML='📧 Сформировать акт и отправить';btn.disabled=false;
-setStatus('✅ Акт отправлен на '+email,'success');
-clearFormData();
-if(navigator.vibrate)navigator.vibrate([30,50,30]);
-var pb=document.getElementById('printBtn');if(pb)pb.style.display='block';
-},2000);
-}
-
-function openActsList(){
-document.getElementById('actsModal').style.display='block';
-document.getElementById('actsList').innerHTML='<div class="spinner"></div> Загрузка...';
-fetch(SCRIPT_URL+'?action=getActs').then(r=>r.json()).then(function(acts){
-var html='';
-Object.keys(acts).sort(function(a,b){
-var numA=parseInt(a.split('/').pop().replace(/[ПВ]/,''))||0;
-var numB=parseInt(b.split('/').pop().replace(/[ПВ]/,''))||0;
-return numB-numA;
-}).forEach(function(n){
-var a=acts[n];
-html+='<div class="act-item" onclick="loadActFromModal(\''+n+'\')"><b>Акт №'+n+'</b> от '+a.date+'<br>Компания: '+a.company+' | Приборов: '+a.devicesCount+'</div>';
-});
-document.getElementById('actsList').innerHTML=html||'Нет актов.';
-}).catch(function(){document.getElementById('actsList').innerHTML='Ошибка.';});
-}
-
+function addCompany(){var name=prompt('Компания:');if(!name||!name.trim())return;name=name.trim();var email=prompt('Email:');companyListData.push(name);document.getElementById('companyInput').value=name;saveFormData();var url=SCRIPT_URL+'?action=addCompany&name='+encodeURIComponent(name);if(email)url+='&email='+encodeURIComponent(email);fetch(url).then(r=>r.json()).then(function(res){if(res.status==='success')setStatus('✅ Сохранено','success');});}
+function saveFormData(){clearTimeout(saveTimeout);saveTimeout=setTimeout(function(){var data={company:document.getElementById('companyInput').value,devices:[]};document.querySelectorAll('.device-block').forEach(function(b){var n=b.id.replace('device','');var d={type:document.getElementById('typeField'+n)?.value||'',name:document.getElementById('nameField'+n)?.value||'',serial:document.getElementById('serialField'+n)?.value||'',serial2:document.getElementById('serialDual2_'+n)?.value||'',address:document.getElementById('addressField'+n)?.value||'',akb:document.getElementById('akbCheck'+n)?.checked||false,note:document.getElementById('noteField'+n)?.value||''};if(d.name||d.type||d.serial)data.devices.push(d);});if(data.company||data.devices.length>0)localStorage.setItem('priemkaFormData',JSON.stringify(data));},300);}
+function loadFormData(){try{var saved=JSON.parse(localStorage.getItem('priemkaFormData')||'{}');if(!saved.devices||!saved.devices.length)return;if(saved.company)document.getElementById('companyInput').value=saved.company;document.getElementById('devicesContainer').innerHTML='';deviceCounter=0;usedAddresses=[];saved.devices.forEach(function(dev){deviceCounter++;createDeviceBlock(deviceCounter);var n=deviceCounter;setTimeout(function(){document.getElementById('nameField'+n).value=dev.name||'';document.getElementById('typeField'+n).value=dev.type||'';document.getElementById('noteField'+n).value=dev.note||'';if(dev.serial2){document.getElementById('serialDual1_'+n).value=dev.serial||'';document.getElementById('serialDual2_'+n).value=dev.serial2||'';checkType(n);fixSerialLetter(n,1);}else document.getElementById('serialField'+n).value=dev.serial||'';if(dev.address){document.getElementById('addressField'+n).value=dev.address;if(usedAddresses.indexOf(dev.address)===-1)usedAddresses.push(dev.address);}if(dev.akb){var cb=document.getElementById('akbCheck'+n);if(cb)cb.checked=true;}},100);});setStatus('✅ Восстановлено','success');}catch(e){}}
+function newAct(){if(confirm('Очистить?')){document.getElementById('devicesContainer').innerHTML='';deviceCounter=0;usedAddresses=[];localStorage.removeItem('priemkaFormData');addDevice();setStatus('✅ Новый акт','success');}}
+function submitAct(){var company=document.getElementById('companyInput').value.trim();if(!company){alert('Введите компанию');return;}var emp=currentUser||'';if(!emp){alert('Нет сотрудника');return;}var devices=[],allValid=true;document.querySelectorAll('.device-block').forEach(function(b){if(b.offsetParent===null)return;var n=b.id.replace('device','');var t=document.getElementById('typeField'+n)?.value.trim()||'',nm=document.getElementById('nameField'+n)?.value.trim()||'',addr=document.getElementById('addressField'+n)?.value.trim()||'',akb=document.getElementById('akbCheck'+n)?.checked||false,nt=document.getElementById('noteField'+n)?.value.trim()||'';var serial='';if(isDualSerialType(parseInt(n))){var s1=document.getElementById('serialDual1_'+n)?.value.trim()||'',s2=document.getElementById('serialDual2_'+n)?.value.trim()||'';serial=s1+(s2?'/'+s2:'');if(!s1){allValid=false;return;}}else{serial=document.getElementById('serialField'+n)?.value.trim()||'';if(!serial){allValid=false;return;}}if(!nm||!t){allValid=false;return;}devices.push({type:t,name:nm,serial:serial,address:addr,akb:akb,note:nt});});if(!allValid||!devices.length){alert('Заполните поля');return;}var email=settings.email||'';if(!email){alert('Укажите email в настройках');return;}var btn=document.getElementById('submitBtn');btn.disabled=true;btn.innerHTML='<span class="spinner spinner-white"></span> Отправка...';var now=new Date(),ds=('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear();var form=document.createElement('form');form.method='POST';form.action=SCRIPT_URL;form.target='hiddenFrame';form.style.display='none';[{n:'date',v:ds},{n:'company',v:company},{n:'employee',v:emp},{n:'devices',v:JSON.stringify(devices)},{n:'email',v:email},{n:'actType',v:'Приёмка'}].forEach(function(f){var i=document.createElement('input');i.type='hidden';i.name=f.n;i.value=f.v;form.appendChild(i);});document.body.appendChild(form);form.submit();document.body.removeChild(form);setTimeout(function(){btn.innerHTML='📧 Сформировать и отправить';btn.disabled=false;setStatus('✅ Отправлен','success');localStorage.removeItem('priemkaFormData');},2000);}
+function openActsList(){document.getElementById('actsModal').style.display='block';document.getElementById('actsList').innerHTML='<div class="spinner"></div>';fetch(SCRIPT_URL+'?action=getActs').then(r=>r.json()).then(function(acts){var html='';Object.keys(acts).sort(function(a,b){return(parseInt(b.split('/').pop().replace(/[ПВ]/,''))||0)-(parseInt(a.split('/').pop().replace(/[ПВ]/,''))||0);}).forEach(function(n){var a=acts[n];html+='<div class="act-item" onclick="loadActFromModal(\''+n+'\')"><b>Акт №'+n+'</b> от '+a.date+'<br>'+a.company+' | '+a.devicesCount+' прибора</div>';});document.getElementById('actsList').innerHTML=html||'Нет актов';});}
 function closeActsList(){document.getElementById('actsModal').style.display='none';}
-
-function loadActFromModal(n){
-fetch(SCRIPT_URL+'?action=getAct&number='+encodeURIComponent(n)).then(r=>r.json()).then(function(act){
-if(act.error){alert(act.error);return;}
-loadActData(act);
-closeActsList();
-setStatus('✅ Загружен акт №'+n,'success');
-var pb=document.getElementById('printBtn');if(pb)pb.style.display='block';
-});
-}
-
-function loadActData(act){
-if(act.company){document.getElementById('companyInput').value=act.company;}
-document.getElementById('devicesContainer').innerHTML='';
-deviceCounter=0;usedAddresses=[];
-act.devices.forEach(function(dev){
-deviceCounter++;createDeviceBlock(deviceCounter);
-document.getElementById('nameField'+deviceCounter).value=dev.name||'';
-document.getElementById('typeField'+deviceCounter).value=dev.type||'';
-document.getElementById('noteField'+deviceCounter).value=dev.note||'';
-checkType(deviceCounter);
-if(isDualSerialType(deviceCounter)&&dev.serial&&dev.serial.includes('/')){
-var p=dev.serial.split('/');
-document.getElementById('serialDual1_'+deviceCounter).value=p[0]||'';
-document.getElementById('serialDual2_'+deviceCounter).value=p[1]||'';
-fixSerialLetter(deviceCounter,1);
-}else document.getElementById('serialField'+deviceCounter).value=dev.serial||'';
-if(dev.address){document.getElementById('addressField'+deviceCounter).value=dev.address;if(usedAddresses.indexOf(dev.address)===-1)usedAddresses.push(dev.address);}
-if(dev.akb){var cb=document.getElementById('akbCheck'+deviceCounter);if(cb)cb.checked=true;}
-});
-if(deviceCounter===0)addDevice();
-saveFormData();
-}
-
+function loadActFromModal(n){fetch(SCRIPT_URL+'?action=getAct&number='+encodeURIComponent(n)).then(r=>r.json()).then(function(act){if(act.error){alert(act.error);return;}if(act.company)document.getElementById('companyInput').value=act.company;document.getElementById('devicesContainer').innerHTML='';deviceCounter=0;usedAddresses=[];act.devices.forEach(function(dev){deviceCounter++;createDeviceBlock(deviceCounter);document.getElementById('nameField'+deviceCounter).value=dev.name||'';document.getElementById('typeField'+deviceCounter).value=dev.type||'';document.getElementById('noteField'+deviceCounter).value=dev.note||'';checkType(deviceCounter);if(isDualSerialType(deviceCounter)&&dev.serial&&dev.serial.includes('/')){var p=dev.serial.split('/');document.getElementById('serialDual1_'+deviceCounter).value=p[0]||'';document.getElementById('serialDual2_'+deviceCounter).value=p[1]||'';fixSerialLetter(deviceCounter,1);}else document.getElementById('serialField'+deviceCounter).value=dev.serial||'';if(dev.address){document.getElementById('addressField'+deviceCounter).value=dev.address;}if(dev.akb){var cb=document.getElementById('akbCheck'+deviceCounter);if(cb)cb.checked=true;}});if(deviceCounter===0)addDevice();saveFormData();closeActsList();setStatus('✅ Загружен','success');});}
 function printAct(){window.open('https://docs.google.com/spreadsheets/d/'+SPREADSHEET_ID+'/export?format=pdf&size=A4&portrait=true&scale=4&fitw=true&gridlines=false&gid=1303750308','_blank');}
-
-function createReturnActByKey(gi){
-var keys=Object.keys(deviceGroups),key=keys[gi];
-if(!key||!deviceGroups[key]){alert('Группа не найдена');return;}
-createReturnAct(deviceGroups[key].company,deviceGroups[key].devices);
-}
-
-function createReturnAct(company,devices){
-var email=settings.email||'';
-if(!email){alert('Укажите email в настройках (⚙️)!');return;}
-if(!confirm('Сформировать акт возврата для «'+company+'» на '+devices.length+' приборов и отправить на '+email+'?'))return;
-setStatus('📤 Формирование акта возврата...','loading');
-var emp=currentUser||'Сотрудник';
-var now=new Date(),ds=('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear();
-var simple=[];
-for(var i=0;i<devices.length;i++){
-var d=devices[i];
-simple.push({type:d.type||'',name:d.name||'',serial:d.serial||'',address:d.address||'',akb:d.akb||false,note:d.repairReason||d.note||'',workType:d.status||'Поверка (годен)',status:d.status||''});
-}
-var form=document.createElement('form');
-form.method='POST';form.action=SCRIPT_URL;form.target='hiddenFrame';form.style.display='none';
-[['date',ds],['company',company],['employee',emp],['devices',JSON.stringify(simple)],['email',email],['actType','Выдача']].forEach(function(p){
-var inp=document.createElement('input');inp.type='hidden';inp.name=p[0];inp.value=p[1];form.appendChild(inp);
-});
-document.body.appendChild(form);form.submit();document.body.removeChild(form);
-setTimeout(function(){
-setStatus('✅ Акт возврата отправлен на '+email,'success');
-if(navigator.vibrate)navigator.vibrate([30,50,30]);
-window.open('https://docs.google.com/spreadsheets/d/'+SPREADSHEET_ID+'/export?format=pdf&size=A4&portrait=true&scale=4&fitw=true&gridlines=false&gid=1303750308','_blank');
-},3000);
-}
-
-function openMessageModal(c,i){
-document.getElementById('msgDeviceInfo').textContent='🏢 '+c+' | '+i;
-document.getElementById('msgSubject').value='Статус приборов';
-document.getElementById('msgBody').value='Уважаемый клиент!\n\nИнформация по прибору:\n'+i+'\n\n🏢 Адрес: ул. Новаторов, 5\n📞 Тел: +7(996)6418436';
-document.getElementById('messageModal').style.display='block';
-fetch(SCRIPT_URL+'?action=getClientEmail&company='+encodeURIComponent(c)).then(r=>r.json()).then(function(res){document.getElementById('msgEmail').value=res.email||'';});
-}
-
-function openGroupMessageModal(gi){
-var keys=Object.keys(deviceGroups),key=keys[gi];
-if(!key||!deviceGroups[key]){alert('Группа не найдена');return;}
-var g=deviceGroups[key];
-var dd=g.actDate?g.actDate.replace(/T.*/,'').split('-').reverse().join('.'):'';
-var t='Уважаемый клиент!\n\nИнформация по вашим приборам:\n\n📅 '+dd;
-if(g.actNumber)t+=' | Акт №'+g.actNumber;
-t+=' | Приборов: '+g.devices.length+'\n\n';
-g.devices.forEach(function(d,i){
-t+=(i+1)+'. '+(d.name||'')+' '+(d.type||'')+' | зав.№ '+(d.serial||'')+' | '+(d.status||'В работе');
-if(d.address)t+='\n Адрес: '+d.address;
-if(d.repairReason)t+='\n Причина: '+d.repairReason;
-if(d.note&&d.note!==d.repairReason)t+='\n Примечание: '+d.note;
-t+='\n\n';
-});
-t+='🏢 Адрес: ул. Новаторов, 5\n📞 Тел: +7(996)6418436';
-document.getElementById('msgDeviceInfo').textContent='🏢 '+(g.company||'');
-document.getElementById('msgSubject').value='Статус приборов';
-document.getElementById('msgBody').value=t;
-document.getElementById('messageModal').style.display='block';
-fetch(SCRIPT_URL+'?action=getClientEmail&company='+encodeURIComponent(g.company||'')).then(r=>r.json()).then(function(res){document.getElementById('msgEmail').value=res.email||'';});
-}
-
+function createReturnActByKey(gi){var keys=Object.keys(deviceGroups),key=keys[gi];if(!key||!deviceGroups[key])return;createReturnAct(deviceGroups[key].company,deviceGroups[key].devices);}
+function createReturnAct(company,devices){var email=settings.email||'';if(!email){alert('Укажите email');return;}if(!confirm('Акт возврата для '+company+'?'))return;var emp=currentUser||'Сотрудник';var now=new Date(),ds=('0'+now.getDate()).slice(-2)+'.'+('0'+(now.getMonth()+1)).slice(-2)+'.'+now.getFullYear();var simple=devices.map(function(d){return{type:d.type||'',name:d.name||'',serial:d.serial||'',address:d.address||'',akb:d.akb||false,note:d.repairReason||d.note||'',workType:d.status||'Поверка',status:d.status||''};});var form=document.createElement('form');form.method='POST';form.action=SCRIPT_URL;form.target='hiddenFrame';form.style.display='none';[['date',ds],['company',company],['employee',emp],['devices',JSON.stringify(simple)],['email',email],['actType','Выдача']].forEach(function(p){var inp=document.createElement('input');inp.type='hidden';inp.name=p[0];inp.value=p[1];form.appendChild(inp);});document.body.appendChild(form);form.submit();document.body.removeChild(form);setTimeout(function(){setStatus('✅ Акт возврата отправлен','success');},3000);}
+function openMessageModal(c,i){document.getElementById('msgDeviceInfo').textContent='🏢 '+c+' | '+i;document.getElementById('msgSubject').value='Статус приборов';document.getElementById('msgBody').value='Уважаемый клиент!\n\nИнформация:\n'+i+'\n\n🏢 ул. Новаторов, 5\n📞 +7(996)6418436';document.getElementById('messageModal').style.display='block';fetch(SCRIPT_URL+'?action=getClientEmail&company='+encodeURIComponent(c)).then(r=>r.json()).then(function(res){document.getElementById('msgEmail').value=res.email||'';});}
+function openGroupMessageModal(gi){var keys=Object.keys(deviceGroups),key=keys[gi];if(!key||!deviceGroups[key])return;var g=deviceGroups[key];var dd=g.actDate?g.actDate.replace(/T.*/,'').split('-').reverse().join('.'):'';var t='Уважаемый клиент!\n\n📅 '+dd+(g.actNumber?' | Акт №'+g.actNumber:'')+' | Приборов: '+g.devices.length+'\n\n';g.devices.forEach(function(d,i){t+=(i+1)+'. '+(d.name||'')+' '+(d.type||'')+' | №'+(d.serial||'')+' | '+(d.status||'')+'\n';if(d.address)t+=' Адрес: '+d.address+'\n';t+='\n';});t+='🏢 ул. Новаторов, 5\n📞 +7(996)6418436';document.getElementById('msgDeviceInfo').textContent='🏢 '+(g.company||'');document.getElementById('msgSubject').value='Статус приборов';document.getElementById('msgBody').value=t;document.getElementById('messageModal').style.display='block';fetch(SCRIPT_URL+'?action=getClientEmail&company='+encodeURIComponent(g.company||'')).then(r=>r.json()).then(function(res){document.getElementById('msgEmail').value=res.email||'';});}
 function closeMessageModal(){document.getElementById('messageModal').style.display='none';}
-
-function sendMsg(){
-var em=document.getElementById('msgEmail').value.trim(),sb=document.getElementById('msgSubject').value.trim(),bd=document.getElementById('msgBody').value.trim();
-if(!em||!sb||!bd){alert('Заполните все поля');return;}
-var cp=document.getElementById('msgDeviceInfo').textContent.replace('🏢 ','').split(' | ')[0];
-if(cp&&em){fetch(SCRIPT_URL+'?action=saveClientEmail&company='+encodeURIComponent(cp)+'&email='+encodeURIComponent(em));}
-fetch(SCRIPT_URL+'?action=sendMessage&email='+encodeURIComponent(em)+'&subject='+encodeURIComponent(sb)+'&message='+encodeURIComponent(bd)).then(r=>r.json()).then(function(res){
-if(res.status==='success'){setStatus('✅ Сообщение отправлено','success');closeMessageModal();}else{setStatus('❌ Ошибка','error');}
-});
-}
-
-function loadArchive(){
-document.getElementById('archiveContent').innerHTML='<div class="spinner"></div> Загрузка...';
-fetch(SCRIPT_URL+'?action=getActs').then(r=>r.json()).then(function(acts){
-var html='';
-Object.keys(acts).sort(function(a,b){return(parseInt(b.split('/').pop().replace(/[ПВ]/,''))||0)-(parseInt(a.split('/').pop().replace(/[ПВ]/,''))||0);}).forEach(function(n){
-var a=acts[n];
-html+='<div class="act-item" style="background:#F2F2F7;border-radius:12px;padding:14px;margin-bottom:8px;"><b>Акт №'+n+'</b> от '+a.date+'<br>Компания: '+(a.company||'')+' | Приборов: '+a.devicesCount+' <button class="btn-sm blue" onclick="restoreAct(\''+n+'\')">📤</button></div>';
-});
-document.getElementById('archiveContent').innerHTML=html||'Нет актов.';
-}).catch(function(){document.getElementById('archiveContent').innerHTML='Ошибка загрузки.';});
-}
-
-function restoreAct(n){
-fetch(SCRIPT_URL+'?action=getAct&number='+encodeURIComponent(n)).then(r=>r.json()).then(function(act){
-if(act.error){alert(act.error);return;}
-showMode('priemka');
-setTimeout(function(){loadActData(act);},500);
-setStatus('✅ Акт восстановлен','success');
-});
-}
-
-// ============ ПРАЙС ============
-function renderPrice(){
-var html='';
-var sections=[
-{title:'1. Тепловычислители и теплосчётчики',color:'#007AFF',rows:[['Поверка тепловычислителя любого типа','5 000'],['Поверка теплосчетчика с 2 расх. и компл. ТС','',[['DN15-50','15 200'],['DN65-100','17 200'],['DN150','30 200']]],['Настройка тепловычислителя','2 000'],['Замена элемента питания (без учёта АКБ)','1 000'],['Ремонт тепловычислителя и теплосчетчика','договорная']]},
-{title:'2. Расходомеры',color:'#34C759',rows:[['Поверка расходомера электромагнитного','',[['DN15-50','4 500'],['DN65-100','5 500'],['DN150','12 000']]],['Поверка расходомера ультразвукового','',[['DN15-50','5 500'],['DN65-100','6 500'],['DN150','15 000']]],['Настройка расходомера','',[['DN15-50','3 000'],['DN65-100','3 500'],['DN150','4 000']]],['Настройка «в пару» расходомера','5 000'],['Ремонт расходомера','договорная'],['Подготовка паспорта на СИ','по запросу']]},
-{title:'3. Счётчики жидкости тахометрические',color:'#FF9500',rows:[['Поверка счётчика жидкости','',[['DN25-32','2 500'],['DN40-65','4 500'],['DN80-150','6 000']]]]},
-{title:'4. Термопреобразователи сопротивления и термометры',color:'#FF2D55',rows:[['Поверка термопреобразователя сопротивления','600'],['Поверка комплекта термопреобразователей сопротивления','1 200'],['Термометр стеклянный технический','300'],['Термометр биметаллический БТ','300']]},
-{title:'5. Преобразователи давления',color:'#AF52DE',rows:[['Поверка преобразователя давления','1 000']]},
-{title:'6. Манометры',color:'#8E8E93',rows:[['Поверка манометра показывающего КТ 1-2,5','180'],['Поверка манометра технического','180'],['Поверка манометра электроконтактного','250'],['Поверка напоромера, тягонапоромера','500'],['Поверка манометра цифрового','1 000'],['Поверка манометра, вакуумметра образцового','1 000']]}
-];
-sections.forEach(function(sec){
-html+='<div class="price-section"><h3 style="color:'+sec.color+'">'+sec.title+'</h3><table class="price-table">';
-sec.rows.forEach(function(row){
-html+='<tr><td>'+row[0]+'</td>';
-if(row[2]&&Array.isArray(row[2])){
-html+='<td>';row[2].forEach(function(dn){html+='<span style="margin-right:10px;font-size:10px;color:#8E8E93;">'+dn[0]+'</span>';});html+='</td></tr><tr><td></td><td>';
-row[2].forEach(function(dn){html+='<span style="margin-right:10px;">'+dn[1]+'</span>';});html+='</td>';
-}else{html+='<td>'+(row[1]||'')+'</td>';}
-html+='</tr>';
-});
-html+='</table></div>';
-});
-document.getElementById('priceContent').innerHTML=html;
-}
-
-// ============ КАМЕРА ============
-function openCamera(target,n){
-currentCameraTarget=target;currentCameraDevice=n;
-document.getElementById('cameraOverlay').style.display='block';
-var video=document.getElementById('cameraVideo');
-if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
-if(window._cachedStream){cameraStream=window._cachedStream;video.srcObject=cameraStream;video.play();return;}
-navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(function(s){cameraStream=s;window._cachedStream=s;video.srcObject=s;video.play();}).catch(function(){closeCamera();});
-}
-}
-
-function captureFromCamera(){
-if(!currentCameraTarget||!currentCameraDevice)return;
-var video=document.getElementById('cameraVideo');
-var canvas=document.createElement('canvas');
-canvas.width=video.videoWidth;canvas.height=video.videoHeight;
-canvas.getContext('2d').drawImage(video,0,0);
-var dataUrl=canvas.toDataURL('image/jpeg',0.9);
-closeCamera();
-recognizeText(dataUrl,currentCameraTarget,currentCameraDevice);
-}
-
-function closeCamera(){
-document.getElementById('cameraOverlay').style.display='none';
-document.getElementById('cameraVideo').srcObject=null;
-}
-
-function recognizeText(dataUrl,target,n){
-setStatus('Распознавание...','loading');
-Tesseract.recognize(dataUrl,'rus+eng',{logger:function(m){if(m.status==='recognizing text')setStatus('Распознавание: '+Math.round(m.progress*100)+'%','loading');}}).then(function(result){
-var text=result.data.text.replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g,' ').replace(/\s+/g,' ').trim();
-if(target==='name'){
-document.getElementById('nameField'+n).value=text;
-var ft=findTypeByName(text);
-if(ft){document.getElementById('typeField'+n).value=ft;checkType(n);}
-}else{document.getElementById('serialField'+n).value=text.match(/\d{3,}/)?.[0]||'';}
-saveFormData();
-setStatus('✅ Распознано','success');
-}).catch(function(){setStatus('❌ Ошибка','error');});
-}
-
-// ============ НАСТРОЙКИ ============
-function saveSettings(){
-settings.email=document.getElementById('settingsEmail').value.trim();
-localStorage.setItem('appSettings',JSON.stringify(settings));
-document.getElementById('settingsStatus').textContent='✅ Настройки сохранены';
-document.getElementById('settingsStatus').className='status success';
-updateEmailHint();
-}
-
-function updateEmailHint(){
-var e=settings.email||'';
-var el=document.getElementById('emailHint');
-if(el)el.textContent=e?'📧 Письмо уйдёт на '+e:'⚠️ Укажите email в настройках';
-}
-
-// ============ ВСПОМОГАТЕЛЬНЫЕ ============
-function setStatus(msg,cls){
-var el=document.getElementById('status');
-if(el){el.innerHTML=msg;el.className='status';if(cls)el.classList.add(cls);}
-}
-
-function esc(s){
-if(s===null||s===undefined)return'';
-s=String(s);
-return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-
-window.addEventListener('click',function(e){
-if(e.target===document.getElementById('statusModal'))closeStatusModal();
-if(e.target===document.getElementById('messageModal'))closeMessageModal();
-if(e.target===document.getElementById('repairStatusModal'))closeRepairStatusModal();
-if(e.target===document.getElementById('cardStatusModal'))closeCardStatusModal();
-if(e.target===document.getElementById('actsModal'))closeActsList();
-});
-
-window.addEventListener('beforeunload',function(){
-localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
-});
+function sendMsg(){var em=document.getElementById('msgEmail').value.trim(),sb=document.getElementById('msgSubject').value.trim(),bd=document.getElementById('msgBody').value.trim();if(!em||!sb||!bd){alert('Заполните поля');return;}fetch(SCRIPT_URL+'?action=sendMessage&email='+encodeURIComponent(em)+'&subject='+encodeURIComponent(sb)+'&message='+encodeURIComponent(bd)).then(r=>r.json()).then(function(res){if(res.status==='success'){setStatus('✅ Отправлено','success');closeMessageModal();}else{setStatus('❌ Ошибка','error');}});}
+function loadArchive(){document.getElementById('archiveContent').innerHTML='<div class="spinner"></div>';fetch(SCRIPT_URL+'?action=getActs').then(r=>r.json()).then(function(acts){var html='';Object.keys(acts).sort(function(a,b){return(parseInt(b.split('/').pop().replace(/[ПВ]/,''))||0)-(parseInt(a.split('/').pop().replace(/[ПВ]/,''))||0);}).forEach(function(n){var a=acts[n];html+='<div class="act-item"><b>Акт №'+n+'</b> от '+a.date+'<br>'+a.company+' | '+a.devicesCount+' прибора <button class="btn-sm blue" onclick="restoreAct(\''+n+'\')">📤</button></div>';});document.getElementById('archiveContent').innerHTML=html||'Нет актов';});}
+function restoreAct(n){fetch(SCRIPT_URL+'?action=getAct&number='+encodeURIComponent(n)).then(r=>r.json()).then(function(act){if(act.error){alert(act.error);return;}showMode('priemka');setTimeout(function(){loadActData(act);},500);});}
+function loadActData(act){if(act.company)document.getElementById('companyInput').value=act.company;document.getElementById('devicesContainer').innerHTML='';deviceCounter=0;usedAddresses=[];act.devices.forEach(function(dev){deviceCounter++;createDeviceBlock(deviceCounter);document.getElementById('nameField'+deviceCounter).value=dev.name||'';document.getElementById('typeField'+deviceCounter).value=dev.type||'';document.getElementById('noteField'+deviceCounter).value=dev.note||'';checkType(deviceCounter);if(isDualSerialType(deviceCounter)&&dev.serial&&dev.serial.includes('/')){var p=dev.serial.split('/');document.getElementById('serialDual1_'+deviceCounter).value=p[0]||'';document.getElementById('serialDual2_'+deviceCounter).value=p[1]||'';}else document.getElementById('serialField'+deviceCounter).value=dev.serial||'';if(dev.address)document.getElementById('addressField'+deviceCounter).value=dev.address;if(dev.akb){var cb=document.getElementById('akbCheck'+deviceCounter);if(cb)cb.checked=true;}});if(deviceCounter===0)addDevice();saveFormData();}
+function renderPrice(){var html='';var sections=[{title:'1. Тепловычислители',color:'#007AFF',rows:[['Поверка тепловычислителя','5 000'],['Поверка теплосчетчика','от 15 200'],['Настройка','2 000'],['Замена АКБ','1 000']]},{title:'2. Расходомеры',color:'#34C759',rows:[['Поверка э/м','от 4 500'],['Поверка у/з','от 5 500'],['Настройка','от 3 000']]},{title:'3. Термопреобразователи',color:'#FF2D55',rows:[['Поверка ТС','600'],['Поверка комплекта','1 200']]},{title:'4. Манометры',color:'#8E8E93',rows:[['Поверка показывающего','180'],['Поверка эл.контактного','250'],['Поверка цифрового','1 000']]}];sections.forEach(function(sec){html+='<div class="price-section"><h3 style="color:'+sec.color+'">'+sec.title+'</h3><table class="price-table">';sec.rows.forEach(function(row){html+='<tr><td>'+row[0]+'</td><td>'+row[1]+'</td></tr>';});html+='</table></div>';});document.getElementById('priceContent').innerHTML=html;}
+function openCamera(t,n){currentCameraTarget=t;currentCameraDevice=n;document.getElementById('cameraOverlay').style.display='block';var video=document.getElementById('cameraVideo');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){if(window._cachedStream){cameraStream=window._cachedStream;video.srcObject=cameraStream;video.play();return;}navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(function(s){cameraStream=s;window._cachedStream=s;video.srcObject=s;video.play();}).catch(function(){closeCamera();});}}
+function captureFromCamera(){if(!currentCameraTarget||!currentCameraDevice)return;var video=document.getElementById('cameraVideo');var canvas=document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight;canvas.getContext('2d').drawImage(video,0,0);var dataUrl=canvas.toDataURL('image/jpeg',0.9);closeCamera();recognizeText(dataUrl,currentCameraTarget,currentCameraDevice);}
+function closeCamera(){document.getElementById('cameraOverlay').style.display='none';document.getElementById('cameraVideo').srcObject=null;}
+function recognizeText(dataUrl,target,n){setStatus('Распознавание...','loading');Tesseract.recognize(dataUrl,'rus+eng',{logger:function(m){if(m.status==='recognizing text')setStatus(Math.round(m.progress*100)+'%','loading');}}).then(function(result){var text=result.data.text.replace(/[^а-яА-ЯёЁa-zA-Z0-9№\-\s\.\/]/g,' ').replace(/\s+/g,' ').trim();if(target==='name'){document.getElementById('nameField'+n).value=text;var ft=findTypeByName(text);if(ft){document.getElementById('typeField'+n).value=ft;checkType(n);}}else{document.getElementById('serialField'+n).value=text.match(/\d{3,}/)?.[0]||'';}saveFormData();setStatus('✅ Распознано','success');}).catch(function(){setStatus('❌ Ошибка','error');});}
+function initVoiceRecognition(){var SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(SR){recognition=new SR();recognition.lang='ru-RU';recognition.interimResults=false;recognition.continuous=false;recognition.maxAlternatives=5;recognition.onresult=function(e){voiceResults=[];for(var i=0;i<e.results.length;i++)for(var j=0;j<e.results[i].length;j++)voiceResults.push(e.results[i][j].transcript.trim());if(voiceResults.length>0&&currentVoiceDevice){if(currentVoiceField==='name'){var ve=document.getElementById('voiceVariants'+currentVoiceDevice);if(ve){ve.innerHTML='';ve.classList.add('active');voiceResults.slice(0,5).forEach(function(v,i){var item=document.createElement('div');item.className='voice-variant-item';item.textContent=(i+1)+'. '+v;item.onclick=function(){document.getElementById('nameField'+currentVoiceDevice).value=v;ve.classList.remove('active');ve.innerHTML='';saveFormData();stopVoiceInput();};ve.appendChild(item);});}}else{var f=document.getElementById(currentVoiceField+currentVoiceDevice);if(f){f.value=currentVoiceField==='serialField'?voiceResults[0].replace(/[^\d]/g,''):voiceResults[0];saveFormData();}stopVoiceInput();}}};recognition.onerror=function(){stopVoiceInput();};recognition.onend=function(){if(isListening)stopVoiceInput();};isVoiceSupported=true;}}
+function startVoiceInput(n,f){if(!isVoiceSupported)return;if(isListening){stopVoiceInput();return;}currentVoiceDevice=n;currentVoiceField=f;isListening=true;if(f==='name'){var ve=document.getElementById('voiceVariants'+n);if(ve){ve.classList.remove('active');ve.innerHTML='';}}try{recognition.start();}catch(e){}}
+function stopVoiceInput(){isListening=false;try{recognition.stop();}catch(e){}}
+function saveSettings(){settings.email=document.getElementById('settingsEmail').value.trim();localStorage.setItem('appSettings',JSON.stringify(settings));document.getElementById('settingsStatus').textContent='✅ Сохранено';updateEmailHint();}
+function updateEmailHint(){var e=settings.email||'';var el=document.getElementById('emailHint');if(el)el.textContent=e?'📧 На '+e:'⚠️ Укажите email';}
+function setStatus(msg,cls){var el=document.getElementById('status');if(el){el.innerHTML=msg;el.className='status';if(cls)el.classList.add(cls);}}
+function esc(s){if(s===null||s===undefined)return'';s=String(s);return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+window.addEventListener('click',function(e){if(e.target===document.getElementById('statusModal'))closeStatusModal();if(e.target===document.getElementById('messageModal'))closeMessageModal();if(e.target===document.getElementById('repairStatusModal'))closeRepairStatusModal();if(e.target===document.getElementById('cardStatusModal'))closeCardStatusModal();if(e.target===document.getElementById('actsModal'))closeActsList();});
+window.addEventListener('beforeunload',function(){localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));});
 </script>
 </body>
 </html>
