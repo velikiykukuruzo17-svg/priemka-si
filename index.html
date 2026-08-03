@@ -37,6 +37,7 @@
         .btn-sm { font-size: 11px; padding: 5px 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: 500; }
         .btn-sm.blue { background: #007AFF; color: white; } .btn-sm.gray { background: #8E8E93; color: white; }
         .btn-sm.green { background: #34C759; color: white; } .btn-sm.orange { background: #FF9500; color: white; }
+        .btn-sm.red { background: #FF3B30; color: white; }
         .field-group { margin-bottom: 12px; } .field-group label { display: block; font-size: 13px; font-weight: 600; color: #3C3C43; margin-bottom: 4px; }
         .field-row { display: flex; gap: 8px; align-items: center; }
         .field-row input, .field-row select { flex: 1; padding: 12px; border: 1px solid #E5E5EA; border-radius: 10px; font-size: 16px; background: #FFFFFF; color: #000; }
@@ -46,7 +47,6 @@
         .device-number { background: #F2F2F7; border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; margin-right: 8px; color: #007AFF; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
         .spinner { display: inline-block; width: 18px; height: 18px; border: 2.5px solid rgba(0,0,0,0.1); border-top-color: #007AFF; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
         .spinner-white { border-color: rgba(255,255,255,0.3); border-top-color: white; }
         .status { text-align: center; margin-top: 12px; font-size: 13px; color: #8E8E93; min-height: 20px; }
@@ -146,6 +146,10 @@
         .btn-refresh-main:active { background: #E5E5EA; transform: scale(0.9); }
         .user-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .user-row p { color: #8E8E93; margin: 0; font-size: 14px; }
+        .search-row { display: flex; gap: 6px; margin-bottom: 10px; align-items: center; }
+        .search-row input { flex: 1; padding: 10px; border: 1px solid #E5E5EA; border-radius: 10px; font-size: 14px; }
+        .search-row button { width: 40px; height: 40px; min-width: 40px; border-radius: 10px; background: #007AFF; color: white; border: none; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .search-row button:active { opacity: 0.7; }
     </style>
 </head>
 <body>
@@ -180,7 +184,10 @@
                 <div class="tab" id="tabArchive" onclick="switchDeviceTab('archive')">✅ Архив</div>
             </div>
             <div class="stats-row" id="statsRow"></div>
-            <input type="text" id="deviceSearch" placeholder="🔍 Поиск по номеру или компании" style="width:100%;padding:10px;border:1px solid #E5E5EA;border-radius:10px;font-size:14px;margin-bottom:10px;" oninput="loadDevices()">
+            <div class="search-row">
+                <input type="text" id="deviceSearch" placeholder="🔍 Поиск по номеру или компании" oninput="if(this.value==='')loadDevices()">
+                <button onclick="loadDevices()">🔍</button>
+            </div>
             <div id="devicesList" style="max-height:450px;overflow-y:auto;"></div>
         </div>
         <div id="calendarMode"><button class="btn-back" onclick="showMainMenu()">↩ Назад</button><div class="header"><div><h1>📅 Календарь поверок</h1></div></div>
@@ -222,20 +229,11 @@
         function showLogin(){document.getElementById('loginScreen').style.display='flex';document.getElementById('appContent').style.display='none';}
         function showApp(){document.getElementById('loginScreen').style.display='none';document.getElementById('appContent').style.display='block';showMainMenu();}
 
-        function doLogin(){
-            var l=document.getElementById('loginInput').value.trim(),p=document.getElementById('passwordInput').value.trim();
-            if(!l||!p){document.getElementById('loginError').textContent='Введите логин и пароль';return;}
-            currentUser=l;localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,date:new Date().toDateString()}));showApp();
-            fetch(SCRIPT_URL+'?action=checkLogin&login='+encodeURIComponent(l)+'&password='+encodeURIComponent(p)).then(r=>r.json()).then(function(res){if(res.status==='success'){currentUser=res.name||l;localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,date:new Date().toDateString()}));document.getElementById('menuUserName').textContent=currentUser;}}).catch(function(){});
-        }
+        function doLogin(){var l=document.getElementById('loginInput').value.trim(),p=document.getElementById('passwordInput').value.trim();if(!l||!p){document.getElementById('loginError').textContent='Введите логин и пароль';return;}currentUser=l;localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,date:new Date().toDateString()}));showApp();fetch(SCRIPT_URL+'?action=checkLogin&login='+encodeURIComponent(l)+'&password='+encodeURIComponent(p)).then(r=>r.json()).then(function(res){if(res.status==='success'){currentUser=res.name||l;localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,date:new Date().toDateString()}));document.getElementById('menuUserName').textContent=currentUser;}}).catch(function(){});}
         function doLogout(){localStorage.removeItem('priemkaSession');currentUser='';location.reload();}
         document.getElementById('passwordInput').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
-        function refreshAllData(){
-            var btn=document.querySelector('.btn-refresh-main');
-            if(btn){btn.style.animation='spin 0.8s linear';setTimeout(function(){btn.style.animation='';},800);}
-            fetch(SCRIPT_URL+'?action=getDevices&search=').then(r=>r.json()).then(function(data){if(data.devices){allDevicesCache=data.devices;localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));loadUrgentBlock();if(navigator.vibrate)navigator.vibrate([30,50,30]);}}).catch(function(){});
-        }
+        function refreshAllData(){var btn=document.querySelector('.btn-refresh-main');if(btn){btn.style.animation='spin 0.8s linear';setTimeout(function(){btn.style.animation='';},800);}fetch(SCRIPT_URL+'?action=getDevices&search=').then(r=>r.json()).then(function(data){if(data.devices){allDevicesCache=data.devices;localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));loadUrgentBlock();if(navigator.vibrate)navigator.vibrate([30,50,30]);}}).catch(function(){});}
 
         function showMainMenu(){hideAllModes();document.getElementById('mainMenu').style.display='block';document.getElementById('menuUserName').textContent=currentUser||'';loadUrgentBlock();}
 
@@ -249,11 +247,7 @@
                 var dl=getDeadline(d.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));return days<=3;
             });
             var block=document.getElementById('urgentBlock');
-            if(urgent.length>0){
-                var html='<div class="urgent-block"><h3 onclick="var n=this.nextElementSibling;n.style.display=n.style.display===\'none\'?\'block\':\'none\';">⚠️ Срочные поверки ('+urgent.length+') <span>▶</span></h3><div style="display:none;">';
-                urgent.slice(0,8).forEach(function(d){var dl=getDeadline(d.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));var emoji=days<=0?'🔴':(days<=1?'🟠':'🟡');html+='<div class="urgent-item">'+emoji+' <b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+esc(d.company||'')+' | до '+dl.toLocaleDateString()+'</div>';});
-                html+='</div></div>';block.innerHTML=html;block.style.display='block';
-            }else{block.style.display='none';}
+            if(urgent.length>0){var html='<div class="urgent-block"><h3 onclick="var n=this.nextElementSibling;n.style.display=n.style.display===\'none\'?\'block\':\'none\';">⚠️ Срочные поверки ('+urgent.length+') <span>▶</span></h3><div style="display:none;">';urgent.slice(0,8).forEach(function(d){var dl=getDeadline(d.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));var emoji=days<=0?'🔴':(days<=1?'🟠':'🟡');html+='<div class="urgent-item">'+emoji+' <b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+esc(d.company||'')+' | до '+dl.toLocaleDateString()+'</div>';});html+='</div></div>';block.innerHTML=html;block.style.display='block';}else{block.style.display='none';}
             fetch(SCRIPT_URL+'?action=getDevices&search=').then(r=>r.json()).then(function(data){if(data.devices){allDevicesCache=data.devices;localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));}}).catch(function(){});
         }
 
@@ -265,13 +259,19 @@
         function loadDevices(){var search=(document.getElementById('deviceSearch')?.value||'').toLowerCase();renderDevicesFromCache(search);fetch(SCRIPT_URL+'?action=getDevices&search='+encodeURIComponent(search||'')).then(r=>r.json()).then(function(data){if(data.devices){allDevicesCache=data.devices;localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));renderDevicesFromCache(search);}}).catch(function(){});}
 
         function renderDevicesFromCache(search){
-            var filtered=allDevicesCache;if(search){filtered=allDevicesCache.filter(function(d){return (d.name&&d.name.toLowerCase().includes(search))||(d.serial&&d.serial.toLowerCase().includes(search))||(d.company&&d.company.toLowerCase().includes(search));});}
-            if(currentDeviceTab==='repair'){filtered=filtered.filter(function(d){return d.status==='Ремонт';});renderRepairTab(filtered);return;}
+            var filtered=allDevicesCache;
+            if(search){filtered=allDevicesCache.filter(function(d){return (d.name&&d.name.toLowerCase().includes(search))||(d.serial&&d.serial.toLowerCase().includes(search))||(d.company&&d.company.toLowerCase().includes(search));});}
+            // Вкладка Ремонт - включает Ремонт, Калибровку, Настройку
+            if(currentDeviceTab==='repair'){filtered=filtered.filter(function(d){return d.status==='Ремонт'||d.status==='Калибровка'||d.status==='Настройка';});renderRepairTab(filtered);return;}
+            // Вкладка Архив
             if(currentDeviceTab==='archive'){filtered=filtered.filter(function(d){return d.status==='Выдан';});}
-            else{filtered=filtered.filter(function(d){return d.status!=='Выдан';});}
-            var stats={inWork:0,ready:0,repair:0,notGood:0,issued:0};filtered.forEach(function(d){if(d.status==='В работе')stats.inWork++;else if(d.status==='Годен')stats.ready++;else if(d.status==='Ремонт')stats.repair++;else if(d.status==='Не годен'||d.status==='Брак')stats.notGood++;else if(d.status==='Выдан')stats.issued++;});
-            document.getElementById('statsRow').innerHTML='<span class="stat-badge blue">🔵 В работе: '+(stats.inWork||0)+'</span><span class="stat-badge green">🟢 Годен: '+(stats.ready||0)+'</span><span class="stat-badge orange">🔧 Ремонт: '+(stats.repair||0)+'</span><span class="stat-badge red">🔴 Не годен: '+(stats.notGood||0)+'</span>'+(currentDeviceTab==='archive'?'<span class="stat-badge gray">✅ Выдано: '+(stats.issued||0)+'</span>':'');
-            deviceGroups={};filtered.forEach(function(d){var key=(d.company||'')+'|'+(d.actDate||'')+'|'+(d.actNumber||'');if(!deviceGroups[key])deviceGroups[key]={company:d.company,actDate:d.actDate,actNumber:d.actNumber,employee:d.employee,cardStatus:d.cardStatus||'lab',devices:[]};deviceGroups[key].devices.push(d);});
+            // Вкладка В работе - исключаем Выдан, Ремонт, Калибровку, Настройку
+            else{filtered=filtered.filter(function(d){return d.status!=='Выдан'&&d.status!=='Ремонт'&&d.status!=='Калибровка'&&d.status!=='Настройка';});}
+            var stats={inWork:0,ready:0,repair:0,notGood:0,issued:0};
+            filtered.forEach(function(d){if(d.status==='В работе')stats.inWork++;else if(d.status==='Годен')stats.ready++;else if(d.status==='Ремонт'||d.status==='Калибровка'||d.status==='Настройка')stats.repair++;else if(d.status==='Не годен'||d.status==='Брак')stats.notGood++;else if(d.status==='Выдан')stats.issued++;});
+            document.getElementById('statsRow').innerHTML='<span class="stat-badge blue">🔵 В работе: '+(stats.inWork||0)+'</span><span class="stat-badge green">🟢 Годен: '+(stats.ready||0)+'</span><span class="stat-badge orange">🔧 Ремонт/Кал/Настр: '+(stats.repair||0)+'</span><span class="stat-badge red">🔴 Не годен: '+(stats.notGood||0)+'</span>'+(currentDeviceTab==='archive'?'<span class="stat-badge gray">✅ Выдано: '+(stats.issued||0)+'</span>':'');
+            deviceGroups={};
+            filtered.forEach(function(d){var key=(d.company||'')+'|'+(d.actDate||'')+'|'+(d.actNumber||'');if(!deviceGroups[key])deviceGroups[key]={company:d.company,actDate:d.actDate,actNumber:d.actNumber,employee:d.employee,cardStatus:d.cardStatus||'lab',devices:[]};deviceGroups[key].devices.push(d);});
             var sortedGroups=Object.values(deviceGroups).sort(function(a,b){return(b.actDate||'').localeCompare(a.actDate||'');});
             var html='';var statusEmojis={'В работе':'🟡','Годен':'🟢','Выдан':'✅','Ремонт':'🔧','Не годен':'🔴','Брак':'❌','Калибровка':'📐','Настройка':'⚙️'};
             sortedGroups.forEach(function(group,gi){
@@ -298,9 +298,60 @@
 
         function saveDeviceNote(row){var note=document.getElementById('note_'+row).value.trim();var d=allDevicesCache.find(function(d){return d.row===row;});if(d){d.repairNote=note;localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));}fetch(SCRIPT_URL+'?action=saveDeviceNote&row='+row+'&note='+encodeURIComponent(note));setStatus('✅ Примечание сохранено','success');}
 
-        function issueCard(groupId){if(!confirm('Выдать заказ?'))return;var key=Object.keys(deviceGroups).find(function(k){return'group_'+Object.keys(deviceGroups).indexOf(k)===groupId;});if(!key||!deviceGroups[key])return;var group=deviceGroups[key];var allRows=[];Object.keys(deviceGroups).forEach(function(k){var g=deviceGroups[k];if(g.company===group.company&&g.actDate===group.actDate&&g.actNumber===group.actNumber){g.devices.forEach(function(d){allRows.push(d.row);});}});allRows=allRows.filter(function(v,i,a){return a.indexOf(v)===i;});allRows.forEach(function(row){var d=allDevicesCache.find(function(d){return d.row===row;});if(d)d.status='Выдан';});localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));loadDevices();setStatus('✅ Заказ выдан','success');fetch(SCRIPT_URL+'?action=updateStatusBulk&rows='+encodeURIComponent(JSON.stringify(allRows))+'&status=Выдан&reason=');}
+        function issueCard(groupId){
+            if(!confirm('Выдать заказ? Приборы в ремонте/калибровке/настройке останутся на месте.'))return;
+            var key=Object.keys(deviceGroups).find(function(k){return'group_'+Object.keys(deviceGroups).indexOf(k)===groupId;});
+            if(!key||!deviceGroups[key])return;
+            var group=deviceGroups[key];
+            var allRows=[];
+            Object.keys(deviceGroups).forEach(function(k){
+                var g=deviceGroups[k];
+                if(g.company===group.company&&g.actDate===group.actDate&&g.actNumber===group.actNumber){
+                    g.devices.forEach(function(d){
+                        if(d.status!=='Ремонт'&&d.status!=='Калибровка'&&d.status!=='Настройка'){
+                            allRows.push(d.row);
+                        }
+                    });
+                }
+            });
+            allRows=allRows.filter(function(v,i,a){return a.indexOf(v)===i;});
+            allRows.forEach(function(row){var d=allDevicesCache.find(function(d){return d.row===row;});if(d)d.status='Выдан';});
+            localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
+            loadDevices();setStatus('✅ Заказ выдан (кроме ремонта/калибровки/настройки)','success');
+            fetch(SCRIPT_URL+'?action=updateStatusBulk&rows='+encodeURIComponent(JSON.stringify(allRows))+'&status=Выдан&reason=');
+        }
 
-        function renderRepairTab(devices){var statsR={inRepair:0,done:0,notRepairable:0};devices.forEach(function(d){var rs=d.repairStatus||'В ремонте';if(rs==='В ремонте')statsR.inRepair++;else if(rs==='Сделан')statsR.done++;else statsR.notRepairable++;});document.getElementById('statsRow').innerHTML='<span class="stat-badge orange">🔧 В ремонте: '+(statsR.inRepair||0)+'</span><span class="stat-badge green">✅ Сделано: '+(statsR.done||0)+'</span><span class="stat-badge red">❌ Неремонтопригоден: '+(statsR.notRepairable||0)+'</span>';var months={};devices.forEach(function(d){var date=d.repairDate||d.actDate||'';var m=date.substring(0,7)||'Без даты';if(!months[m])months[m]=[];months[m].push(d);});var html='';var remojis={'В ремонте':'🔧','Сделан':'✅','Неремонтопригоден':'❌'};Object.keys(months).sort(function(a,b){return b.localeCompare(a);}).forEach(function(m){var items=months[m];html+='<div class="month-group"><div class="month-header" onclick="var el=this.parentElement;el.classList.toggle(\'expanded\');var inner=el.querySelector(\'.month-inner\');inner.style.display=el.classList.contains(\'expanded\')?\'block\':\'none\';">📅 '+m+'</div><div class="month-inner">';items.forEach(function(d){var rs=d.repairStatus||'В ремонте';html+='<div class="repair-card"><div class="device-mini"><b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+remojis[rs]+' '+rs+'</div><div style="font-size:11px;color:#8E8E93;">🏢 '+esc(d.company||'')+'</div><div class="device-note"><input type="text" id="note_'+d.row+'" value="'+esc(d.repairNote||'')+'" placeholder="Примечание"><button onclick="saveDeviceNote('+d.row+')">💾</button></div><button class="btn-sm orange" onclick="openRepairStatusModal('+d.row+',\''+esc(d.name||'')+'\',\''+esc(d.serial||'')+'\',\''+rs+'\',\''+esc(d.repairNote||'')+'\')">🔧 Статус</button></div>';});html+='</div></div>';});document.getElementById('devicesList').innerHTML=html||'Нет приборов в ремонте';}
+        // Удаление прибора из ремонта
+        function removeFromRepair(row){
+            if(!confirm('Удалить прибор из ремонта? Он вернётся в статус "В работе".'))return;
+            var d=allDevicesCache.find(function(d){return d.row===row;});
+            if(d){d.status='В работе';d.repairStatus='';d.repairNote='';}
+            localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
+            loadDevices();setStatus('✅ Прибор возвращён в работу','success');
+            fetch(SCRIPT_URL+'?action=updateStatus&row='+row+'&status=В работе&reason=');
+        }
+
+        function renderRepairTab(devices){
+            var statsR={inRepair:0,done:0,notRepairable:0};devices.forEach(function(d){var rs=d.repairStatus||'В ремонте';if(rs==='В ремонте')statsR.inRepair++;else if(rs==='Сделан')statsR.done++;else statsR.notRepairable++;});
+            document.getElementById('statsRow').innerHTML='<span class="stat-badge orange">🔧 В ремонте: '+(statsR.inRepair||0)+'</span><span class="stat-badge green">✅ Сделано: '+(statsR.done||0)+'</span><span class="stat-badge red">❌ Неремонтопригоден: '+(statsR.notRepairable||0)+'</span>';
+            var html='';
+            var remojis={'В ремонте':'🔧','Сделан':'✅','Неремонтопригоден':'❌'};
+            devices.forEach(function(d){
+                var rs=d.repairStatus||'В ремонте';
+                html+='<div class="repair-card">';
+                html+='<div class="device-mini"><b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+(statusEmojis&&statusEmojis[d.status]?statusEmojis[d.status]:'')+' '+esc(d.status||'')+' | '+remojis[rs]+' '+rs+'</div>';
+                html+='<div style="font-size:11px;color:#8E8E93;">🏢 '+esc(d.company||'')+' | 📅 '+esc(d.actDate||'')+'</div>';
+                if(d.repairReason)html+='<div style="font-size:11px;color:#FF3B30;">Причина: '+esc(d.repairReason)+'</div>';
+                html+='<div class="device-note"><input type="text" id="note_'+d.row+'" value="'+esc(d.repairNote||'')+'" placeholder="Примечание"><button onclick="saveDeviceNote('+d.row+')">💾</button></div>';
+                html+='<button class="btn-sm orange" onclick="openRepairStatusModal('+d.row+',\''+esc(d.name||'')+'\',\''+esc(d.serial||'')+'\',\''+rs+'\',\''+esc(d.repairNote||'')+'\')">🔧 Статус</button>';
+                html+=' <button class="btn-sm red" onclick="removeFromRepair('+d.row+')">🗑️ Удалить из ремонта</button>';
+                html+='</div>';
+            });
+            document.getElementById('devicesList').innerHTML=html||'Нет приборов в ремонте';
+        }
+
+        var statusEmojis={'В работе':'🟡','Годен':'🟢','Выдан':'✅','Ремонт':'🔧','Не годен':'🔴','Брак':'❌','Калибровка':'📐','Настройка':'⚙️'};
+
         function openRepairStatusModal(row,name,serial,currentStatus,currentNote){currentRepairRow=row;document.getElementById('repairDeviceInfo').textContent=name+' | '+serial+' | Текущий: '+currentStatus;document.getElementById('newRepairStatus').value=currentStatus||'В ремонте';document.getElementById('repairNote').value=currentNote||'';document.getElementById('repairStatusModal').style.display='block';}
         function closeRepairStatusModal(){document.getElementById('repairStatusModal').style.display='none';currentRepairRow=null;}
         function saveRepairStatus(){if(!currentRepairRow)return;var st=document.getElementById('newRepairStatus').value,note=document.getElementById('repairNote').value.trim();var d=allDevicesCache.find(function(d){return d.row===currentRepairRow;});if(d){d.repairStatus=st;d.repairNote=note;localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));}closeRepairStatusModal();loadDevices();setStatus('✅ Статус ремонта обновлён','success');fetch(SCRIPT_URL+'?action=updateRepairStatus&row='+currentRepairRow+'&status='+encodeURIComponent(st)+'&note='+encodeURIComponent(note));}
@@ -363,7 +414,7 @@
         function openStatusModal(rows,name,serial){currentStatusRows=rows;document.getElementById('statusDeviceInfo').textContent=name+' | '+(Array.isArray(rows)?rows.length+' шт.':serial);document.getElementById('newStatus').value='В работе';document.getElementById('statusReason').value='';document.getElementById('statusModal').style.display='block';}
         function closeStatusModal(){document.getElementById('statusModal').style.display='none';currentStatusRows=[];}
         function saveNewStatus(){if(!currentStatusRows||currentStatusRows.length===0)return;var st=document.getElementById('newStatus').value,rs=document.getElementById('statusReason').value.trim();var rows=Array.isArray(currentStatusRows)?currentStatusRows:[currentStatusRows];updateStatusesInDOM(rows,st,rs);rows.forEach(function(row){var d=allDevicesCache.find(function(d){return d.row===row;});if(d){d.status=st;if(rs)d.repairReason=rs;}});localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));closeStatusModal();setStatus('✅ Статус обновлён','success');fetch(SCRIPT_URL+'?action=updateStatusBulk&rows='+encodeURIComponent(JSON.stringify(rows))+'&status='+encodeURIComponent(st)+'&reason='+encodeURIComponent(rs)).then(r=>r.json()).then(function(res){if(res.status==='success')setTimeout(loadDevices,1000);});}
-        function updateStatusesInDOM(rows,ns,rs){var em={'В работе':'🟡','Годен':'🟢','Выдан':'✅','Ремонт':'🔧','Не годен':'🔴','Брак':'❌','Калибровка':'📐','Настройка':'⚙️'};document.querySelectorAll('.device-mini').forEach(function(el){var ra=el.getAttribute('data-row');if(ra&&rows.indexOf(parseInt(ra))!==-1){var ss=el.querySelector('.dev-status');if(ss){ss.textContent=ns;el.innerHTML=el.innerHTML.replace(/🟡|🟢|✅|🔧|🔴|❌|📐|⚙️/,em[ns]||'🟡');}}});}
+        function updateStatusesInDOM(rows,ns,rs){var em=statusEmojis;document.querySelectorAll('.device-mini').forEach(function(el){var ra=el.getAttribute('data-row');if(ra&&rows.indexOf(parseInt(ra))!==-1){var ss=el.querySelector('.dev-status');if(ss){ss.textContent=ns;el.innerHTML=el.innerHTML.replace(/🟡|🟢|✅|🔧|🔴|❌|📐|⚙️/,em[ns]||'🟡');}}});}
         function openMessageModal(c,i){document.getElementById('msgDeviceInfo').textContent='🏢 '+c+' | '+i;document.getElementById('msgSubject').value='Статус приборов';document.getElementById('msgBody').value='Уважаемый клиент!\n\nИнформация по прибору:\n'+i+'\n\n🏢 Адрес: ул. Новаторов, 5\n📞 Тел: +7(996)6418436';document.getElementById('messageModal').style.display='block';fetch(SCRIPT_URL+'?action=getClientEmail&company='+encodeURIComponent(c)).then(r=>r.json()).then(function(res){document.getElementById('msgEmail').value=res.email||'';});}
         function openGroupMessageModal(gi){var keys=Object.keys(deviceGroups),key=keys[gi];if(!key||!deviceGroups[key]){alert('Группа не найдена');return;}var g=deviceGroups[key];var dd=g.actDate?g.actDate.replace(/T.*/,'').split('-').reverse().join('.'):'';var t='Уважаемый клиент!\n\nИнформация по вашим приборам:\n\n📅 '+dd;if(g.actNumber)t+=' | Акт №'+g.actNumber;t+=' | Приборов: '+g.devices.length+'\n\n';g.devices.forEach(function(d,i){t+=(i+1)+'. '+(d.name||'')+' '+(d.type||'')+' | зав.№ '+(d.serial||'')+' | '+(d.status||'В работе');if(d.address)t+='\n   Адрес: '+d.address;if(d.repairReason)t+='\n   Причина: '+d.repairReason;if(d.note&&d.note!==d.repairReason)t+='\n   Примечание: '+d.note;t+='\n\n';});t+='🏢 Адрес: ул. Новаторов, 5\n📞 Тел: +7(996)6418436';document.getElementById('msgDeviceInfo').textContent='🏢 '+(g.company||'');document.getElementById('msgSubject').value='Статус приборов';document.getElementById('msgBody').value=t;document.getElementById('messageModal').style.display='block';fetch(SCRIPT_URL+'?action=getClientEmail&company='+encodeURIComponent(g.company||'')).then(r=>r.json()).then(function(res){document.getElementById('msgEmail').value=res.email||'';});}
         function closeMessageModal(){document.getElementById('messageModal').style.display='none';}
