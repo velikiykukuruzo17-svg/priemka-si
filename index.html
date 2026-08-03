@@ -375,6 +375,7 @@ if(currentDeviceTab==='repair'){filtered=filtered.filter(function(d){return d.st
 renderRepairTab(filtered);return;}
 if(currentDeviceTab==='archive'){filtered=filtered.filter(function(d){return d.status==='Выдан';});}
 else{filtered=filtered.filter(function(d){return d.status!=='Выдан'&&d.status!=='Ремонт'&&d.status!=='Калибровка'&&d.status!=='Настройка';});}
+else{filtered=filtered.filter(function(d){return d.status!=='Выдан'&&d.status!=='Ремонт'&&d.status!=='Калибровка'&&d.status!=='Настройка';});}
 var stats={inWork:0,ready:0,repair:0,notGood:0,issued:0};
 filtered.forEach(function(d){
 if(d.status==='В работе')stats.inWork++;
