@@ -36,6 +36,8 @@
         .btn-ios-icon.pink { background: #FF2D55; color: white; }
         .btn-refresh { width: 36px; height: 36px; min-width: 36px; border-radius: 50%; background: #F2F2F7; border: none; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; }
         .btn-refresh:active { background: #E5E5EA; transform: scale(0.9); }
+        .btn-clear-pending { width: 36px; height: 36px; min-width: 36px; border-radius: 50%; background: #FF3B30; color: white; border: none; font-size: 14px; display: none; align-items: center; justify-content: center; cursor: pointer; margin-left: 5px; }
+        .btn-clear-pending:active { opacity: 0.7; }
         @keyframes rotateRefresh { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .btn-refresh.refreshing { animation: rotateRefresh 0.8s ease-in-out; pointer-events: none; }
         .btn-sm { font-size: 11px; padding: 5px 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: 500; }
@@ -151,6 +153,7 @@
         .user-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .user-row p { color: #8E8E93; margin: 0; font-size: 14px; }
         .pending-count { background: #FF3B30; color: white; border-radius: 10px; padding: 2px 8px; font-size: 10px; margin-left: 5px; }
+        .btn-row { display: flex; align-items: center; gap: 5px; }
     </style>
 </head>
 <body>
@@ -167,7 +170,10 @@
             <div class="header"><div><h1>📋 Меню</h1><p>ООО МС «ЦЕНТР ИЗМЕРЕНИЙ»</p></div><button class="btn-logout" onclick="doLogout()">🚪</button></div>
             <div class="user-row">
                 <p>👤 <span id="menuUserName"></span></p>
-                <button class="btn-refresh" onclick="refreshAllData()" title="Обновить все данные" id="refreshBtn">🔄<span class="pending-count" id="pendingCount" style="display:none;">0</span></button>
+                <div class="btn-row">
+                    <button class="btn-refresh" onclick="refreshAllData()" title="Обновить все данные" id="refreshBtn">🔄<span class="pending-count" id="pendingCount" style="display:none;">0</span></button>
+                    <button class="btn-clear-pending" onclick="clearPendingChanges()" title="Очистить очередь неотправленных изменений" id="clearPendingBtn">🗑️</button>
+                </div>
             </div>
             <div id="urgentBlock" style="display:none;"></div>
             <div class="menu-card" onclick="showMode('priemka')"><div class="menu-icon">📝</div><div class="menu-info"><h3>Приёмка СИ</h3><p>Создание актов приёма-передачи и выдачи</p></div></div>
@@ -241,9 +247,52 @@
             updatePendingBadge();checkSession();loadDictionariesCache();
         });
         function loadDictionariesCache(){var ct=localStorage.getItem('cache_types');var cc=localStorage.getItem('cache_companies');if(ct)try{typesData=JSON.parse(ct);}catch(e){}if(cc)try{companyListData=JSON.parse(cc);}catch(e){}}
-        function addPendingChange(change){change.id=Date.now()+'_'+Math.random().toString(36).substr(2,9);change.timestamp=Date.now();pendingChanges.push(change);localStorage.setItem('pendingChanges',JSON.stringify(pendingChanges));updatePendingBadge();if(isOnline)syncPendingChanges();}
-        function updatePendingBadge(){var badge=document.getElementById('pendingCount');if(pendingChanges.length>0){badge.textContent=pendingChanges.length;badge.style.display='inline';}else{badge.style.display='none';}}
-        function syncPendingChanges(){if(!isOnline||pendingChanges.length===0)return;var changes=[...pendingChanges];fetch(SCRIPT_URL+'?action=batchUpdate',{method:'POST',body:JSON.stringify({changes:changes})}).then(function(r){return r.json();}).then(function(res){if(res.status==='success'){pendingChanges=[];localStorage.setItem('pendingChanges','[]');updatePendingBadge();}}).catch(function(){});}
+        
+        function addPendingChange(change){
+            change.id=Date.now()+'_'+Math.random().toString(36).substr(2,9);
+            change.timestamp=Date.now();
+            pendingChanges.push(change);
+            localStorage.setItem('pendingChanges',JSON.stringify(pendingChanges));
+            updatePendingBadge();
+            if(isOnline)syncPendingChanges();
+        }
+        
+        function clearPendingChanges(){
+            if(pendingChanges.length===0){alert('Нет неотправленных изменений');return;}
+            if(confirm('Очистить '+pendingChanges.length+' неотправленных изменений? Данные будут загружены заново с сервера.')){
+                pendingChanges=[];
+                localStorage.setItem('pendingChanges','[]');
+                updatePendingBadge();
+                if(isOnline)refreshAllData();
+                setStatusGlobal('✅ Очередь очищена','success');
+            }
+        }
+        
+        function updatePendingBadge(){
+            var badge=document.getElementById('pendingCount');
+            var clearBtn=document.getElementById('clearPendingBtn');
+            if(pendingChanges.length>0){
+                badge.textContent=pendingChanges.length;
+                badge.style.display='inline';
+                if(clearBtn)clearBtn.style.display='flex';
+            }else{
+                badge.style.display='none';
+                if(clearBtn)clearBtn.style.display='none';
+            }
+        }
+        function syncPendingChanges(){
+            if(!isOnline||pendingChanges.length===0)return;
+            var changes=[...pendingChanges];
+            fetch(SCRIPT_URL+'?action=batchUpdate',{method:'POST',body:JSON.stringify({changes:changes})})
+                .then(function(r){return r.json();})
+                .then(function(res){
+                    if(res.status==='success'){
+                        pendingChanges=[];
+                        localStorage.setItem('pendingChanges','[]');
+                        updatePendingBadge();
+                    }
+                }).catch(function(){});
+        }
         setInterval(syncPendingChanges,30000);
 
         function checkSession(){var s=JSON.parse(localStorage.getItem('priemkaSession')||'{}');if(s.user){currentUser=s.user;showApp();}else{showLogin();}}
@@ -253,20 +302,7 @@
         function doLogout(){localStorage.removeItem('priemkaSession');currentUser='';location.reload();}
         document.getElementById('passwordInput').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
-        function refreshAllData(){if(!isOnline){setStatusGlobal('❌ Нет интернета','error');return;}var refreshBtn=document.getElementById('refreshBtn');if(refreshBtn){refreshBtn.classList.add('refreshing');setTimeout(function(){refreshBtn.classList.remove('refreshing');},800);}Promise.all([fetch(SCRIPT_URL+'?action=getDevices&search=').then(r=>r.json()).then(function(data){if(data.devices){mergeWithCache(data.devices);}}).catch(function(){}),fetch(CSV_BASE+GID_TYPES).then(r=>r.text()).then(function(csv){typesData=parseCSV(csv);localStorage.setItem('cache_types',JSON.stringify(typesData));allTypesFromSheet=[];typesData.forEach(function(r){for(var i=0;i<r.length;i++){var v=(r[i]||'').trim();if(v&&v.length>2&&allTypesFromSheet.indexOf(v)===-1)allTypesFromSheet.push(v);}});}).catch(function(){}),fetch(CSV_BASE+GID_COMPANIES).then(r=>r.text()).then(function(csv){companyListData=parseCSV(csv).map(function(row){return row[0]||'';}).filter(function(v){return v;});localStorage.setItem('cache_companies',JSON.stringify(companyListData));}).catch(function(){})]).then(function(){loadUrgentBlock();if(navigator.vibrate)navigator.vibrate([30,50,30]);setStatusGlobal('✅ Данные обновлены','success');}).catch(function(){setStatusGlobal('❌ Ошибка','error');});}
-
-        function mergeWithCache(serverDevices){
-            var localCardStatus={};
-            allDevicesCache.forEach(function(d){var key=(d.company||'')+'|'+(d.actDate||'')+'|'+(d.actNumber||'');if(!localCardStatus[key])localCardStatus[key]=d.cardStatus||'lab';});
-            serverDevices.forEach(function(sd){
-                var existing=allDevicesCache.findIndex(function(cd){return cd.row===sd.row;});
-                var gk=(sd.company||'')+'|'+(sd.actDate||'')+'|'+(sd.actNumber||'');
-                sd.cardStatus=localCardStatus[gk]||sd.cardStatus||'lab';
-                if(existing>=0){var cached=allDevicesCache[existing];sd.repairNote=cached.repairNote||sd.repairNote||'';sd.repairStatus=cached.repairStatus||sd.repairStatus||'';allDevicesCache[existing]=sd;}
-                else{sd.cardStatus=sd.cardStatus||'lab';allDevicesCache.push(sd);}
-            });
-            localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
-        }
+        function refreshAllData(){if(!isOnline){setStatusGlobal('❌ Нет интернета','error');return;}var refreshBtn=document.getElementById('refreshBtn');if(refreshBtn){refreshBtn.classList.add('refreshing');setTimeout(function(){refreshBtn.classList.remove('refreshing');},800);}Promise.all([fetch(SCRIPT_URL+'?action=getDevices&search=').then(r=>r.json()).then(function(data){if(data.devices){allDevicesCache=data.devices;localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));}}).catch(function(){}),fetch(CSV_BASE+GID_TYPES).then(r=>r.text()).then(function(csv){typesData=parseCSV(csv);localStorage.setItem('cache_types',JSON.stringify(typesData));allTypesFromSheet=[];typesData.forEach(function(r){for(var i=0;i<r.length;i++){var v=(r[i]||'').trim();if(v&&v.length>2&&allTypesFromSheet.indexOf(v)===-1)allTypesFromSheet.push(v);}});}).catch(function(){}),fetch(CSV_BASE+GID_COMPANIES).then(r=>r.text()).then(function(csv){companyListData=parseCSV(csv).map(function(row){return row[0]||'';}).filter(function(v){return v;});localStorage.setItem('cache_companies',JSON.stringify(companyListData));}).catch(function(){})]).then(function(){loadUrgentBlock();if(navigator.vibrate)navigator.vibrate([30,50,30]);setStatusGlobal('✅ Данные обновлены','success');}).catch(function(){setStatusGlobal('❌ Ошибка','error');});}
 
         function showMainMenu(){hideAllModes();document.getElementById('mainMenu').style.display='block';document.getElementById('menuUserName').textContent=currentUser||'';loadUrgentBlock();}
 
@@ -276,7 +312,7 @@
             var urgent=allDevicesCache.filter(function(d){if(skipStatuses.indexOf(d.status)!==-1)return false;if(d.cardStatus==='issued')return false;var dl=getDeadline(d.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));return days<=3;});
             var block=document.getElementById('urgentBlock');
             if(urgent.length>0){var html='<div class="urgent-block"><h3 onclick="var n=this.nextElementSibling;n.style.display=n.style.display===\'none\'?\'block\':\'none\';">⚠️ Срочные поверки ('+urgent.length+') <span>▶</span></h3><div style="display:none;">';urgent.slice(0,8).forEach(function(d){var dl=getDeadline(d.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));var emoji=days<=0?'🔴':(days<=1?'🟠':'🟡');html+='<div class="urgent-item">'+emoji+' <b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+esc(d.company||'')+' | до '+dl.toLocaleDateString()+'</div>';});html+='</div></div>';block.innerHTML=html;block.style.display='block';}else{block.style.display='none';}
-            if(isOnline){fetch(SCRIPT_URL+'?action=getDevices&search=').then(r=>r.json()).then(function(data){if(data.devices){mergeWithCache(data.devices);}}).catch(function(){});}
+            if(isOnline){fetch(SCRIPT_URL+'?action=getDevices&search=').then(r=>r.json()).then(function(data){if(data.devices){allDevicesCache=data.devices;localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));}}).catch(function(){});}
         }
 
         function getDeadline(dateStr){if(!dateStr)return new Date();var d;if(dateStr.includes('T')||dateStr.includes('Z')){d=new Date(dateStr);}else if(dateStr.includes('.')){var parts=dateStr.split('.');d=new Date(parseInt(parts[2]),parseInt(parts[1])-1,parseInt(parts[0]));}else if(dateStr.includes('-')){var parts=dateStr.split('-');d=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));}else{d=new Date(dateStr);}if(isNaN(d.getTime()))return new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate()+10);}
@@ -286,9 +322,19 @@
 
         function loadDevices(){
             var search=(document.getElementById('deviceSearch')?.value||'').toLowerCase();
-            if(currentDeviceTab==='archive'&&isOnline){document.getElementById('devicesList').innerHTML='<div style="text-align:center;padding:20px;"><div class="spinner"></div> Загрузка архива...</div>';fetch(SCRIPT_URL+'?action=getDevices&search='+encodeURIComponent(search||'')).then(r=>r.json()).then(function(data){if(data.devices){allDevicesCache=data.devices;localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));renderDevicesFromCache(search);}}).catch(function(){renderDevicesFromCache(search);});return;}
+            // Для архива и ремонта ВСЕГДА загружаем с сервера
+            if((currentDeviceTab==='archive'||currentDeviceTab==='repair')&&isOnline){
+                document.getElementById('devicesList').innerHTML='<div style="text-align:center;padding:20px;"><div class="spinner"></div> Загрузка...</div>';
+                fetch(SCRIPT_URL+'?action=getDevices&search='+encodeURIComponent(search||''))
+                    .then(r=>r.json()).then(function(data){
+                        if(data.devices){allDevicesCache=data.devices;localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));}
+                        renderDevicesFromCache(search);
+                    }).catch(function(){renderDevicesFromCache(search);});
+                return;
+            }
+            // Для "В работе" - кеш, потом сервер
             renderDevicesFromCache(search);
-            if(isOnline){setTimeout(function(){fetch(SCRIPT_URL+'?action=getDevices&search='+encodeURIComponent(search||'')).then(r=>r.json()).then(function(data){if(data.devices){mergeWithCache(data.devices);renderDevicesFromCache(search);}}).catch(function(){});},2000);}
+            if(isOnline){setTimeout(function(){fetch(SCRIPT_URL+'?action=getDevices&search='+encodeURIComponent(search||'')).then(r=>r.json()).then(function(data){if(data.devices){allDevicesCache=data.devices;localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));renderDevicesFromCache(search);}}).catch(function(){});},1000);}
         }
 
         function renderDevicesFromCache(search){
@@ -416,8 +462,7 @@
                     document.getElementById('archiveContent').innerHTML=html;
                 }).catch(function(){document.getElementById('archiveContent').innerHTML='Ошибка загрузки.';});
             }else{
-                var html='<div style="text-align:center;color:#FF9500;padding:10px;">📡 Офлайн. Нет подключения к интернету.</div>';
-                document.getElementById('archiveContent').innerHTML=html;
+                document.getElementById('archiveContent').innerHTML='<div style="text-align:center;color:#FF9500;padding:20px;">📡 Нет интернета</div>';
             }
         }
 
