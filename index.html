@@ -154,7 +154,7 @@
     </style>
 </head>
 <body>
-    <div class="offline-badge" id="offlineBadge">📡 Офлайн</div>
+    <div class="offline-badge" id="offlineBadge" style="display:none;">📡 Офлайн</div>
     <div id="loginScreen">
         <h2>🔒 Вход</h2><p>МС «ЦЕНТР ИЗМЕРЕНИЙ»</p>
         <input type="text" id="loginInput" placeholder="Логин" autocomplete="username">
@@ -224,7 +224,7 @@
             isOnline=navigator.onLine;
             var badge=document.getElementById('offlineBadge');
             if(isOnline){
-                badge.textContent='📡 Онлайн';badge.className='offline-badge online';
+                badge.textContent='📡 Онлайн';badge.className='offline-badge online';badge.style.display='flex';
                 setTimeout(function(){badge.style.display='none';},2000);
                 syncPendingChanges();
             }else{
@@ -233,7 +233,7 @@
         }
         window.addEventListener('online',updateOnlineStatus);window.addEventListener('offline',updateOnlineStatus);
         window.addEventListener('load',function(){
-            updateOnlineStatus();
+            setTimeout(updateOnlineStatus,500);
             var cachedDevices=localStorage.getItem('cache_devices');
             if(cachedDevices){try{allDevicesCache=JSON.parse(cachedDevices);}catch(e){}}
             var pending=localStorage.getItem('pendingChanges');
@@ -248,7 +248,7 @@
 
         function checkSession(){var s=JSON.parse(localStorage.getItem('priemkaSession')||'{}');if(s.user){currentUser=s.user;showApp();}else{showLogin();}}
         function showLogin(){document.getElementById('loginScreen').style.display='flex';document.getElementById('appContent').style.display='none';}
-        function showApp(){document.getElementById('loginScreen').style.display='none';document.getElementById('appContent').style.display='block';showMainMenu();}
+        function showApp(){document.getElementById('loginScreen').style.display='none';document.getElementById('appContent').style.display='block';setTimeout(updateOnlineStatus,300);showMainMenu();}
         function doLogin(){var l=document.getElementById('loginInput').value.trim(),p=document.getElementById('passwordInput').value.trim();if(!l||!p){document.getElementById('loginError').textContent='Введите логин и пароль';return;}currentUser=l;localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,date:new Date().toDateString()}));showApp();if(isOnline){fetch(SCRIPT_URL+'?action=checkLogin&login='+encodeURIComponent(l)+'&password='+encodeURIComponent(p)).then(r=>r.json()).then(function(res){if(res.status==='success'){currentUser=res.name||l;localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,date:new Date().toDateString()}));document.getElementById('menuUserName').textContent=currentUser;}}).catch(function(){});}}
         function doLogout(){localStorage.removeItem('priemkaSession');currentUser='';location.reload();}
         document.getElementById('passwordInput').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
@@ -256,20 +256,14 @@
         function refreshAllData(){if(!isOnline){setStatusGlobal('❌ Нет интернета','error');return;}var refreshBtn=document.getElementById('refreshBtn');if(refreshBtn){refreshBtn.classList.add('refreshing');setTimeout(function(){refreshBtn.classList.remove('refreshing');},800);}Promise.all([fetch(SCRIPT_URL+'?action=getDevices&search=').then(r=>r.json()).then(function(data){if(data.devices){mergeWithCache(data.devices);}}).catch(function(){}),fetch(CSV_BASE+GID_TYPES).then(r=>r.text()).then(function(csv){typesData=parseCSV(csv);localStorage.setItem('cache_types',JSON.stringify(typesData));allTypesFromSheet=[];typesData.forEach(function(r){for(var i=0;i<r.length;i++){var v=(r[i]||'').trim();if(v&&v.length>2&&allTypesFromSheet.indexOf(v)===-1)allTypesFromSheet.push(v);}});}).catch(function(){}),fetch(CSV_BASE+GID_COMPANIES).then(r=>r.text()).then(function(csv){companyListData=parseCSV(csv).map(function(row){return row[0]||'';}).filter(function(v){return v;});localStorage.setItem('cache_companies',JSON.stringify(companyListData));}).catch(function(){})]).then(function(){loadUrgentBlock();if(navigator.vibrate)navigator.vibrate([30,50,30]);setStatusGlobal('✅ Данные обновлены','success');}).catch(function(){setStatusGlobal('❌ Ошибка','error');});}
 
         function mergeWithCache(serverDevices){
-            // Сначала создаём карту локальных cardStatus
             var localCardStatus={};
             allDevicesCache.forEach(function(d){var key=(d.company||'')+'|'+(d.actDate||'')+'|'+(d.actNumber||'');if(!localCardStatus[key])localCardStatus[key]=d.cardStatus||'lab';});
             serverDevices.forEach(function(sd){
                 var existing=allDevicesCache.findIndex(function(cd){return cd.row===sd.row;});
                 var gk=(sd.company||'')+'|'+(sd.actDate||'')+'|'+(sd.actNumber||'');
-                // Приоритет: локальный cardStatus > серверный
                 sd.cardStatus=localCardStatus[gk]||sd.cardStatus||'lab';
-                if(existing>=0){
-                    var cached=allDevicesCache[existing];
-                    sd.repairNote=cached.repairNote||sd.repairNote||'';
-                    sd.repairStatus=cached.repairStatus||sd.repairStatus||'';
-                    allDevicesCache[existing]=sd;
-                }else{sd.cardStatus=sd.cardStatus||'lab';allDevicesCache.push(sd);}
+                if(existing>=0){var cached=allDevicesCache[existing];sd.repairNote=cached.repairNote||sd.repairNote||'';sd.repairStatus=cached.repairStatus||sd.repairStatus||'';allDevicesCache[existing]=sd;}
+                else{sd.cardStatus=sd.cardStatus||'lab';allDevicesCache.push(sd);}
             });
             localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
         }
@@ -279,17 +273,9 @@
         function loadUrgentBlock(){
             var now=new Date();
             var skipStatuses=['Выдан','Ремонт','Не годен','Брак','Годен','Калибровка','Настройка'];
-            var urgent=allDevicesCache.filter(function(d){
-                if(skipStatuses.indexOf(d.status)!==-1)return false;
-                if(d.cardStatus==='issued')return false;
-                var dl=getDeadline(d.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));return days<=3;
-            });
+            var urgent=allDevicesCache.filter(function(d){if(skipStatuses.indexOf(d.status)!==-1)return false;if(d.cardStatus==='issued')return false;var dl=getDeadline(d.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));return days<=3;});
             var block=document.getElementById('urgentBlock');
-            if(urgent.length>0){
-                var html='<div class="urgent-block"><h3 onclick="var n=this.nextElementSibling;n.style.display=n.style.display===\'none\'?\'block\':\'none\';">⚠️ Срочные поверки ('+urgent.length+') <span>▶</span></h3><div style="display:none;">';
-                urgent.slice(0,8).forEach(function(d){var dl=getDeadline(d.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));var emoji=days<=0?'🔴':(days<=1?'🟠':'🟡');html+='<div class="urgent-item">'+emoji+' <b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+esc(d.company||'')+' | до '+dl.toLocaleDateString()+'</div>';});
-                html+='</div></div>';block.innerHTML=html;block.style.display='block';
-            }else{block.style.display='none';}
+            if(urgent.length>0){var html='<div class="urgent-block"><h3 onclick="var n=this.nextElementSibling;n.style.display=n.style.display===\'none\'?\'block\':\'none\';">⚠️ Срочные поверки ('+urgent.length+') <span>▶</span></h3><div style="display:none;">';urgent.slice(0,8).forEach(function(d){var dl=getDeadline(d.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));var emoji=days<=0?'🔴':(days<=1?'🟠':'🟡');html+='<div class="urgent-item">'+emoji+' <b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+esc(d.company||'')+' | до '+dl.toLocaleDateString()+'</div>';});html+='</div></div>';block.innerHTML=html;block.style.display='block';}else{block.style.display='none';}
             if(isOnline){fetch(SCRIPT_URL+'?action=getDevices&search=').then(r=>r.json()).then(function(data){if(data.devices){mergeWithCache(data.devices);}}).catch(function(){});}
         }
 
@@ -300,6 +286,7 @@
 
         function loadDevices(){
             var search=(document.getElementById('deviceSearch')?.value||'').toLowerCase();
+            if(currentDeviceTab==='archive'&&isOnline){document.getElementById('devicesList').innerHTML='<div style="text-align:center;padding:20px;"><div class="spinner"></div> Загрузка архива...</div>';fetch(SCRIPT_URL+'?action=getDevices&search='+encodeURIComponent(search||'')).then(r=>r.json()).then(function(data){if(data.devices){allDevicesCache=data.devices;localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));renderDevicesFromCache(search);}}).catch(function(){renderDevicesFromCache(search);});return;}
             renderDevicesFromCache(search);
             if(isOnline){setTimeout(function(){fetch(SCRIPT_URL+'?action=getDevices&search='+encodeURIComponent(search||'')).then(r=>r.json()).then(function(data){if(data.devices){mergeWithCache(data.devices);renderDevicesFromCache(search);}}).catch(function(){});},2000);}
         }
@@ -307,25 +294,19 @@
         function renderDevicesFromCache(search){
             var filtered=allDevicesCache;
             if(search){filtered=allDevicesCache.filter(function(d){return (d.name&&d.name.toLowerCase().includes(search))||(d.serial&&d.serial.toLowerCase().includes(search))||(d.company&&d.company.toLowerCase().includes(search));});}
-            // Вкладка Ремонт
             if(currentDeviceTab==='repair'){filtered=filtered.filter(function(d){return d.status==='Ремонт';});renderRepairTab(filtered);return;}
-            // Вкладка Архив - группируем по cardStatus===issued, исключаем ремонт
             if(currentDeviceTab==='archive'){filtered=filtered.filter(function(d){return d.cardStatus==='issued'&&d.status!=='Ремонт';});}
-            // Вкладка В работе - исключаем выданные и ремонт
             else{filtered=filtered.filter(function(d){return d.cardStatus!=='issued'&&d.status!=='Ремонт';});}
             var stats={inWork:0,ready:0,repair:0,notGood:0,issued:0};
             filtered.forEach(function(d){if(d.status==='В работе')stats.inWork++;else if(d.status==='Годен')stats.ready++;else if(d.status==='Ремонт')stats.repair++;else if(d.status==='Не годен'||d.status==='Брак')stats.notGood++;else if(d.status==='Выдан')stats.issued++;});
             document.getElementById('statsRow').innerHTML='<span class="stat-badge blue">🔵 В работе: '+(stats.inWork||0)+'</span><span class="stat-badge green">🟢 Годен: '+(stats.ready||0)+'</span><span class="stat-badge orange">🔧 Ремонт: '+(stats.repair||0)+'</span><span class="stat-badge red">🔴 Не годен: '+(stats.notGood||0)+'</span>'+(currentDeviceTab==='archive'?'<span class="stat-badge gray">✅ Выдано: '+(stats.issued||0)+'</span>':'');
             deviceGroups={};
-            // Группировка: НЕ учитываем cardStatus в ключе
             filtered.forEach(function(d){var key=(d.company||'')+'|'+(d.actDate||'')+'|'+(d.actNumber||'');if(!deviceGroups[key])deviceGroups[key]={company:d.company,actDate:d.actDate,actNumber:d.actNumber,employee:d.employee,cardStatus:d.cardStatus||'lab',devices:[]};deviceGroups[key].devices.push(d);});
-            // Определяем cardStatus группы по большинству
             Object.keys(deviceGroups).forEach(function(key){var g=deviceGroups[key];var issuedCount=g.devices.filter(function(d){return d.cardStatus==='issued';}).length;g.cardStatus=issuedCount>g.devices.length/2?'issued':(g.devices[0].cardStatus||'lab');});
             var sortedGroups=Object.values(deviceGroups).sort(function(a,b){return(b.actDate||'').localeCompare(a.actDate||'');});
             var html='';var statusEmojis={'В работе':'🟡','Годен':'🟢','Выдан':'✅','Ремонт':'🔧','Не годен':'🔴','Брак':'❌','Калибровка':'📐','Настройка':'⚙️'};
             sortedGroups.forEach(function(group,gi){
-                var groupId='group_'+gi;
-                var displayDate=group.actDate?group.actDate.replace(/T.*/,'').split('-').reverse().join('.'):'';
+                var groupId='group_'+gi;var displayDate=group.actDate?group.actDate.replace(/T.*/,'').split('-').reverse().join('.'):'';
                 var statusCounts={};group.devices.forEach(function(d){var s=d.status||'В работе';statusCounts[s]=(statusCounts[s]||0)+1;});
                 var statusLine=Object.keys(statusCounts).map(function(s){return(statusEmojis[s]||'')+'×'+statusCounts[s];}).join(' ');
                 var cardStatusText,cardStatusCls,cardBorder='';
@@ -350,52 +331,11 @@
 
         function saveDeviceNote(row){var note=document.getElementById('note_'+row).value.trim();var d=allDevicesCache.find(function(d){return d.row===row;});if(d){d.repairNote=note;localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));}addPendingChange({action:'saveDeviceNote',row:row,note:note});setStatusGlobal('✅ Примечание сохранено','success');}
 
-        function issueCard(groupId){
-            if(!confirm('Выдать заказ? Все приборы переместятся в Архив.'))return;
-            var key=Object.keys(deviceGroups).find(function(k){return'group_'+Object.keys(deviceGroups).indexOf(k)===groupId;});
-            if(!key||!deviceGroups[key])return;
-            var group=deviceGroups[key];
-            var allRows=[];
-            // Обновляем ВСЕ приборы с таким же ключом группы во ВСЕХ группах
-            Object.keys(deviceGroups).forEach(function(k){
-                if(k===key||(deviceGroups[k].company===group.company&&deviceGroups[k].actDate===group.actDate&&deviceGroups[k].actNumber===group.actNumber)){
-                    deviceGroups[k].devices.forEach(function(d){allRows.push(d.row);});
-                }
-            });
-            // Убираем дубликаты
-            allRows=allRows.filter(function(v,i,a){return a.indexOf(v)===i;});
-            allRows.forEach(function(row){var d=allDevicesCache.find(function(d){return d.row===row;});if(d){d.status='Выдан';d.cardStatus='issued';}});
-            localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
-            loadDevices();setStatusGlobal('✅ Заказ выдан','success');
-            addPendingChange({action:'updateStatusBulk',rows:allRows,status:'Выдан',cardStatus:'issued',reason:''});
-        }
+        function issueCard(groupId){if(!confirm('Выдать заказ?'))return;var key=Object.keys(deviceGroups).find(function(k){return'group_'+Object.keys(deviceGroups).indexOf(k)===groupId;});if(!key||!deviceGroups[key])return;var group=deviceGroups[key];var allRows=[];Object.keys(deviceGroups).forEach(function(k){if(k===key||(deviceGroups[k].company===group.company&&deviceGroups[k].actDate===group.actDate&&deviceGroups[k].actNumber===group.actNumber)){deviceGroups[k].devices.forEach(function(d){allRows.push(d.row);});}});allRows=allRows.filter(function(v,i,a){return a.indexOf(v)===i;});allRows.forEach(function(row){var d=allDevicesCache.find(function(d){return d.row===row;});if(d){d.status='Выдан';d.cardStatus='issued';}});localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));loadDevices();setStatusGlobal('✅ Заказ выдан','success');addPendingChange({action:'updateStatusBulk',rows:allRows,status:'Выдан',cardStatus:'issued',reason:''});}
 
-        function returnCardToLab(groupId){
-            if(!confirm('Вернуть заказ в лабораторию? Все приборы получат статус "В работе".'))return;
-            var key=Object.keys(deviceGroups).find(function(k){return'group_'+Object.keys(deviceGroups).indexOf(k)===groupId;});
-            if(!key||!deviceGroups[key])return;
-            var group=deviceGroups[key];
-            var allRows=[];
-            Object.keys(deviceGroups).forEach(function(k){
-                if(k===key||(deviceGroups[k].company===group.company&&deviceGroups[k].actDate===group.actDate&&deviceGroups[k].actNumber===group.actNumber)){
-                    deviceGroups[k].devices.forEach(function(d){allRows.push(d.row);});
-                }
-            });
-            allRows=allRows.filter(function(v,i,a){return a.indexOf(v)===i;});
-            allRows.forEach(function(row){var d=allDevicesCache.find(function(d){return d.row===row;});if(d){d.status='В работе';d.cardStatus='lab';}});
-            localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
-            loadDevices();setStatusGlobal('✅ Заказ возвращён в работу','success');
-            addPendingChange({action:'updateStatusBulk',rows:allRows,status:'В работе',cardStatus:'lab',reason:''});
-        }
+        function returnCardToLab(groupId){if(!confirm('Вернуть заказ в лабораторию?'))return;var key=Object.keys(deviceGroups).find(function(k){return'group_'+Object.keys(deviceGroups).indexOf(k)===groupId;});if(!key||!deviceGroups[key])return;var group=deviceGroups[key];var allRows=[];Object.keys(deviceGroups).forEach(function(k){if(k===key||(deviceGroups[k].company===group.company&&deviceGroups[k].actDate===group.actDate&&deviceGroups[k].actNumber===group.actNumber)){deviceGroups[k].devices.forEach(function(d){allRows.push(d.row);});}});allRows=allRows.filter(function(v,i,a){return a.indexOf(v)===i;});allRows.forEach(function(row){var d=allDevicesCache.find(function(d){return d.row===row;});if(d){d.status='В работе';d.cardStatus='lab';}});localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));loadDevices();setStatusGlobal('✅ Заказ возвращён','success');addPendingChange({action:'updateStatusBulk',rows:allRows,status:'В работе',cardStatus:'lab',reason:''});}
 
-        function renderRepairTab(devices){
-            var statsR={inRepair:0,done:0,notRepairable:0};devices.forEach(function(d){var rs=d.repairStatus||'В ремонте';if(rs==='В ремонте')statsR.inRepair++;else if(rs==='Сделан')statsR.done++;else statsR.notRepairable++;});
-            document.getElementById('statsRow').innerHTML='<span class="stat-badge orange">🔧 В ремонте: '+(statsR.inRepair||0)+'</span><span class="stat-badge green">✅ Сделано: '+(statsR.done||0)+'</span><span class="stat-badge red">❌ Неремонтопригоден: '+(statsR.notRepairable||0)+'</span>';
-            var months={};devices.forEach(function(d){var date=d.repairDate||d.actDate||'';var m=date.substring(0,7)||'Без даты';if(!months[m])months[m]=[];months[m].push(d);});
-            var html='';var remojis={'В ремонте':'🔧','Сделан':'✅','Неремонтопригоден':'❌'};
-            Object.keys(months).sort(function(a,b){return b.localeCompare(a);}).forEach(function(m){var items=months[m];html+='<div class="month-group"><div class="month-header" onclick="var el=this.parentElement;el.classList.toggle(\'expanded\');var inner=el.querySelector(\'.month-inner\');inner.style.display=el.classList.contains(\'expanded\')?\'block\':\'none\';">📅 '+m+'</div><div class="month-inner">';items.forEach(function(d){var rs=d.repairStatus||'В ремонте';html+='<div class="repair-card"><div class="device-mini"><b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+remojis[rs]+' '+rs+'</div><div style="font-size:11px;color:#8E8E93;">🏢 '+esc(d.company||'')+'</div><div class="device-note"><input type="text" id="note_'+d.row+'" value="'+esc(d.repairNote||'')+'" placeholder="Примечание"><button onclick="saveDeviceNote('+d.row+')">💾</button></div><button class="btn-sm orange" onclick="openRepairStatusModal('+d.row+',\''+esc(d.name||'')+'\',\''+esc(d.serial||'')+'\',\''+rs+'\',\''+esc(d.repairNote||'')+'\')">🔧 Статус</button></div>';});html+='</div></div>';});
-            document.getElementById('devicesList').innerHTML=html||'Нет приборов в ремонте';
-        }
+        function renderRepairTab(devices){var statsR={inRepair:0,done:0,notRepairable:0};devices.forEach(function(d){var rs=d.repairStatus||'В ремонте';if(rs==='В ремонте')statsR.inRepair++;else if(rs==='Сделан')statsR.done++;else statsR.notRepairable++;});document.getElementById('statsRow').innerHTML='<span class="stat-badge orange">🔧 В ремонте: '+(statsR.inRepair||0)+'</span><span class="stat-badge green">✅ Сделано: '+(statsR.done||0)+'</span><span class="stat-badge red">❌ Неремонтопригоден: '+(statsR.notRepairable||0)+'</span>';var months={};devices.forEach(function(d){var date=d.repairDate||d.actDate||'';var m=date.substring(0,7)||'Без даты';if(!months[m])months[m]=[];months[m].push(d);});var html='';var remojis={'В ремонте':'🔧','Сделан':'✅','Неремонтопригоден':'❌'};Object.keys(months).sort(function(a,b){return b.localeCompare(a);}).forEach(function(m){var items=months[m];html+='<div class="month-group"><div class="month-header" onclick="var el=this.parentElement;el.classList.toggle(\'expanded\');var inner=el.querySelector(\'.month-inner\');inner.style.display=el.classList.contains(\'expanded\')?\'block\':\'none\';">📅 '+m+'</div><div class="month-inner">';items.forEach(function(d){var rs=d.repairStatus||'В ремонте';html+='<div class="repair-card"><div class="device-mini"><b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | '+remojis[rs]+' '+rs+'</div><div style="font-size:11px;color:#8E8E93;">🏢 '+esc(d.company||'')+'</div><div class="device-note"><input type="text" id="note_'+d.row+'" value="'+esc(d.repairNote||'')+'" placeholder="Примечание"><button onclick="saveDeviceNote('+d.row+')">💾</button></div><button class="btn-sm orange" onclick="openRepairStatusModal('+d.row+',\''+esc(d.name||'')+'\',\''+esc(d.serial||'')+'\',\''+rs+'\',\''+esc(d.repairNote||'')+'\')">🔧 Статус</button></div>';});html+='</div></div>';});document.getElementById('devicesList').innerHTML=html||'Нет приборов в ремонте';}
 
         function openRepairStatusModal(row,name,serial,currentStatus,currentNote){currentRepairRow=row;document.getElementById('repairDeviceInfo').textContent=name+' | '+serial+' | Текущий: '+currentStatus;document.getElementById('newRepairStatus').value=currentStatus||'В ремонте';document.getElementById('repairNote').value=currentNote||'';document.getElementById('repairStatusModal').style.display='block';}
         function closeRepairStatusModal(){document.getElementById('repairStatusModal').style.display='none';currentRepairRow=null;}
@@ -465,7 +405,22 @@
         function openGroupMessageModal(gi){var keys=Object.keys(deviceGroups),key=keys[gi];if(!key||!deviceGroups[key]){alert('Группа не найдена');return;}var g=deviceGroups[key];var dd=g.actDate?g.actDate.replace(/T.*/,'').split('-').reverse().join('.'):'';var t='Уважаемый клиент!\n\nИнформация по вашим приборам:\n\n📅 '+dd;if(g.actNumber)t+=' | Акт №'+g.actNumber;t+=' | Приборов: '+g.devices.length+'\n\n';g.devices.forEach(function(d,i){t+=(i+1)+'. '+(d.name||'')+' '+(d.type||'')+' | зав.№ '+(d.serial||'')+' | '+(d.status||'В работе');if(d.address)t+='\n   Адрес: '+d.address;if(d.repairReason)t+='\n   Причина: '+d.repairReason;if(d.note&&d.note!==d.repairReason)t+='\n   Примечание: '+d.note;t+='\n\n';});t+='🏢 Адрес: ул. Новаторов, 5\n📞 Тел: +7(996)6418436';document.getElementById('msgDeviceInfo').textContent='🏢 '+(g.company||'');document.getElementById('msgSubject').value='Статус приборов';document.getElementById('msgBody').value=t;document.getElementById('messageModal').style.display='block';if(isOnline){fetch(SCRIPT_URL+'?action=getClientEmail&company='+encodeURIComponent(g.company||'')).then(r=>r.json()).then(function(res){document.getElementById('msgEmail').value=res.email||'';});}}
         function closeMessageModal(){document.getElementById('messageModal').style.display='none';}
         function sendMsg(){var em=document.getElementById('msgEmail').value.trim(),sb=document.getElementById('msgSubject').value.trim(),bd=document.getElementById('msgBody').value.trim();if(!em||!sb||!bd){alert('Заполните все поля');return;}var cp=document.getElementById('msgDeviceInfo').textContent.replace('🏢 ','').split(' | ')[0];if(isOnline){if(cp&&em){fetch(SCRIPT_URL+'?action=saveClientEmail&company='+encodeURIComponent(cp)+'&email='+encodeURIComponent(em));}fetch(SCRIPT_URL+'?action=sendMessage&email='+encodeURIComponent(em)+'&subject='+encodeURIComponent(sb)+'&message='+encodeURIComponent(bd)).then(r=>r.json()).then(function(res){if(res.status==='success'){setStatus('✅ Сообщение отправлено','success');closeMessageModal();}else{setStatus('❌ Ошибка','error');}});}else{addPendingChange({action:'sendMessage',email:em,subject:sb,message:bd});setStatus('✅ Сообщение сохранено, отправится при подключении','success');closeMessageModal();}}
-        function loadArchive(){document.getElementById('archiveContent').innerHTML='<div class="spinner"></div> Загрузка...';if(isOnline){fetch(SCRIPT_URL+'?action=getActs').then(r=>r.json()).then(function(acts){var html='';Object.keys(acts).sort(function(a,b){return(parseInt(b.split('/').pop().replace(/[ПВ]/,''))||0)-(parseInt(a.split('/').pop().replace(/[ПВ]/,''))||0);}).forEach(function(n){var a=acts[n];html+='<div class="act-item" style="background:#F2F2F7;border-radius:12px;padding:14px;margin-bottom:8px;"><b>Акт №'+n+'</b> от '+a.date+'<br>Компания: '+(a.company||'')+' | Приборов: '+a.devicesCount+' <button class="btn-sm blue" onclick="restoreAct(\''+n+'\')">📤</button></div>';});document.getElementById('archiveContent').innerHTML=html||'Нет актов.';}).catch(function(){document.getElementById('archiveContent').innerHTML='Ошибка загрузки.';});}else{document.getElementById('archiveContent').innerHTML='Нет интернета. Работаем офлайн.';}}
+
+        function loadArchive(){
+            document.getElementById('archiveContent').innerHTML='<div class="spinner"></div> Загрузка...';
+            if(isOnline){
+                fetch(SCRIPT_URL+'?action=getActs').then(r=>r.json()).then(function(acts){
+                    var html='';var keys=Object.keys(acts);
+                    if(keys.length===0){html='<div style="text-align:center;color:#8E8E93;padding:20px;">Нет актов</div>';}
+                    else{keys.sort(function(a,b){return(parseInt(b.split('/').pop().replace(/[ПВ]/,''))||0)-(parseInt(a.split('/').pop().replace(/[ПВ]/,''))||0);}).forEach(function(n){var a=acts[n];html+='<div class="act-item" style="background:#F2F2F7;border-radius:12px;padding:14px;margin-bottom:8px;"><b>Акт №'+n+'</b> от '+a.date+'<br>Компания: '+(a.company||'')+' | Приборов: '+a.devicesCount+' <button class="btn-sm blue" onclick="restoreAct(\''+n+'\')">📤</button></div>';});}
+                    document.getElementById('archiveContent').innerHTML=html;
+                }).catch(function(){document.getElementById('archiveContent').innerHTML='Ошибка загрузки.';});
+            }else{
+                var html='<div style="text-align:center;color:#FF9500;padding:10px;">📡 Офлайн. Нет подключения к интернету.</div>';
+                document.getElementById('archiveContent').innerHTML=html;
+            }
+        }
+
         function restoreAct(n){if(isOnline){fetch(SCRIPT_URL+'?action=getAct&number='+encodeURIComponent(n)).then(r=>r.json()).then(function(act){if(act.error){alert(act.error);return;}showMode('priemka');setTimeout(function(){loadActData(act);},500);setStatus('✅ Акт восстановлен','success');});}}
         function renderPrice(){var html='';var sections=[{title:'1. Тепловычислители и теплосчётчики',color:'#007AFF',rows:[['Поверка тепловычислителя любого типа','5 000'],['Поверка теплосчетчика с 2 расх. и компл. ТС','',[['DN15-50','15 200'],['DN65-100','17 200'],['DN150','30 200']]],['Настройка тепловычислителя','2 000'],['Замена элемента питания (без учёта АКБ)','1 000'],['Ремонт тепловычислителя и теплосчетчика','договорная']]},{title:'2. Расходомеры',color:'#34C759',rows:[['Поверка расходомера электромагнитного','',[['DN15-50','4 500'],['DN65-100','5 500'],['DN150','12 000']]],['Поверка расходомера ультразвукового','',[['DN15-50','5 500'],['DN65-100','6 500'],['DN150','15 000']]],['Настройка расходомера','',[['DN15-50','3 000'],['DN65-100','3 500'],['DN150','4 000']]],['Настройка «в пару» расходомера','5 000'],['Ремонт расходомера','договорная'],['Подготовка паспорта на СИ','по запросу']]},{title:'3. Счётчики жидкости тахометрические',color:'#FF9500',rows:[['Поверка счётчика жидкости','',[['DN25-32','2 500'],['DN40-65','4 500'],['DN80-150','6 000']]]]},{title:'4. Термопреобразователи сопротивления и термометры',color:'#FF2D55',rows:[['Поверка термопреобразователя сопротивления','600'],['Поверка комплекта термопреобразователей сопротивления','1 200'],['Термометр стеклянный технический','300'],['Термометр биметаллический БТ','300']]},{title:'5. Преобразователи давления',color:'#AF52DE',rows:[['Поверка преобразователя давления','1 000']]},{title:'6. Манометры',color:'#8E8E93',rows:[['Поверка манометра показывающего КТ 1-2,5','180'],['Поверка манометра технического','180'],['Поверка манометра электроконтактного','250'],['Поверка напоромера, тягонапоромера','500'],['Поверка манометра цифрового','1 000'],['Поверка манометра, вакуумметра образцового','1 000']]}];sections.forEach(function(sec){html+='<div class="price-section"><h3 style="color:'+sec.color+'">'+sec.title+'</h3><table class="price-table">';sec.rows.forEach(function(row){html+='<tr><td>'+row[0]+'</td>';if(row[2]&&Array.isArray(row[2])){html+='<td>';row[2].forEach(function(dn){html+='<span style="margin-right:10px;font-size:10px;color:#8E8E93;">'+dn[0]+'</span>';});html+='</td></tr><tr><td></td><td>';row[2].forEach(function(dn){html+='<span style="margin-right:10px;">'+dn[1]+'</span>';});html+='</td>';}else{html+='<td>'+(row[1]||'')+'</td>';}html+='</tr>';});html+='</table></div>';});document.getElementById('priceContent').innerHTML=html;}
         function openCamera(target,n){currentCameraTarget=target;currentCameraDevice=n;document.getElementById('cameraOverlay').style.display='block';var video=document.getElementById('cameraVideo');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){if(window._cachedStream){cameraStream=window._cachedStream;video.srcObject=cameraStream;video.play();return;}navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(function(s){cameraStream=s;window._cachedStream=s;video.srcObject=s;video.play();}).catch(function(){closeCamera();});}}
