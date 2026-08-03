@@ -277,16 +277,14 @@
         function syncPendingChanges(){
             if(!isOnline||pendingChanges.length===0)return;
             var changes=[...pendingChanges];
-            fetch(SCRIPT_URL+'?action=batchUpdate',{
-                method:'POST',
-                body:JSON.stringify({changes:changes})
-            }).then(function(r){return r.json();}).then(function(res){
-                if(res.status==='success'){
-                    pendingChanges=[];
-                    localStorage.setItem('pendingChanges','[]');
-                    updatePendingBadge();
-                }
-            }).catch(function(){});
+            fetch(SCRIPT_URL+'?action=batchUpdate',{method:'POST',body:JSON.stringify({changes:changes})})
+                .then(function(r){return r.json();}).then(function(res){
+                    if(res.status==='success'){
+                        pendingChanges=[];
+                        localStorage.setItem('pendingChanges','[]');
+                        updatePendingBadge();
+                    }
+                }).catch(function(){});
         }
 
         setInterval(syncPendingChanges,30000);
@@ -460,8 +458,13 @@
             if(!confirm('Выдать заказ? Все приборы переместятся в Архив.'))return;
             var key=Object.keys(deviceGroups).find(function(k){return'group_'+Object.keys(deviceGroups).indexOf(k)===groupId;});
             if(!key||!deviceGroups[key])return;
-            var group=deviceGroups[key];var rows=group.devices.map(function(d){return d.row;});
-            rows.forEach(function(row){var d=allDevicesCache.find(function(d){return d.row===row;});if(d){d.status='Выдан';d.cardStatus='issued';}});
+            var group=deviceGroups[key];
+            var rows=group.devices.map(function(d){return d.row;});
+            // Обновляем ВСЕ приборы с таким же ключом группы
+            allDevicesCache.forEach(function(d){
+                var dk=(d.company||'')+'|'+(d.actDate||'')+'|'+(d.actNumber||'');
+                if(dk===key){d.status='Выдан';d.cardStatus='issued';}
+            });
             localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
             loadDevices();setStatusGlobal('✅ Заказ выдан','success');
             addPendingChange({action:'updateStatusBulk',rows:rows,status:'Выдан',cardStatus:'issued',reason:''});
@@ -471,8 +474,13 @@
             if(!confirm('Вернуть заказ в лабораторию? Все приборы получат статус "В работе".'))return;
             var key=Object.keys(deviceGroups).find(function(k){return'group_'+Object.keys(deviceGroups).indexOf(k)===groupId;});
             if(!key||!deviceGroups[key])return;
-            var group=deviceGroups[key];var rows=group.devices.map(function(d){return d.row;});
-            rows.forEach(function(row){var d=allDevicesCache.find(function(d){return d.row===row;});if(d){d.status='В работе';d.cardStatus='lab';}});
+            var group=deviceGroups[key];
+            var rows=group.devices.map(function(d){return d.row;});
+            // Обновляем ВСЕ приборы с таким же ключом группы
+            allDevicesCache.forEach(function(d){
+                var dk=(d.company||'')+'|'+(d.actDate||'')+'|'+(d.actNumber||'');
+                if(dk===key){d.status='В работе';d.cardStatus='lab';}
+            });
             localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
             loadDevices();setStatusGlobal('✅ Заказ возвращён в работу','success');
             addPendingChange({action:'updateStatusBulk',rows:rows,status:'В работе',cardStatus:'lab',reason:''});
