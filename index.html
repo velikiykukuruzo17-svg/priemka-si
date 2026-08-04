@@ -216,52 +216,7 @@ var currentRepairRow=null,currentCardStatusKey=null;
 window.addEventListener('load',function(){
 var cachedDevices=localStorage.getItem('cache_devices');
 if(cachedDevices){try{allDevicesCache=JSON.parse(cachedDevices);}catch(e){}}
-checkSession();
 });
-
-function checkSession(){
-var s=JSON.parse(localStorage.getItem('priemkaSession')||'{}');
-if(s.user){currentUser=s.user;showApp();}
-else{showLogin();}
-}
-
-function showLogin(){
-document.getElementById('loginScreen').style.display='flex';
-document.getElementById('appContent').style.display='none';
-}
-
-function showApp(){
-document.getElementById('loginScreen').style.display='none';
-document.getElementById('appContent').style.display='block';
-showMainMenu();
-}
-
-function doLogin(){
-var l=document.getElementById('loginInput').value.trim();
-var p=document.getElementById('passwordInput').value.trim();
-if(!l||!p){document.getElementById('loginError').textContent='Введите логин и пароль';return;}
-currentUser=l;
-localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,role:'',date:new Date().toDateString()}));
-document.getElementById('menuUserName').textContent=currentUser;
-document.getElementById('loginScreen').style.display='none';
-document.getElementById('appContent').style.display='block';
-document.getElementById('mainMenu').style.display='block';
-loadUrgentBlock();
-fetch(SCRIPT_URL+'?action=checkLogin&login='+encodeURIComponent(l)+'&password='+encodeURIComponent(p))
-.then(r=>r.json())
-.then(function(res){
-if(res.status==='success'){
-currentUser=res.name||l;
-var role=res.role||'';
-window.userRole=role;
-localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,role:role,date:new Date().toDateString()}));
-document.getElementById('menuUserName').textContent=currentUser;
-}
-})
-.catch(function(){});
-}
-function doLogout(){localStorage.removeItem('priemkaSession');currentUser='';location.reload();}
-document.getElementById('passwordInput').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
 function showMainMenu(){hideAllModes();document.getElementById('mainMenu').style.display='block';document.getElementById('menuUserName').textContent=currentUser||'';loadUrgentBlock();}
 
@@ -552,6 +507,6 @@ function esc(s){if(s===null||s===undefined)return'';s=String(s);return s.replace
 window.addEventListener('click',function(e){if(e.target===document.getElementById('statusModal'))closeStatusModal();if(e.target===document.getElementById('messageModal'))closeMessageModal();if(e.target===document.getElementById('repairStatusModal'))closeRepairStatusModal();if(e.target===document.getElementById('cardStatusModal'))closeCardStatusModal();if(e.target===document.getElementById('actsModal'))closeActsList();});
 window.addEventListener('beforeunload',function(){localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));});
 </script>
-<script src="roles.js"></script>
+<script src="auth.js"></script>
 </body>
 </html>
