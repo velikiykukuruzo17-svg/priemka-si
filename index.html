@@ -288,7 +288,7 @@ renderDevicesFromCache(search);
 
 function renderDevicesFromCache(search){
 var filtered=allDevicesCache;
-if(search){filtered=allDevicesCache.filter(function(d){return(d.name&&d.name.toLowerCase().includes(search))||(d.serial&&d.serial.toLowerCase().includes(search))||(d.company&&d.company.toLowerCase().includes(search));});}
+if(search){filtered=allDevicesCache.filter(function(d){return String(d.name||'').toLowerCase().includes(search)||String(d.serial||'').toLowerCase().includes(search)||String(d.company||'').toLowerCase().includes(search);});}
 if(currentDeviceTab==='repair'){filtered=filtered.filter(function(d){return d.status==='Ремонт'||d.status==='Калибровка'||d.status==='Настройка';});renderRepairTab(filtered);return;}
 deviceGroups={};
 filtered.forEach(function(d){
