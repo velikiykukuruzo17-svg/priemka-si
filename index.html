@@ -314,6 +314,15 @@ function switchDeviceTab(tab){currentDeviceTab=tab;document.getElementById('tabW
 function loadDevices(){
 var search=(document.getElementById('deviceSearch')?.value||'').toLowerCase();
 renderDevicesFromCache(search);
+function renderDevicesFromCache(search){
+// Получаем роль из localStorage
+var s=JSON.parse(localStorage.getItem('priemkaSession')||'{}');
+var userRole=s.role||'';
+var isUserArchive=(userRole==='user'&&currentDeviceTab==='archive');
+
+var filtered=allDevicesCache;
+if(search){
+filtered=allDevicesCache.filter(function(d){
 fetch(SCRIPT_URL+'?action=getDevices&search='+encodeURIComponent(search||''))
 .then(r=>r.json())
 .then(function(data){
