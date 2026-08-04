@@ -541,5 +541,6 @@ function esc(s){if(s===null||s===undefined)return'';s=String(s);return s.replace
 window.addEventListener('click',function(e){if(e.target===document.getElementById('statusModal'))closeStatusModal();if(e.target===document.getElementById('messageModal'))closeMessageModal();if(e.target===document.getElementById('repairStatusModal'))closeRepairStatusModal();if(e.target===document.getElementById('cardStatusModal'))closeCardStatusModal();if(e.target===document.getElementById('actsModal'))closeActsList();});
 window.addEventListener('beforeunload',function(){localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));});
 </script>
+<script src="roles.js"></script>
 </body>
 </html>
