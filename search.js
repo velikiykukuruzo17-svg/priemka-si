@@ -1,157 +1,124 @@
 // ============ ПРОДВИНУТЫЙ ПОИСК И ФИЛЬТРАЦИЯ ============
 
-// Добавляем улучшенный поиск при загрузке страницы
+// Добавляем фильтры при загрузке
 window.addEventListener('load',function(){
-setTimeout(addSearchPanel,600);
+setTimeout(addSearchPanel,800);
 });
 
 function addSearchPanel(){
 var devicesMode=document.getElementById('devicesMode');
 if(!devicesMode)return;
+if(document.getElementById('filterPanel'))return;
 
-// Проверяем что ещё не добавлен
-if(document.getElementById('searchPanel'))return;
-
-// Находим старый поиск
+// Находим старый поиск и заменяем его
 var oldSearch=document.getElementById('deviceSearch');
-var searchContainer=oldSearch?oldSearch.parentElement:null;
+if(!oldSearch)return;
 
-// Создаём новую панель
-var panel=document.createElement('div');
-panel.id='searchPanel';
-panel.innerHTML=`
-<div style="display:flex;gap:6px;margin-bottom:10px;align-items:center;flex-wrap:wrap">
-<input type="text" id="deviceSearch" placeholder="🔍 Поиск по номеру, компании или названию" style="flex:1;min-width:150px;padding:10px;border:1px solid #E5E5EA;border-radius:10px;font-size:14px" oninput="doSearch()">
-<button onclick="doSearch()" style="width:40px;height:40px;border-radius:10px;background:#007AFF;color:#fff;border:none;font-size:18px;cursor:pointer">🔍</button>
-<button onclick="toggleFilters()" id="filterBtn" style="height:40px;border-radius:10px;background:#8E8E93;color:#fff;border:none;font-size:14px;cursor:pointer;padding:0 12px">⚙️ Фильтры</button>
-</div>
-<div id="filterPanel" style="display:none;background:#F9F9F9;border-radius:12px;padding:12px;margin-bottom:10px">
-<div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap">
-<label style="font-size:12px;font-weight:600">📅 С:</label>
-<input type="date" id="filterDateFrom" style="flex:1;min-width:120px;padding:8px;border:1px solid #E5E5EA;border-radius:8px;font-size:13px" onchange="doSearch()">
-<label style="font-size:12px;font-weight:600">📅 По:</label>
-<input type="date" id="filterDateTo" style="flex:1;min-width:120px;padding:8px;border:1px solid #E5E5EA;border-radius:8px;font-size:13px" onchange="doSearch()">
-</div>
-<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-<label style="font-size:12px;font-weight:600">🏢 Компания:</label>
-<select id="filterCompany" style="flex:1;min-width:150px;padding:8px;border:1px solid #E5E5EA;border-radius:8px;font-size:13px" onchange="doSearch()">
-<option value="">Все компании</option>
-</select>
-<button onclick="resetFilters()" style="height:36px;border-radius:8px;background:#FF3B30;color:#fff;border:none;font-size:13px;cursor:pointer;padding:0 12px">✕ Сбросить</button>
-</div>
-</div>
-`;
+// Добавляем поле даты и компании рядом
+var container=oldSearch.parentElement;
 
-// Вставляем панель
-if(searchContainer){
-searchContainer.replaceWith(panel);
-}else{
-var statsRow=document.getElementById('statsRow');
-if(statsRow)statsRow.after(panel);
+// Создаём строку фильтров
+var filterRow=document.createElement('div');
+filterRow.id='filterPanel';
+filterRow.style.cssText='display:flex;gap:6px;margin-top:8px;align-items:center;flex-wrap:wrap';
+
+filterRow.innerHTML=
+'<input type="date" id="filterDateFrom" placeholder="С даты" style="flex:1;min-width:110px;padding:8px;border:1px solid #E5E5EA;border-radius:8px;font-size:12px" onchange="applyFilters()">'+
+'<input type="date" id="filterDateTo" placeholder="По дату" style="flex:1;min-width:110px;padding:8px;border:1px solid #E5E5EA;border-radius:8px;font-size:12px" onchange="applyFilters()">'+
+'<select id="filterCompany" style="flex:1;min-width:130px;padding:8px;border:1px solid #E5E5EA;border-radius:8px;font-size:12px" onchange="applyFilters()"><option value="">🏢 Все</option></select>'+
+'<button onclick="clearFilters()" style="padding:8px 12px;background:#FF3B30;color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer">✕</button>';
+
+// Вставляем после строки поиска
+container.after(filterRow);
+
+// Обновляем поиск — теперь он вызывает фильтрацию
+oldSearch.oninput=function(){applyFilters();};
+var searchBtn=container.querySelector('button');
+if(searchBtn)searchBtn.onclick=function(){applyFilters();};
+
+// Обновляем компании
+updateCompanies();
 }
 
-// Заполняем список компаний
-updateCompanyFilter();
-// Вешаем слушатель на переключение вкладок для обновления компаний
-var origSwitch=switchDeviceTab;
-switchDeviceTab=function(tab){
-origSwitch(tab);
-setTimeout(updateCompanyFilter,300);
-};
-}
-
-// Показать/скрыть фильтры
-function toggleFilters(){
-var panel=document.getElementById('filterPanel');
-var btn=document.getElementById('filterBtn');
-if(panel.style.display==='none'){
-panel.style.display='block';
-btn.style.background='#007AFF';
-}else{
-panel.style.display='none';
-btn.style.background='#8E8E93';
-}
-}
-
-// Сбросить фильтры
-function resetFilters(){
-document.getElementById('filterDateFrom').value='';
-document.getElementById('filterDateTo').value='';
-document.getElementById('filterCompany').value='';
-document.getElementById('deviceSearch').value='';
-doSearch();
-}
-
-// Выполнить поиск
-function doSearch(){
+function applyFilters(){
 var query=(document.getElementById('deviceSearch')?.value||'').toLowerCase().trim();
 var dateFrom=document.getElementById('filterDateFrom')?.value||'';
 var dateTo=document.getElementById('filterDateTo')?.value||'';
 var company=document.getElementById('filterCompany')?.value||'';
 
-// Фильтруем кеш
-var filtered=allDevicesCache;
+// Копируем кеш
+var filtered=allDevicesCache.slice();
 
 // Текстовый поиск
 if(query){
 filtered=filtered.filter(function(d){
 return(d.serial&&d.serial.toLowerCase().includes(query))||
 (d.company&&d.company.toLowerCase().includes(query))||
-(d.name&&d.name.toLowerCase().includes(query))||
-(d.type&&d.type.toLowerCase().includes(query));
+(d.name&&d.name.toLowerCase().includes(query));
 });
 }
 
-// Фильтр по дате
+// Дата С
 if(dateFrom){
+var df=dateFrom.split('-').reverse().join('.');
 filtered=filtered.filter(function(d){
 if(!d.actDate)return false;
-var ad=d.actDate.replace(/T.*/,'').split('-').reverse().join('-');
-return ad>=dateFrom.split('-').reverse().join('-');
+return d.actDate>=df;
 });
 }
+
+// Дата По
 if(dateTo){
+var dt=dateTo.split('-').reverse().join('.');
 filtered=filtered.filter(function(d){
 if(!d.actDate)return false;
-var ad=d.actDate.replace(/T.*/,'').split('-').reverse().join('-');
-return ad<=dateTo.split('-').reverse().join('-');
+return d.actDate<=dt;
 });
 }
 
-// Фильтр по компании
+// Компания
 if(company){
-filtered=filtered.filter(function(d){
-return d.company===company;
-});
+filtered=filtered.filter(function(d){return d.company===company;});
 }
 
-// Применяем фильтр по вкладкам
+// Применяем вкладку
 if(currentDeviceTab==='repair'){
 filtered=filtered.filter(function(d){return d.status==='Ремонт'||d.status==='Калибровка'||d.status==='Настройка';});
 renderRepairTab(filtered);
 }else{
-// Группируем и рендерим через renderDevicesFromCache
-// Временно подменяем allDevicesCache
-var originalCache=allDevicesCache;
+// Временно подменяем кеш для рендера
+var saved=allDevicesCache;
 allDevicesCache=filtered;
-renderDevicesFromCache(query);
-allDevicesCache=originalCache;
+renderDevicesFromCache(query||'');
+allDevicesCache=saved;
 }
 }
 
-// Обновить список компаний в фильтре
-function updateCompanyFilter(){
+function clearFilters(){
+document.getElementById('filterDateFrom').value='';
+document.getElementById('filterDateTo').value='';
+document.getElementById('filterCompany').value='';
+document.getElementById('deviceSearch').value='';
+applyFilters();
+}
+
+function updateCompanies(){
 var select=document.getElementById('filterCompany');
 if(!select)return;
-var currentVal=select.value;
 var companies=[];
 allDevicesCache.forEach(function(d){
 if(d.company&&companies.indexOf(d.company)===-1)companies.push(d.company);
 });
 companies.sort();
-select.innerHTML='<option value="">Все компании</option>';
+select.innerHTML='<option value="">🏢 Все</option>';
 companies.forEach(function(c){
 select.innerHTML+='<option value="'+c+'">'+c+'</option>';
 });
-select.value=currentVal;
 }
+
+// Перехватываем switchDeviceTab для обновления компаний
+var _origSwitchTab=switchDeviceTab;
+switchDeviceTab=function(tab){
+_origSwitchTab(tab);
+setTimeout(updateCompanies,300);
+};
