@@ -314,15 +314,6 @@ function switchDeviceTab(tab){currentDeviceTab=tab;document.getElementById('tabW
 function loadDevices(){
 var search=(document.getElementById('deviceSearch')?.value||'').toLowerCase();
 renderDevicesFromCache(search);
-function renderDevicesFromCache(search){
-// Получаем роль из localStorage
-var s=JSON.parse(localStorage.getItem('priemkaSession')||'{}');
-var userRole=s.role||'';
-var isUserArchive=(userRole==='user'&&currentDeviceTab==='archive');
-
-var filtered=allDevicesCache;
-if(search){
-filtered=allDevicesCache.filter(function(d){
 fetch(SCRIPT_URL+'?action=getDevices&search='+encodeURIComponent(search||''))
 .then(r=>r.json())
 .then(function(data){
@@ -398,10 +389,12 @@ html+='<div class="device-note"><input type="text" id="note_'+d.row+'" value="'+
 // Кнопки прибора — скрываем для user в архиве
 if(!isUserArchive){
 html+=' <button class="btn-sm blue" onclick="event.stopPropagation();openStatusModal(['+d.row+'],\''+esc(d.name||'')+'\',\''+esc(d.serial||'')+'\')">🔄</button>';
+html+=' <button class="btn-sm gray" onclick="event.stopPropagation();openMessageModal(\''+esc(d.company||'')+'\',\''+esc(d.name||'')+' '+esc(d.serial||'')+'\')">📧</button></div>';
 html+=' <button class="btn-sm gray" onclick="event.stopPropagation();openMessageModal(\''+esc(d.company||'')+'\',\''+esc(d.name||'')+' '+esc(d.serial||'')+'\')">📧</button>';
 }
 html+='</div>';
 });
+html+='</div><div class="group-actions">';
 html+='</div>';
 // Групповые действия — скрываем для user в архиве
 if(!isUserArchive){
@@ -409,6 +402,7 @@ html+='<div class="group-actions">';
 html+='<button class="btn-sm green" onclick="event.stopPropagation();openStatusModal('+JSON.stringify(group.devices.map(function(d){return d.row;}))+',\'ВСЕ\',\''+group.devices.length+' шт.\')">🔄 Статус всем</button>';
 if(currentDeviceTab==='work'){html+=' <button class="btn-sm orange" onclick="event.stopPropagation();createReturnActByKey(\''+gi+'\')">📧 Акт возврата</button>';}
 html+=' <button class="btn-sm gray" onclick="event.stopPropagation();printAct()">🖨️ Печать</button>';
+html+=' <button class="btn-sm gray" onclick="event.stopPropagation();openGroupMessageModal(\''+gi+'\')">📧 Написать</button></div></div>';
 html+=' <button class="btn-sm gray" onclick="event.stopPropagation();openGroupMessageModal(\''+gi+'\')">📧 Написать</button></div>';
 }
 html+='</div>';
