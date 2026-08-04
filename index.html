@@ -551,49 +551,6 @@ function setStatus(msg,cls){var el=document.getElementById('status');if(el){el.i
 function esc(s){if(s===null||s===undefined)return'';s=String(s);return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 window.addEventListener('click',function(e){if(e.target===document.getElementById('statusModal'))closeStatusModal();if(e.target===document.getElementById('messageModal'))closeMessageModal();if(e.target===document.getElementById('repairStatusModal'))closeRepairStatusModal();if(e.target===document.getElementById('cardStatusModal'))closeCardStatusModal();if(e.target===document.getElementById('actsModal'))closeActsList();});
 window.addEventListener('beforeunload',function(){localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));});
-</script>
-<script>
-<script>
-// ============ РОЛИ ПОЛЬЗОВАТЕЛЕЙ ============
-(function(){
-var s=JSON.parse(localStorage.getItem('priemkaSession')||'{}');
-window.userRole=s.role||'';
-})();
-
-var __origSwitchTab=switchDeviceTab;
-switchDeviceTab=function(tab){
-var s=JSON.parse(localStorage.getItem('priemkaSession')||'{}');
-window.userRole=s.role||'';
-__origSwitchTab(tab);
-};
-
-var __origOpenStatus=openStatusModal;
-openStatusModal=function(rows,name,serial){
-if(window.userRole==='user'&&currentDeviceTab==='archive')return;
-__origOpenStatus(rows,name,serial);
-};
-
-var __origOpenCard=openCardStatusModal;
-openCardStatusModal=function(groupId){
-if(window.userRole==='user'&&currentDeviceTab==='archive')return;
-__origOpenCard(groupId);
-};
-
-var __origSaveCard=saveCardStatus;
-saveCardStatus=function(){
-if(window.userRole==='user'&&currentDeviceTab==='archive')return;
-__origSaveCard();
-};
-
-var __origSaveStatus=saveNewStatus;
-saveNewStatus=function(){
-if(window.userRole==='user'&&currentDeviceTab==='archive')return;
-__origSaveStatus();
-};
-
-var __origIssue=issueCard;
-issueCard=function(groupId){
-if(window.userRole==='user'&&currentDeviceTab==='archive')return;
-__origIssue(groupId);
-};
-</script>
+<script src="roles.js"></script>
+</body>
+</html>
