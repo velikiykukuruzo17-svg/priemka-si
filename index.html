@@ -201,7 +201,7 @@ input[type="email"], input[type="text"] { width: 100%; padding: 12px; border: 1p
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 // КОНФИГУРАЦИЯ
-var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdZiFIfGaGjJmX9E_HQzfyPDmeK9koj9-chvMvo67CKYCbIhO9W15l4YrnJY6RSHtA/exec';
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjDjr-wLyfyf16eKY0z2gs9wYnLwHnnpRfJwRbw0KIbLRXvLyXytWbehUaFcbJJNV5/exec';
 var CSV_BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJLJVjVpDuLsNRjFg9j7X2NHcDtOgmo4lhiC_CTx2S0ox97Hne91SXQ7XtJJxb9OberlzYUrSXijw6/pub?output=csv&gid=';
 var GID_TYPES = '441822937', GID_COMPANIES = '883764981', SPREADSHEET_ID = '1nj6cd6fGp6WVNDcHpRPxT4OLL6iUYli5IO8l6TVzMLI';
 var typesData=[],deviceCounter=0,cameraStream=null,currentCameraTarget=null,currentCameraDevice=null;
@@ -221,11 +221,7 @@ checkSession();
 
 function checkSession(){
 var s=JSON.parse(localStorage.getItem('priemkaSession')||'{}');
-if(s.user){
-currentUser=s.user;
-document.getElementById('menuUserName').textContent=currentUser;
-showApp();
-}
+if(s.user){currentUser=s.user;showApp();}
 else{showLogin();}
 }
 
@@ -251,17 +247,8 @@ document.getElementById('loginScreen').style.display='none';
 document.getElementById('appContent').style.display='block';
 document.getElementById('mainMenu').style.display='block';
 loadUrgentBlock();
-fetch(SCRIPT_URL+'?action=checkLogin&login='+encodeURIComponent(l)+'&password='+encodeURIComponent(p))
-.then(r=>r.json())
-.then(function(res){
-if(res.status==='success'){
-currentUser=res.name||l;
-localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,date:new Date().toDateString()}));
-document.getElementById('menuUserName').textContent=currentUser;
 }
-})
-.catch(function(){});
-}
+
 function doLogout(){localStorage.removeItem('priemkaSession');currentUser='';location.reload();}
 document.getElementById('passwordInput').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
@@ -272,6 +259,7 @@ var now=new Date();
 var urgent=allDevicesCache.filter(function(d){
 var skipStatuses=['Выдан','Ремонт','Годен','Не годен','Брак','Калибровка','Настройка'];
 if(skipStatuses.indexOf(d.status)!==-1)return false;
+if(d.cardStatus==='transferred')return false;
 var dl=getDeadline(d.actDate);var days=Math.ceil((dl-now)/(1000*60*60*24));return days<=3;
 });
 var block=document.getElementById('urgentBlock');
@@ -283,7 +271,6 @@ html+='<div class="urgent-item">'+emoji+' <b>'+esc(d.name||'')+'</b> | '+esc(d.s
 });
 html+='</div></div>';block.innerHTML=html;block.style.display='block';
 }else{block.style.display='none';}
-fetch(SCRIPT_URL+'?action=getDevices&search=').then(r=>r.json()).then(function(data){if(data.devices){allDevicesCache=data.devices;localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));}}).catch(function(){});
 }
 
 function getDeadline(dateStr){
@@ -318,17 +305,12 @@ fetch(SCRIPT_URL+'?action=getDevices&search='+encodeURIComponent(search||''))
 .then(r=>r.json())
 .then(function(data){
 if(data.devices){
-// 1. Сохраняем старые статусы из текущего кеша
 var oldStatuses={};var oldDates={};
 allDevicesCache.forEach(function(d){
-if(d.cardStatus && d.cardStatus !== 'lab'){oldStatuses[d.row]=d.cardStatus;if(d.transferDate)oldDates[d.row]=d.transferDate;}
+if(d.cardStatus&&d.cardStatus!=='lab'){oldStatuses[d.row]=d.cardStatus;if(d.transferDate)oldDates[d.row]=d.transferDate;}
 });
-// 2. Загружаем резервную копию
-var backup={};
-try{backup=JSON.parse(localStorage.getItem('cardStatusBackup')||'{}');}catch(e){}
-// 3. Обновляем кеш с сервера
+var backup={};try{backup=JSON.parse(localStorage.getItem('cardStatusBackup')||'{}');}catch(e){}
 allDevicesCache=data.devices;
-// 4. Восстанавливаем статусы
 allDevicesCache.forEach(function(d){
 if(oldStatuses[d.row]){d.cardStatus=oldStatuses[d.row];if(oldDates[d.row])d.transferDate=oldDates[d.row];}
 else{var cKey=d.company+'|'+d.actDate+'|'+d.actNumber;if(backup[cKey]){d.cardStatus=backup[cKey].cardStatus;d.transferDate=backup[cKey].transferDate||'';}}
@@ -366,19 +348,12 @@ var sl=Object.keys(sc).map(function(s){return(sem[s]||'')+'×'+sc[s];}).join(' '
 var cst=group.cardStatus==='transferred'?'📤 Передано'+(group.transferDate?' '+group.transferDate:''):(group.cardStatus==='done'?'🟢 Готова':'🟡 В лаборатории');
 var csc=group.cardStatus==='transferred'?'transferred':(group.cardStatus==='done'?'done':'lab');
 var isA=(currentDeviceTab==='archive');
-var isUserArchive=(window.userRole==='user'&&isA);
 html+='<div class="group-card'+(isA?' transferred-card':'')+'" id="'+groupId+'">';
 html+='<div class="company-name" onclick="var el=document.getElementById(\''+groupId+'\');el.classList.toggle(\'expanded\');">🏢 '+esc(group.company||'Нет компании')+' <span class="toggle-icon">▶</span></div>';
 html+='<div class="act-date">📅 '+dd+(group.actNumber?' | Акт №'+esc(group.actNumber):'')+' ('+group.devices.length+' прибора)</div>';
 html+='<div class="employee-line">👤 '+(group.employee||'—')+'</div>';
 html+='<div class="status-indicator">'+sl+'</div>';
-// Статус карточки — кликабельный только если НЕ user в архиве
-var isUserArchive=(window.userRole==='user'&&currentDeviceTab==='archive');
-if(isUserArchive){
-html+='<div class="card-status '+csc+'">📋 '+cst+'</div>';
-}else{
 html+='<div class="card-status '+csc+'" onclick="event.stopPropagation();openCardStatusModal(\''+groupId+'\')">📋 '+cst+' (нажми для смены)</div>';
-}
 if(currentDeviceTab==='work'&&group.cardStatus!=='transferred'){html+=' <button class="btn-sm green" onclick="event.stopPropagation();issueCard(\''+groupId+'\')">📤 Передать</button>';}
 html+='<div class="devices-inner">';
 group.devices.forEach(function(d){
@@ -386,26 +361,14 @@ var em=sem[d.status]||'🟡';
 html+='<div class="device-mini" data-row="'+d.row+'">'+em+' <b>'+esc(d.name||'')+'</b> | '+esc(d.serial||'')+' | <span class="dev-status">'+esc(d.status||'В работе')+'</span>';
 if(d.repairReason)html+='<br><span style="color:#FF3B30;">Причина: '+esc(d.repairReason)+'</span>';
 html+='<div class="device-note"><input type="text" id="note_'+d.row+'" value="'+esc(d.repairNote||'')+'" placeholder="Примечание"><button onclick="event.stopPropagation();saveDeviceNote('+d.row+')">💾</button></div>';
-// Кнопки прибора — скрываем для user в архиве
-if(!isUserArchive){
 html+=' <button class="btn-sm blue" onclick="event.stopPropagation();openStatusModal(['+d.row+'],\''+esc(d.name||'')+'\',\''+esc(d.serial||'')+'\')">🔄</button>';
 html+=' <button class="btn-sm gray" onclick="event.stopPropagation();openMessageModal(\''+esc(d.company||'')+'\',\''+esc(d.name||'')+' '+esc(d.serial||'')+'\')">📧</button></div>';
-html+=' <button class="btn-sm gray" onclick="event.stopPropagation();openMessageModal(\''+esc(d.company||'')+'\',\''+esc(d.name||'')+' '+esc(d.serial||'')+'\')">📧</button>';
-}
-html+='</div>';
 });
 html+='</div><div class="group-actions">';
-html+='</div>';
-// Групповые действия — скрываем для user в архиве
-if(!isUserArchive){
-html+='<div class="group-actions">';
 html+='<button class="btn-sm green" onclick="event.stopPropagation();openStatusModal('+JSON.stringify(group.devices.map(function(d){return d.row;}))+',\'ВСЕ\',\''+group.devices.length+' шт.\')">🔄 Статус всем</button>';
 if(currentDeviceTab==='work'){html+=' <button class="btn-sm orange" onclick="event.stopPropagation();createReturnActByKey(\''+gi+'\')">📧 Акт возврата</button>';}
 html+=' <button class="btn-sm gray" onclick="event.stopPropagation();printAct()">🖨️ Печать</button>';
 html+=' <button class="btn-sm gray" onclick="event.stopPropagation();openGroupMessageModal(\''+gi+'\')">📧 Написать</button></div></div>';
-html+=' <button class="btn-sm gray" onclick="event.stopPropagation();openGroupMessageModal(\''+gi+'\')">📧 Написать</button></div>';
-}
-html+='</div>';
 });
 document.getElementById('devicesList').innerHTML=html||'Нет приборов';
 }
@@ -434,7 +397,6 @@ var cached=allDevicesCache.find(function(c){return c.row===d.row;});
 if(cached){cached.cardStatus=newCS;cached.transferDate=transferDate;}
 });
 localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));
-// Резервная копия
 var backup={};try{backup=JSON.parse(localStorage.getItem('cardStatusBackup')||'{}');}catch(e){}
 var cKey=group.company+'|'+group.actDate+'|'+group.actNumber;
 backup[cKey]={cardStatus:newCS,transferDate:transferDate};
