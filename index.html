@@ -553,6 +553,7 @@ window.addEventListener('click',function(e){if(e.target===document.getElementByI
 window.addEventListener('beforeunload',function(){localStorage.setItem('cache_devices',JSON.stringify(allDevicesCache));});
 </script>
 <script>
+<script>
 // ============ РОЛИ ПОЛЬЗОВАТЕЛЕЙ ============
 (function(){
 var s=JSON.parse(localStorage.getItem('priemkaSession')||'{}');
@@ -568,33 +569,31 @@ __origSwitchTab(tab);
 
 var __origOpenStatus=openStatusModal;
 openStatusModal=function(rows,name,serial){
-if(window.userRole==='user'&&currentDeviceTab==='archive'){alert('⛔ Доступ запрещён');return;}
+if(window.userRole==='user'&&currentDeviceTab==='archive')return;
 __origOpenStatus(rows,name,serial);
 };
 
 var __origOpenCard=openCardStatusModal;
 openCardStatusModal=function(groupId){
-if(window.userRole==='user'&&currentDeviceTab==='archive'){alert('⛔ Доступ запрещён');return;}
+if(window.userRole==='user'&&currentDeviceTab==='archive')return;
 __origOpenCard(groupId);
 };
 
 var __origSaveCard=saveCardStatus;
 saveCardStatus=function(){
-if(window.userRole==='user'&&currentDeviceTab==='archive'){alert('⛔ Доступ запрещён');closeCardStatusModal();return;}
+if(window.userRole==='user'&&currentDeviceTab==='archive')return;
 __origSaveCard();
 };
 
 var __origSaveStatus=saveNewStatus;
 saveNewStatus=function(){
-if(window.userRole==='user'&&currentDeviceTab==='archive'){alert('⛔ Доступ запрещён');closeStatusModal();return;}
+if(window.userRole==='user'&&currentDeviceTab==='archive')return;
 __origSaveStatus();
 };
 
 var __origIssue=issueCard;
 issueCard=function(groupId){
-if(window.userRole==='user'&&currentDeviceTab==='archive'){alert('⛔ Доступ запрещён');return;}
+if(window.userRole==='user'&&currentDeviceTab==='archive')return;
 __origIssue(groupId);
 };
 </script>
-</body>
-</html>
