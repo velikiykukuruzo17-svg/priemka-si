@@ -241,7 +241,10 @@ var l=document.getElementById('loginInput').value.trim();
 var p=document.getElementById('passwordInput').value.trim();
 if(!l||!p){document.getElementById('loginError').textContent='Введите логин и пароль';return;}
 currentUser=l;
-localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,date:new Date().toDateString()}));
+var role=res.role||'';
+window.userRole=role;
+localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,role:role,date:new Date().toDateString()}));
+document.getElementById('menuUserName').textContent=currentUser;
 document.getElementById('menuUserName').textContent=currentUser;
 document.getElementById('loginScreen').style.display='none';
 document.getElementById('appContent').style.display='block';
