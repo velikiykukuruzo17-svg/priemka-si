@@ -221,7 +221,11 @@ checkSession();
 
 function checkSession(){
 var s=JSON.parse(localStorage.getItem('priemkaSession')||'{}');
-if(s.user){currentUser=s.user;showApp();}
+if(s.user){
+currentUser=s.user;
+document.getElementById('menuUserName').textContent=currentUser;
+showApp();
+}
 else{showLogin();}
 }
 
@@ -234,17 +238,6 @@ function showApp(){
 document.getElementById('loginScreen').style.display='none';
 document.getElementById('appContent').style.display='block';
 showMainMenu();
-// Фоново получаем полное имя
-var s=JSON.parse(localStorage.getItem('priemkaSession')||'{}');
-if(s.user){
-fetch(SCRIPT_URL+'?action=checkLogin&login='+encodeURIComponent(s.user)+'&password=')
-.then(r=>r.json())
-.then(function(res){
-if(res.status==='success'){
-document.getElementById('menuUserName').textContent=res.name||s.user;
-}
-})
-.catch(function(){});
 }
 
 function doLogin(){
