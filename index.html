@@ -223,12 +223,13 @@ function checkSession(){
 var s=JSON.parse(localStorage.getItem('priemkaSession')||'{}');
 if(s.user){
 currentUser=s.user;
+window.userRole=s.role||'';
 document.getElementById('menuUserName').textContent=currentUser;
 showApp();
+if(s.role)applyRolePermissions(s.role);
 }
 else{showLogin();}
 }
-
 function showLogin(){
 document.getElementById('loginScreen').style.display='flex';
 document.getElementById('appContent').style.display='none';
@@ -256,8 +257,11 @@ fetch(SCRIPT_URL+'?action=checkLogin&login='+encodeURIComponent(l)+'&password='+
 .then(function(res){
 if(res.status==='success'){
 currentUser=res.name||l;
-localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,date:new Date().toDateString()}));
+var role=res.role||'';
+window.userRole=role;
+localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,role:role,date:new Date().toDateString()}));
 document.getElementById('menuUserName').textContent=currentUser;
+applyRolePermissions(role);
 }
 })
 .catch(function(){});
@@ -308,18 +312,21 @@ else if(mode==='settings'){document.getElementById('settingsPanel').style.displa
 
 function hideAllModes(){['mainMenu','priemkaMode','devicesMode','calendarMode','priceMode','archiveMode','settingsPanel'].forEach(function(id){document.getElementById(id).style.display='none';});}
 
-function switchDeviceTab(tab){currentDeviceTab=tab;document.getElementById('tabWork').classList.toggle('active',tab==='work');document.getElementById('tabRepair').classList.toggle('active',tab==='repair');document.getElementById('tabArchive').classList.toggle('active',tab==='archive');loadDevices();}
+function switchDeviceTab(tab){
+currentDeviceTab=tab;
+document.getElementById('tabWork').classList.toggle('active',tab==='work');
+document.getElementById('tabRepair').classList.toggle('active',tab==='repair');
+document.getElementById('tabArchive').classList.toggle('active',tab==='archive');
+var s=JSON.parse(localStorage.getItem('priemkaSession')||'{}');
+window.userRole=s.role||'';
+loadDevices();
+}
 
 // ============ УПРАВЛЕНИЕ СИ ============
 function loadDevices(){
 var search=(document.getElementById('deviceSearch')?.value||'').toLowerCase();
 renderDevicesFromCache(search);
 function renderDevicesFromCache(search){
-// Получаем роль из localStorage
-var s=JSON.parse(localStorage.getItem('priemkaSession')||'{}');
-var userRole=s.role||'';
-var isUserArchive=(userRole==='user'&&currentDeviceTab==='archive');
-
 var filtered=allDevicesCache;
 if(search){
 filtered=allDevicesCache.filter(function(d){
