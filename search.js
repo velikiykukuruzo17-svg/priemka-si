@@ -23,15 +23,15 @@ function initSearch() {
     panel.id = 'newSearchPanel';
     panel.innerHTML = 
         '<div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">' +
-        '<input type="text" id="deviceSearch" placeholder="🔍 Поиск по номеру, компании или названию" style="flex:1;padding:10px;border:1px solid #E5E5EA;border-radius:10px;font-size:14px" oninput="doFilter()">' +
-        '<button onclick="doFilter()" style="width:40px;height:40px;border-radius:10px;background:#007AFF;color:#fff;border:none;font-size:18px;cursor:pointer">🔍</button>' +
+        '<input type="text" id="deviceSearch" placeholder="🔍 Поиск по номеру, компании или названию" style="flex:1;padding:10px;border:1px solid #E5E5EA;border-radius:10px;font-size:14px">' +
+        '<button id="searchBtn" style="width:40px;height:40px;border-radius:10px;background:#007AFF;color:#fff;border:none;font-size:18px;cursor:pointer">🔍</button>' +
         '</div>' +
         '<div style="display:flex;gap:6px;margin-bottom:10px;align-items:center;flex-wrap:wrap">' +
-        '<input type="date" id="filterDateFrom" style="flex:1;min-width:100px;padding:7px;border:1px solid #E5E5EA;border-radius:8px;font-size:11px" onchange="doFilter()">' +
+        '<input type="date" id="filterDateFrom" style="flex:1;min-width:100px;padding:7px;border:1px solid #E5E5EA;border-radius:8px;font-size:11px">' +
         '<span style="font-size:11px;color:#8E8E93">—</span>' +
-        '<input type="date" id="filterDateTo" style="flex:1;min-width:100px;padding:7px;border:1px solid #E5E5EA;border-radius:8px;font-size:11px" onchange="doFilter()">' +
-        '<select id="filterCompany" style="flex:1;min-width:120px;padding:7px;border:1px solid #E5E5EA;border-radius:8px;font-size:11px" onchange="doFilter()"><option value="">🏢 Все</option></select>' +
-        '<button onclick="resetFilter()" style="padding:7px 10px;background:#FF3B30;color:#fff;border:none;border-radius:8px;font-size:11px;cursor:pointer">✕</button>' +
+        '<input type="date" id="filterDateTo" style="flex:1;min-width:100px;padding:7px;border:1px solid #E5E5EA;border-radius:8px;font-size:11px">' +
+        '<select id="filterCompany" style="flex:1;min-width:120px;padding:7px;border:1px solid #E5E5EA;border-radius:8px;font-size:11px"><option value="">🏢 Все</option></select>' +
+        '<button id="resetBtn" style="padding:7px 10px;background:#FF3B30;color:#fff;border:none;border-radius:8px;font-size:11px;cursor:pointer">✕</button>' +
         '</div>';
 
     // Вставляем перед statsRow
@@ -40,11 +40,14 @@ function initSearch() {
         statsRow.before(panel);
     }
     
-    // Заполняем компании
-    updateCompanyList();
-    
-    // Применяем поиск
+    // Вешаем обработчики
     var searchInput = document.getElementById('deviceSearch');
+    var searchBtn = document.getElementById('searchBtn');
+    var filterDateFrom = document.getElementById('filterDateFrom');
+    var filterDateTo = document.getElementById('filterDateTo');
+    var filterCompany = document.getElementById('filterCompany');
+    var resetBtn = document.getElementById('resetBtn');
+
     if (searchInput) {
         searchInput.oninput = function() {
             if (this.value === '' && !hasActiveFilters()) {
@@ -54,6 +57,14 @@ function initSearch() {
             doFilter();
         };
     }
+    if (searchBtn) searchBtn.onclick = doFilter;
+    if (filterDateFrom) filterDateFrom.onchange = doFilter;
+    if (filterDateTo) filterDateTo.onchange = doFilter;
+    if (filterCompany) filterCompany.onchange = doFilter;
+    if (resetBtn) resetBtn.onclick = resetFilter;
+    
+    // Заполняем компании
+    updateCompanyList();
 }
 
 // Проверка активных фильтров
@@ -93,17 +104,18 @@ function doFilter() {
 
     if (query) {
         filtered = filtered.filter(function(d) {
-            return (d.serial && d.serial.toLowerCase().includes(query)) ||
-                   (d.company && d.company.toLowerCase().includes(query)) ||
-                   (d.name && d.name.toLowerCase().includes(query)) ||
-                   (d.type && d.type.toLowerCase().includes(query));
+            var s = String(d.serial || '').toLowerCase();
+            var c = String(d.company || '').toLowerCase();
+            var n = String(d.name || '').toLowerCase();
+            var t = String(d.type || '').toLowerCase();
+            return s.includes(query) || c.includes(query) || n.includes(query) || t.includes(query);
         });
     }
 
     if (dateFrom) {
         filtered = filtered.filter(function(d) {
             if (!d.actDate) return false;
-            var ad = d.actDate;
+            var ad = String(d.actDate);
             if (ad.includes('T')) ad = ad.split('T')[0];
             return ad >= dateFrom;
         });
@@ -112,7 +124,7 @@ function doFilter() {
     if (dateTo) {
         filtered = filtered.filter(function(d) {
             if (!d.actDate) return false;
-            var ad = d.actDate;
+            var ad = String(d.actDate);
             if (ad.includes('T')) ad = ad.split('T')[0];
             return ad <= dateTo;
         });
@@ -134,7 +146,7 @@ function doFilter() {
         // Временно подменяем кеш
         var saved = allDevicesCache;
         allDevicesCache = filtered;
-        renderDevicesFromCache(query);
+        renderDevicesFromCache('');
         allDevicesCache = saved;
     }
 }
