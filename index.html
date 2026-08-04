@@ -241,7 +241,7 @@ var l=document.getElementById('loginInput').value.trim();
 var p=document.getElementById('passwordInput').value.trim();
 if(!l||!p){document.getElementById('loginError').textContent='Введите логин и пароль';return;}
 currentUser=l;
-localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,position:'',date:new Date().toDateString()}));
+localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,date:new Date().toDateString()}));
 document.getElementById('menuUserName').textContent=currentUser;
 document.getElementById('loginScreen').style.display='none';
 document.getElementById('appContent').style.display='block';
@@ -252,14 +252,12 @@ fetch(SCRIPT_URL+'?action=checkLogin&login='+encodeURIComponent(l)+'&password='+
 .then(function(res){
 if(res.status==='success'){
 currentUser=res.name||l;
-var pos=res.position||'';
-localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,position:pos,date:new Date().toDateString()}));
-document.getElementById('menuUserName').textContent=currentUser+(pos?' — '+pos:'');
+localStorage.setItem('priemkaSession',JSON.stringify({user:currentUser,date:new Date().toDateString()}));
+document.getElementById('menuUserName').textContent=currentUser;
 }
 })
 .catch(function(){});
 }
-
 function doLogout(){localStorage.removeItem('priemkaSession');currentUser='';location.reload();}
 document.getElementById('passwordInput').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
