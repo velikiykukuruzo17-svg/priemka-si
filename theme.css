@@ -347,3 +347,8 @@ select option, .autocomplete-list {
     border: 1px solid rgba(255, 23, 68, 0.2) !important;
     backdrop-filter: blur(10px) !important;
 }
+/* Частицы */
+#particlesCanvas { z-index: 0 !important; }
+
+/* Контент поверх частиц */
+#appContent, #loginScreen { position: relative; z-index: 1; }
