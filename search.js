@@ -9,7 +9,6 @@ function initSearch() {
     var devicesMode = document.getElementById('devicesMode');
     if (!devicesMode) return;
     
-    // Удаляем старый поиск
     var oldSearch = document.getElementById('deviceSearch');
     if (oldSearch && oldSearch.parentElement) {
         oldSearch.parentElement.remove();
@@ -25,7 +24,7 @@ function initSearch() {
         '<button id="searchBtn" style="width:40px;height:40px;border-radius:10px;background:#007AFF;color:#fff;border:none;font-size:18px;cursor:pointer">🔍</button>' +
         '<button id="toggleFiltersBtn" style="height:40px;border-radius:10px;background:#8E8E93;color:#fff;border:none;font-size:13px;cursor:pointer;padding:0 10px;white-space:nowrap">⚙️ Фильтры</button>' +
         '</div>' +
-        '<div id="filtersContainer" style="display:none;gap:6px;margin-bottom:10px;align-items:center;flex-wrap:wrap;padding:10px;background:#F9F9F9;border-radius:12px">' +
+        '<div id="filtersContainer" class="search-filters" style="display:none;gap:6px;margin-bottom:10px;align-items:center;flex-wrap:wrap;padding:10px;border-radius:12px">' +
         '<input type="date" id="filterDateFrom" style="flex:1;min-width:100px;padding:7px;border:1px solid #E5E5EA;border-radius:8px;font-size:11px">' +
         '<span style="font-size:11px;color:#8E8E93">—</span>' +
         '<input type="date" id="filterDateTo" style="flex:1;min-width:100px;padding:7px;border:1px solid #E5E5EA;border-radius:8px;font-size:11px">' +
@@ -38,7 +37,6 @@ function initSearch() {
         statsRow.before(panel);
     }
     
-    // Обработчики
     var searchInput = document.getElementById('deviceSearch');
     var searchBtn = document.getElementById('searchBtn');
     var toggleBtn = document.getElementById('toggleFiltersBtn');
@@ -59,7 +57,6 @@ function initSearch() {
     }
     if (searchBtn) searchBtn.onclick = doFilter;
     
-    // Кнопка сворачивания/разворачивания фильтров
     if (toggleBtn) {
         toggleBtn.onclick = function() {
             if (filtersContainer.style.display === 'none') {
@@ -86,7 +83,6 @@ function initSearch() {
     updateCompanyList();
 }
 
-// Проверка активных фильтров
 function hasActiveFilters() {
     var df = document.getElementById('filterDateFrom');
     var dt = document.getElementById('filterDateTo');
@@ -94,7 +90,6 @@ function hasActiveFilters() {
     return (df && df.value !== '') || (dt && dt.value !== '') || (fc && fc.value !== '');
 }
 
-// Фильтрация
 function doFilter() {
     var query = '';
     var searchInput = document.getElementById('deviceSearch');
@@ -166,7 +161,6 @@ function doFilter() {
     }
 }
 
-// Сброс
 function resetFilter() {
     var searchInput = document.getElementById('deviceSearch');
     var df = document.getElementById('filterDateFrom');
@@ -181,7 +175,6 @@ function resetFilter() {
     loadDevices();
 }
 
-// Обновление списка компаний
 function updateCompanyList() {
     var select = document.getElementById('filterCompany');
     if (!select) return;
@@ -198,7 +191,6 @@ function updateCompanyList() {
     if (current) select.value = current;
 }
 
-// Перехватываем switchDeviceTab
 var _swTab = switchDeviceTab;
 switchDeviceTab = function(tab) {
     _swTab(tab);
