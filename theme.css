@@ -360,3 +360,280 @@ input:focus, select:focus, textarea:focus {
 #toggleFiltersBtn {
     transition: all 0.3s ease !important;
 }
+/* ============ ИСПРАВЛЕНИЯ ДЛЯ ВСЕХ ЭЛЕМЕНТОВ ============ */
+
+/* Срочные поверки */
+.urgent-block {
+    background: rgba(255,82,82,0.08) !important;
+    border: 1px solid rgba(255,82,82,0.3) !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.urgent-block h3 {
+    color: #FF5252 !important;
+}
+
+.urgent-block .urgent-item {
+    color: #DDD !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+/* Календарь - модальное окно дня */
+#dayModal > div {
+    background: linear-gradient(180deg, #1E1E30, #1A1A1A) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6) !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+#dayModal .group-card {
+    background: rgba(255,255,255,0.03) !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    border-left: 4px solid #FFD54F !important;
+}
+
+#dayModal .company-name {
+    color: #FFFFFF !important;
+}
+
+#dayModal .act-date,
+#dayModal .employee-line {
+    color: #AAA !important;
+}
+
+#dayModal .device-mini {
+    color: #CCC !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+#dayModalClose {
+    color: #FF5252 !important;
+}
+
+/* Календарь - заголовок дня */
+#calDayInfo {
+    color: #AAA !important;
+}
+
+.calendar-nav .month-label {
+    color: #FFFFFF !important;
+}
+
+/* Архив актов (не в управлении СИ) */
+#archiveContent {
+    color: #FFFFFF !important;
+}
+
+#archiveContent .act-item {
+    background: rgba(255,255,255,0.03) !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    color: #FFFFFF !important;
+}
+
+#archiveContent .act-item b {
+    color: #FFD54F !important;
+}
+
+/* Все модальные окна */
+#statusModal .modal-content,
+#cardStatusModal .modal-content,
+#repairStatusModal .modal-content,
+#messageModal .modal-content,
+#actsModal .modal-content {
+    background: linear-gradient(180deg, #1E1E30, #1A1A1A) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    color: #FFFFFF !important;
+}
+
+#statusModal h3,
+#cardStatusModal h3,
+#repairStatusModal h3,
+#messageModal h3,
+#actsModal h3 {
+    color: #FFFFFF !important;
+}
+
+#statusModal p,
+#cardStatusModal p,
+#repairStatusModal p,
+#messageModal p {
+    color: #AAA !important;
+}
+
+#statusModal select,
+#cardStatusModal select,
+#repairStatusModal select,
+#messageModal select {
+    background: rgba(255,255,255,0.08) !important;
+    color: #FFFFFF !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+#statusModal select option,
+#cardStatusModal select option,
+#repairStatusModal select option,
+#messageModal select option {
+    background: #1A1A1A !important;
+    color: #FFFFFF !important;
+}
+
+#statusModal input,
+#cardStatusModal input,
+#repairStatusModal input,
+#messageModal input,
+#messageModal textarea {
+    background: rgba(255,255,255,0.08) !important;
+    color: #FFFFFF !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+#statusModal input::placeholder,
+#messageModal textarea::placeholder {
+    color: #888 !important;
+}
+
+/* Список актов в модальном окне */
+#actsList .act-item {
+    background: rgba(255,255,255,0.03) !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    color: #FFFFFF !important;
+}
+
+#actsList .act-item b {
+    color: #FFD54F !important;
+}
+
+/* Секция с приборами в приёмке */
+#devicesContainer {
+    color: #FFFFFF !important;
+}
+
+.section-title {
+    color: #AAA !important;
+}
+
+/* Подсказки */
+.hint {
+    color: #888 !important;
+}
+
+.serial-hint {
+    color: #888 !important;
+}
+
+/* Голосовые подсказки */
+.voice-variants {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 12px !important;
+}
+
+.voice-variant-item {
+    background: rgba(255,255,255,0.03) !important;
+    color: #FFFFFF !important;
+    border-radius: 8px !important;
+}
+
+.voice-variant-item:active {
+    background: #FFD54F !important;
+    color: #0D0D0D !important;
+}
+
+/* Заметки в приборах */
+.device-note input {
+    background: rgba(255,255,255,0.08) !important;
+    color: #FFFFFF !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+/* Выпадающие списки везде */
+select option {
+    background: #1A1A1A !important;
+    color: #FFFFFF !important;
+}
+
+/* Предпросмотр сохранения */
+.saved-indicator {
+    color: #4CAF50 !important;
+}
+
+/* Настройки */
+#settingsPanel label {
+    color: #AAA !important;
+}
+
+#settingsStatus {
+    color: #4CAF50 !important;
+}
+
+/* Прайс */
+.price-table td:first-child {
+    color: #DDD !important;
+}
+
+.price-table td:last-child {
+    color: #FFD54F !important;
+}
+
+/* Ремонт - карточки */
+.repair-card {
+    background: rgba(255,255,255,0.03) !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    border-left: 4px solid #FF9500 !important;
+}
+
+.repair-card .device-mini {
+    color: #DDD !important;
+}
+
+/* Группировка по месяцам */
+.month-group {
+    background: rgba(255,255,255,0.03) !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+.month-group .month-header {
+    color: #FFD54F !important;
+}
+
+/* Нижняя панель фильтров */
+#filterRow {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+/* Чекбоксы */
+.checkbox-row {
+    color: #DDD !important;
+}
+
+.checkbox-row input {
+    accent-color: #FFD54F !important;
+}
+
+/* Двойные серийные номера */
+.serial-dual-block {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+.serial-dual-row label {
+    color: #AAA !important;
+}
+
+/* Спиннер загрузки */
+.spinner {
+    border-color: rgba(255,255,255,0.1) !important;
+    border-top-color: #FFD54F !important;
+}
+
+/* Затемнение фона для модалок */
+#statusModal, #cardStatusModal, #repairStatusModal, #messageModal, #actsModal, #dayModal {
+    background: rgba(0,0,0,0.7) !important;
+    backdrop-filter: blur(4px) !important;
+}
+
+/* Кнопка "Закрыть" в модалках */
+#dayModalClose, .modal-content button {
+    transition: all 0.3s ease !important;
+}
