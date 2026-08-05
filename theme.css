@@ -637,3 +637,197 @@ select option {
 #dayModalClose, .modal-content button {
     transition: all 0.3s ease !important;
 }
+/* ============ ПРИЁМКА СИ ============ */
+
+/* Основной контейнер */
+#priemkaContent {
+    color: #FFFFFF !important;
+}
+
+/* Заголовок секции */
+#priemkaContent .section-title {
+    color: #AAA !important;
+}
+
+/* Поле компании */
+#companyInput {
+    background: rgba(255,255,255,0.08) !important;
+    color: #FFFFFF !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+#companyInput::placeholder {
+    color: #888 !important;
+}
+
+/* Выпадающий список компаний */
+#companyList {
+    background: #1A1A1A !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+#companyList li {
+    color: #FFFFFF !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+#companyList li:hover,
+#companyList li:active {
+    background: #FFD54F !important;
+    color: #0D0D0D !important;
+}
+
+/* Блоки приборов */
+#priemkaContent .device-block {
+    background: rgba(255,255,255,0.03) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
+}
+
+#priemkaContent .device-title {
+    color: #FFFFFF !important;
+}
+
+#priemkaContent .device-number {
+    background: #FFD54F !important;
+    color: #0D0D0D !important;
+}
+
+#priemkaContent .field-group label {
+    color: #AAA !important;
+}
+
+/* Поля ввода в приборах */
+#priemkaContent input[type="text"] {
+    background: rgba(255,255,255,0.08) !important;
+    color: #FFFFFF !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+#priemkaContent input[type="text"]::placeholder {
+    color: #888 !important;
+}
+
+#priemkaContent input[type="text"]:focus {
+    border-color: #FFD54F !important;
+}
+
+/* Чекбокс АКБ */
+#priemkaContent .checkbox-row {
+    color: #DDD !important;
+}
+
+#priemkaContent .checkbox-row input {
+    accent-color: #FFD54F !important;
+}
+
+/* Кнопка добавления прибора */
+#priemkaContent .btn-ios {
+    margin: 8px 0 !important;
+}
+
+/* Кнопка отправить */
+#priemkaContent .btn-ios-green {
+    margin-top: 12px !important;
+}
+
+/* Подсказка email */
+#priemkaContent .hint {
+    color: #888 !important;
+}
+
+/* Индикатор сохранения */
+#priemkaContent .saved-indicator {
+    color: #4CAF50 !important;
+}
+
+/* Статус */
+#priemkaContent .status {
+    color: #AAA !important;
+}
+
+/* Кнопки иконок в приёмке */
+#priemkaContent .btn-ios-icon {
+    background: rgba(255,255,255,0.08) !important;
+    color: #FFFFFF !important;
+}
+
+#priemkaContent .btn-ios-icon.green {
+    background: rgba(76,175,80,0.3) !important;
+}
+
+#priemkaContent .btn-ios-icon.red {
+    background: rgba(255,82,82,0.3) !important;
+}
+
+#priemkaContent .btn-ios-icon.pink {
+    background: rgba(255,45,85,0.3) !important;
+}
+
+/* Кнопка сохранить */
+#priemkaContent .save-btn {
+    background: #FFD54F !important;
+    color: #0D0D0D !important;
+}
+
+/* Двойные серийные */
+#priemkaContent .serial-dual-block {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+#priemkaContent .serial-dual-row label {
+    color: #AAA !important;
+}
+
+#priemkaContent .serial-hint {
+    color: #888 !important;
+}
+
+/* Голосовые подсказки */
+#priemkaContent .voice-variants {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+#priemkaContent .voice-variant-item {
+    background: rgba(255,255,255,0.03) !important;
+    color: #FFFFFF !important;
+}
+
+#priemkaContent .voice-variant-item:active {
+    background: #FFD54F !important;
+    color: #0D0D0D !important;
+}
+
+/* Панель инструментов */
+#priemkaContent .act-toolbar {
+    margin-bottom: 16px !important;
+}
+
+/* Загрузка */
+#loadingSkeleton {
+    color: #AAA !important;
+}
+
+/* Все выпадающие списки в приёмке */
+#priemkaContent select option {
+    background: #1A1A1A !important;
+    color: #FFFFFF !important;
+}
+
+/* Автозаполнение */
+#priemkaContent .autocomplete-list {
+    background: #1A1A1A !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+#priemkaContent .autocomplete-list li {
+    color: #FFFFFF !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+#priemkaContent .autocomplete-list li:active {
+    background: #FFD54F !important;
+    color: #0D0D0D !important;
+}
