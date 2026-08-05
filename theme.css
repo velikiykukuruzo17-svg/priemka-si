@@ -1,20 +1,17 @@
 /* ============ ТЕМА В СТИЛЕ ЯНДЕКС МУЗЫКИ v2 ============ */
 
-/* Импорт шрифта */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 * {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
-/* Основной фон с градиентом */
 body {
     background: linear-gradient(180deg, #1A1A2E 0%, #0D0D0D 50%, #000000 100%) !important;
     color: #FFFFFF !important;
     min-height: 100vh !important;
 }
 
-/* Полупрозрачная шапка с блюром */
 .header {
     background: rgba(255,255,255,0.03) !important;
     backdrop-filter: blur(20px) !important;
@@ -31,7 +28,6 @@ body {
     font-weight: 800 !important;
 }
 
-/* Меню - карточки с градиентом */
 .menu-card {
     background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)) !important;
     border-radius: 24px !important;
@@ -56,20 +52,15 @@ body {
     transition: opacity 0.3s ease !important;
 }
 
-.menu-card:hover::before {
-    opacity: 1 !important;
-}
+.menu-card:hover::before { opacity: 1 !important; }
 
 .menu-card:active {
     transform: scale(0.96) !important;
     box-shadow: 0 4px 16px rgba(255,213,79,0.2) !important;
 }
 
-.menu-icon {
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)) !important;
-}
+.menu-icon { filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)) !important; }
 
-/* Аватар пользователя */
 #menuUserName {
     background: linear-gradient(135deg, #FFD54F, #FF9500) !important;
     -webkit-background-clip: text !important;
@@ -77,7 +68,6 @@ body {
     font-weight: 700 !important;
 }
 
-/* Кнопки с градиентами */
 .btn-ios {
     background: linear-gradient(135deg, #FFD54F, #FFB300) !important;
     color: #0D0D0D !important;
@@ -114,7 +104,6 @@ body {
     backdrop-filter: blur(10px) !important;
 }
 
-/* Вкладки */
 .tabs {
     background: rgba(255,255,255,0.05) !important;
     border-radius: 14px !important;
@@ -134,7 +123,6 @@ body {
     box-shadow: 0 2px 8px rgba(255,213,79,0.3) !important;
 }
 
-/* Карточки */
 .group-card {
     background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)) !important;
     border-radius: 20px !important;
@@ -159,7 +147,6 @@ body {
     -webkit-text-fill-color: transparent !important;
 }
 
-/* Поля ввода */
 input, select, textarea {
     background: rgba(255,255,255,0.05) !important;
     color: #FFFFFF !important;
@@ -175,14 +162,12 @@ input:focus, select:focus, textarea:focus {
     background: rgba(255,255,255,0.08) !important;
 }
 
-/* Поиск */
 #deviceSearch {
     background: rgba(255,255,255,0.05) !important;
     border-radius: 14px !important;
     font-size: 15px !important;
 }
 
-/* Календарь */
 .calendar-grid .day {
     border-radius: 50% !important;
     width: 36px !important;
@@ -224,7 +209,6 @@ input:focus, select:focus, textarea:focus {
     box-shadow: 0 2px 8px rgba(76,175,80,0.4) !important;
 }
 
-/* Модальные окна */
 .modal-content {
     background: linear-gradient(180deg, #1E1E30, #1A1A1A) !important;
     border-radius: 24px !important;
@@ -233,11 +217,8 @@ input:focus, select:focus, textarea:focus {
     backdrop-filter: blur(20px) !important;
 }
 
-.modal-content select {
-    background: rgba(255,255,255,0.08) !important;
-}
+.modal-content select { background: rgba(255,255,255,0.08) !important; }
 
-/* Статусы с неоном */
 .card-status.lab {
     background: rgba(255,149,0,0.15) !important;
     box-shadow: 0 0 10px rgba(255,149,0,0.2) !important;
@@ -253,7 +234,6 @@ input:focus, select:focus, textarea:focus {
     box-shadow: 0 0 10px rgba(100,150,255,0.2) !important;
 }
 
-/* Прайс */
 .price-section {
     background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)) !important;
     border-radius: 20px !important;
@@ -268,25 +248,11 @@ input:focus, select:focus, textarea:focus {
     font-weight: 700 !important;
 }
 
-/* Скроллбар */
-::-webkit-scrollbar {
-    width: 5px !important;
-}
+::-webkit-scrollbar { width: 5px !important; }
+::-webkit-scrollbar-track { background: transparent !important; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1) !important; border-radius: 10px !important; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,213,79,0.3) !important; }
 
-::-webkit-scrollbar-track {
-    background: transparent !important;
-}
-
-::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.1) !important;
-    border-radius: 10px !important;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: rgba(255,213,79,0.3) !important;
-}
-
-/* Анимация появления */
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(20px) scale(0.95); }
     to { opacity: 1; transform: translateY(0) scale(1); }
@@ -296,21 +262,15 @@ input:focus, select:focus, textarea:focus {
     animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-/* Пульсация для кнопок */
 @keyframes pulse {
     0% { box-shadow: 0 0 0 0 rgba(255,213,79,0.4); }
     70% { box-shadow: 0 0 0 10px rgba(255,213,79,0); }
     100% { box-shadow: 0 0 0 0 rgba(255,213,79,0); }
 }
 
-.btn-ios-green:not(:disabled) {
-    animation: pulse 2s infinite !important;
-}
+.btn-ios-green:not(:disabled) { animation: pulse 2s infinite !important; }
 
-/* Экран входа */
-#loginScreen {
-    background: linear-gradient(180deg, #1A1A2E, #0D0D0D) !important;
-}
+#loginScreen { background: linear-gradient(180deg, #1A1A2E, #0D0D0D) !important; }
 
 #loginScreen input {
     background: rgba(255,255,255,0.05) !important;
@@ -320,13 +280,6 @@ input:focus, select:focus, textarea:focus {
     padding: 16px !important;
 }
 
-/* Аватарка компании в карточке */
-.group-card .company-name::before {
-    content: '🏢 ' !important;
-    font-size: 20px !important;
-}
-
-/* Бейджи */
 .stat-badge {
     border-radius: 20px !important;
     padding: 6px 12px !important;
@@ -334,7 +287,14 @@ input:focus, select:focus, textarea:focus {
     letter-spacing: 0.5px !important;
     backdrop-filter: blur(10px) !important;
 }
-/* Фильтры поиска */
+
+.stat-badge.blue { background: rgba(0,122,255,0.2) !important; color: #4DA3FF !important; }
+.stat-badge.green { background: rgba(76,175,80,0.2) !important; color: #4CAF50 !important; }
+.stat-badge.orange { background: rgba(255,149,0,0.2) !important; color: #FF9500 !important; }
+.stat-badge.red { background: rgba(255,82,82,0.2) !important; color: #FF5252 !important; }
+.stat-badge.gray { background: rgba(255,255,255,0.1) !important; color: #AAA !important; }
+
+/* ============ ФИЛЬТРЫ ПОИСКА ============ */
 .search-filters {
     background: rgba(255,255,255,0.05) !important;
     border: 1px solid rgba(255,255,255,0.1) !important;
@@ -348,37 +308,25 @@ input:focus, select:focus, textarea:focus {
     border: 1px solid rgba(255,255,255,0.1) !important;
 }
 
-.search-filters input::placeholder {
-    color: #888 !important;
-}
+.search-filters input::placeholder { color: #888 !important; }
 
 .search-filters select option {
     background: #1A1A1A !important;
     color: #FFFFFF !important;
 }
 
-#toggleFiltersBtn {
-    transition: all 0.3s ease !important;
-}
-/* ============ ИСПРАВЛЕНИЯ ДЛЯ ВСЕХ ЭЛЕМЕНТОВ ============ */
+#toggleFiltersBtn { transition: all 0.3s ease !important; }
 
-/* Срочные поверки */
+/* ============ ВСЕ ОСТАЛЬНЫЕ ЭЛЕМЕНТЫ ============ */
 .urgent-block {
     background: rgba(255,82,82,0.08) !important;
     border: 1px solid rgba(255,82,82,0.3) !important;
     backdrop-filter: blur(10px) !important;
 }
 
-.urgent-block h3 {
-    color: #FF5252 !important;
-}
+.urgent-block h3 { color: #FF5252 !important; }
+.urgent-block .urgent-item { color: #DDD !important; border-bottom: 1px solid rgba(255,255,255,0.06) !important; }
 
-.urgent-block .urgent-item {
-    color: #DDD !important;
-    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
-}
-
-/* Календарь - модальное окно дня */
 #dayModal > div {
     background: linear-gradient(180deg, #1E1E30, #1A1A1A) !important;
     border: 1px solid rgba(255,255,255,0.1) !important;
@@ -386,142 +334,80 @@ input:focus, select:focus, textarea:focus {
     backdrop-filter: blur(20px) !important;
 }
 
+#dayModal > div > div:first-child { background: transparent !important; }
+#dayModalTitle { color: #FFFFFF !important; background: transparent !important; }
+
 #dayModal .group-card {
     background: rgba(255,255,255,0.03) !important;
     border: 1px solid rgba(255,255,255,0.06) !important;
     border-left: 4px solid #FFD54F !important;
 }
 
-#dayModal .company-name {
-    color: #FFFFFF !important;
-}
+#dayModal .company-name { color: #FFFFFF !important; }
+#dayModal .act-date, #dayModal .employee-line { color: #AAA !important; }
+#dayModal .device-mini { color: #CCC !important; border-bottom: 1px solid rgba(255,255,255,0.06) !important; }
+#dayModalClose { color: #FF5252 !important; }
 
-#dayModal .act-date,
-#dayModal .employee-line {
-    color: #AAA !important;
-}
+#calDayInfo { color: #AAA !important; }
+.calendar-nav .month-label { color: #FFFFFF !important; }
 
-#dayModal .device-mini {
-    color: #CCC !important;
-    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
-}
-
-#dayModalClose {
-    color: #FF5252 !important;
-}
-
-/* Календарь - заголовок дня */
-#calDayInfo {
-    color: #AAA !important;
-}
-
-.calendar-nav .month-label {
-    color: #FFFFFF !important;
-}
-
-/* Архив актов (не в управлении СИ) */
-#archiveContent {
-    color: #FFFFFF !important;
-}
-
+#archiveContent { color: #FFFFFF !important; }
 #archiveContent .act-item {
     background: rgba(255,255,255,0.03) !important;
     border: 1px solid rgba(255,255,255,0.06) !important;
     color: #FFFFFF !important;
 }
+#archiveContent .act-item b { color: #FFD54F !important; }
 
-#archiveContent .act-item b {
-    color: #FFD54F !important;
-}
-
-/* Все модальные окна */
-#statusModal .modal-content,
-#cardStatusModal .modal-content,
-#repairStatusModal .modal-content,
-#messageModal .modal-content,
+#statusModal .modal-content, #cardStatusModal .modal-content,
+#repairStatusModal .modal-content, #messageModal .modal-content,
 #actsModal .modal-content {
     background: linear-gradient(180deg, #1E1E30, #1A1A1A) !important;
     border: 1px solid rgba(255,255,255,0.1) !important;
     color: #FFFFFF !important;
 }
 
-#statusModal h3,
-#cardStatusModal h3,
-#repairStatusModal h3,
-#messageModal h3,
-#actsModal h3 {
-    color: #FFFFFF !important;
-}
+#statusModal h3, #cardStatusModal h3, #repairStatusModal h3,
+#messageModal h3, #actsModal h3 { color: #FFFFFF !important; }
 
-#statusModal p,
-#cardStatusModal p,
-#repairStatusModal p,
-#messageModal p {
-    color: #AAA !important;
-}
+#statusModal p, #cardStatusModal p, #repairStatusModal p,
+#messageModal p { color: #AAA !important; }
 
-#statusModal select,
-#cardStatusModal select,
-#repairStatusModal select,
-#messageModal select {
+#statusModal select, #cardStatusModal select,
+#repairStatusModal select, #messageModal select {
     background: rgba(255,255,255,0.08) !important;
     color: #FFFFFF !important;
     border: 1px solid rgba(255,255,255,0.1) !important;
 }
 
-#statusModal select option,
-#cardStatusModal select option,
-#repairStatusModal select option,
-#messageModal select option {
+#statusModal select option, #cardStatusModal select option,
+#repairStatusModal select option, #messageModal select option {
     background: #1A1A1A !important;
     color: #FFFFFF !important;
 }
 
-#statusModal input,
-#cardStatusModal input,
-#repairStatusModal input,
-#messageModal input,
+#statusModal input, #cardStatusModal input,
+#repairStatusModal input, #messageModal input,
 #messageModal textarea {
     background: rgba(255,255,255,0.08) !important;
     color: #FFFFFF !important;
     border: 1px solid rgba(255,255,255,0.1) !important;
 }
 
-#statusModal input::placeholder,
-#messageModal textarea::placeholder {
-    color: #888 !important;
-}
+#statusModal input::placeholder, #messageModal textarea::placeholder { color: #888 !important; }
 
-/* Список актов в модальном окне */
 #actsList .act-item {
     background: rgba(255,255,255,0.03) !important;
     border: 1px solid rgba(255,255,255,0.06) !important;
     color: #FFFFFF !important;
 }
+#actsList .act-item b { color: #FFD54F !important; }
 
-#actsList .act-item b {
-    color: #FFD54F !important;
-}
+#devicesContainer { color: #FFFFFF !important; }
+.section-title { color: #AAA !important; }
+.hint { color: #888 !important; }
+.serial-hint { color: #888 !important; }
 
-/* Секция с приборами в приёмке */
-#devicesContainer {
-    color: #FFFFFF !important;
-}
-
-.section-title {
-    color: #AAA !important;
-}
-
-/* Подсказки */
-.hint {
-    color: #888 !important;
-}
-
-.serial-hint {
-    color: #888 !important;
-}
-
-/* Голосовые подсказки */
 .voice-variants {
     background: rgba(255,255,255,0.05) !important;
     border: 1px solid rgba(255,255,255,0.1) !important;
@@ -534,300 +420,137 @@ input:focus, select:focus, textarea:focus {
     border-radius: 8px !important;
 }
 
-.voice-variant-item:active {
-    background: #FFD54F !important;
-    color: #0D0D0D !important;
-}
+.voice-variant-item:active { background: #FFD54F !important; color: #0D0D0D !important; }
 
-/* Заметки в приборах */
 .device-note input {
     background: rgba(255,255,255,0.08) !important;
     color: #FFFFFF !important;
     border: 1px solid rgba(255,255,255,0.1) !important;
 }
 
-/* Выпадающие списки везде */
-select option {
-    background: #1A1A1A !important;
-    color: #FFFFFF !important;
-}
+select option { background: #1A1A1A !important; color: #FFFFFF !important; }
+.saved-indicator { color: #4CAF50 !important; }
+#settingsPanel label { color: #AAA !important; }
+#settingsStatus { color: #4CAF50 !important; }
 
-/* Предпросмотр сохранения */
-.saved-indicator {
-    color: #4CAF50 !important;
-}
+.price-table td:first-child { color: #DDD !important; }
+.price-table td:last-child { color: #FFD54F !important; }
 
-/* Настройки */
-#settingsPanel label {
-    color: #AAA !important;
-}
-
-#settingsStatus {
-    color: #4CAF50 !important;
-}
-
-/* Прайс */
-.price-table td:first-child {
-    color: #DDD !important;
-}
-
-.price-table td:last-child {
-    color: #FFD54F !important;
-}
-
-/* Ремонт - карточки */
 .repair-card {
     background: rgba(255,255,255,0.03) !important;
     border: 1px solid rgba(255,255,255,0.06) !important;
     border-left: 4px solid #FF9500 !important;
 }
+.repair-card .device-mini { color: #DDD !important; }
 
-.repair-card .device-mini {
-    color: #DDD !important;
-}
-
-/* Группировка по месяцам */
 .month-group {
     background: rgba(255,255,255,0.03) !important;
     border: 1px solid rgba(255,255,255,0.06) !important;
 }
+.month-group .month-header { color: #FFD54F !important; }
 
-.month-group .month-header {
-    color: #FFD54F !important;
-}
-
-/* Нижняя панель фильтров */
 #filterRow {
     background: rgba(255,255,255,0.05) !important;
     border: 1px solid rgba(255,255,255,0.1) !important;
 }
 
-/* Чекбоксы */
-.checkbox-row {
-    color: #DDD !important;
-}
+.checkbox-row { color: #DDD !important; }
+.checkbox-row input { accent-color: #FFD54F !important; }
 
-.checkbox-row input {
-    accent-color: #FFD54F !important;
-}
-
-/* Двойные серийные номера */
 .serial-dual-block {
     background: rgba(255,255,255,0.05) !important;
     border: 1px solid rgba(255,255,255,0.1) !important;
 }
+.serial-dual-row label { color: #AAA !important; }
 
-.serial-dual-row label {
-    color: #AAA !important;
-}
+.spinner { border-color: rgba(255,255,255,0.1) !important; border-top-color: #FFD54F !important; }
 
-/* Спиннер загрузки */
-.spinner {
-    border-color: rgba(255,255,255,0.1) !important;
-    border-top-color: #FFD54F !important;
-}
-
-/* Затемнение фона для модалок */
-#statusModal, #cardStatusModal, #repairStatusModal, #messageModal, #actsModal, #dayModal {
+#statusModal, #cardStatusModal, #repairStatusModal,
+#messageModal, #actsModal, #dayModal {
     background: rgba(0,0,0,0.7) !important;
     backdrop-filter: blur(4px) !important;
 }
 
-/* Кнопка "Закрыть" в модалках */
-#dayModalClose, .modal-content button {
-    transition: all 0.3s ease !important;
-}
 /* ============ ПРИЁМКА СИ ============ */
+#priemkaContent { color: #FFFFFF !important; }
+#priemkaContent .section-title { color: #AAA !important; }
 
-/* Основной контейнер */
-#priemkaContent {
-    color: #FFFFFF !important;
-}
-
-/* Заголовок секции */
-#priemkaContent .section-title {
-    color: #AAA !important;
-}
-
-/* Поле компании */
 #companyInput {
     background: rgba(255,255,255,0.08) !important;
     color: #FFFFFF !important;
     border: 1px solid rgba(255,255,255,0.1) !important;
 }
+#companyInput::placeholder { color: #888 !important; }
 
-#companyInput::placeholder {
-    color: #888 !important;
-}
-
-/* Выпадающий список компаний */
 #companyList {
     background: #1A1A1A !important;
     border: 1px solid rgba(255,255,255,0.1) !important;
 }
-
 #companyList li {
     color: #FFFFFF !important;
     border-bottom: 1px solid rgba(255,255,255,0.06) !important;
 }
+#companyList li:active { background: #FFD54F !important; color: #0D0D0D !important; }
 
-#companyList li:hover,
-#companyList li:active {
-    background: #FFD54F !important;
-    color: #0D0D0D !important;
-}
-
-/* Блоки приборов */
 #priemkaContent .device-block {
     background: rgba(255,255,255,0.03) !important;
     border: 1px solid rgba(255,255,255,0.08) !important;
     box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
 }
+#priemkaContent .device-title { color: #FFFFFF !important; }
+#priemkaContent .device-number { background: #FFD54F !important; color: #0D0D0D !important; }
+#priemkaContent .field-group label { color: #AAA !important; }
 
-#priemkaContent .device-title {
-    color: #FFFFFF !important;
-}
-
-#priemkaContent .device-number {
-    background: #FFD54F !important;
-    color: #0D0D0D !important;
-}
-
-#priemkaContent .field-group label {
-    color: #AAA !important;
-}
-
-/* Поля ввода в приборах */
 #priemkaContent input[type="text"] {
     background: rgba(255,255,255,0.08) !important;
     color: #FFFFFF !important;
     border: 1px solid rgba(255,255,255,0.1) !important;
 }
+#priemkaContent input[type="text"]::placeholder { color: #888 !important; }
+#priemkaContent input[type="text"]:focus { border-color: #FFD54F !important; }
 
-#priemkaContent input[type="text"]::placeholder {
-    color: #888 !important;
-}
+#priemkaContent .checkbox-row { color: #DDD !important; }
+#priemkaContent .checkbox-row input { accent-color: #FFD54F !important; }
+#priemkaContent .hint { color: #888 !important; }
+#priemkaContent .saved-indicator { color: #4CAF50 !important; }
+#priemkaContent .status { color: #AAA !important; }
 
-#priemkaContent input[type="text"]:focus {
-    border-color: #FFD54F !important;
-}
-
-/* Чекбокс АКБ */
-#priemkaContent .checkbox-row {
-    color: #DDD !important;
-}
-
-#priemkaContent .checkbox-row input {
-    accent-color: #FFD54F !important;
-}
-
-/* Кнопка добавления прибора */
-#priemkaContent .btn-ios {
-    margin: 8px 0 !important;
-}
-
-/* Кнопка отправить */
-#priemkaContent .btn-ios-green {
-    margin-top: 12px !important;
-}
-
-/* Подсказка email */
-#priemkaContent .hint {
-    color: #888 !important;
-}
-
-/* Индикатор сохранения */
-#priemkaContent .saved-indicator {
-    color: #4CAF50 !important;
-}
-
-/* Статус */
-#priemkaContent .status {
-    color: #AAA !important;
-}
-
-/* Кнопки иконок в приёмке */
 #priemkaContent .btn-ios-icon {
     background: rgba(255,255,255,0.08) !important;
     color: #FFFFFF !important;
 }
+#priemkaContent .btn-ios-icon.green { background: rgba(76,175,80,0.3) !important; }
+#priemkaContent .btn-ios-icon.red { background: rgba(255,82,82,0.3) !important; }
+#priemkaContent .btn-ios-icon.pink { background: rgba(255,45,85,0.3) !important; }
+#priemkaContent .save-btn { background: #FFD54F !important; color: #0D0D0D !important; }
 
-#priemkaContent .btn-ios-icon.green {
-    background: rgba(76,175,80,0.3) !important;
-}
-
-#priemkaContent .btn-ios-icon.red {
-    background: rgba(255,82,82,0.3) !important;
-}
-
-#priemkaContent .btn-ios-icon.pink {
-    background: rgba(255,45,85,0.3) !important;
-}
-
-/* Кнопка сохранить */
-#priemkaContent .save-btn {
-    background: #FFD54F !important;
-    color: #0D0D0D !important;
-}
-
-/* Двойные серийные */
 #priemkaContent .serial-dual-block {
     background: rgba(255,255,255,0.05) !important;
     border: 1px solid rgba(255,255,255,0.1) !important;
 }
+#priemkaContent .serial-dual-row label { color: #AAA !important; }
+#priemkaContent .serial-hint { color: #888 !important; }
 
-#priemkaContent .serial-dual-row label {
-    color: #AAA !important;
-}
-
-#priemkaContent .serial-hint {
-    color: #888 !important;
-}
-
-/* Голосовые подсказки */
 #priemkaContent .voice-variants {
     background: rgba(255,255,255,0.05) !important;
     border: 1px solid rgba(255,255,255,0.1) !important;
 }
-
 #priemkaContent .voice-variant-item {
     background: rgba(255,255,255,0.03) !important;
     color: #FFFFFF !important;
 }
+#priemkaContent .voice-variant-item:active { background: #FFD54F !important; color: #0D0D0D !important; }
 
-#priemkaContent .voice-variant-item:active {
-    background: #FFD54F !important;
-    color: #0D0D0D !important;
-}
+#priemkaContent select option { background: #1A1A1A !important; color: #FFFFFF !important; }
 
-/* Панель инструментов */
-#priemkaContent .act-toolbar {
-    margin-bottom: 16px !important;
-}
-
-/* Загрузка */
-#loadingSkeleton {
-    color: #AAA !important;
-}
-
-/* Все выпадающие списки в приёмке */
-#priemkaContent select option {
-    background: #1A1A1A !important;
-    color: #FFFFFF !important;
-}
-
-/* Автозаполнение */
 #priemkaContent .autocomplete-list {
     background: #1A1A1A !important;
     border: 1px solid rgba(255,255,255,0.1) !important;
 }
-
 #priemkaContent .autocomplete-list li {
     color: #FFFFFF !important;
     border-bottom: 1px solid rgba(255,255,255,0.06) !important;
 }
+#priemkaContent .autocomplete-list li:active { background: #FFD54F !important; color: #0D0D0D !important; }
 
-#priemkaContent .autocomplete-list li:active {
-    background: #FFD54F !important;
-    color: #0D0D0D !important;
-}
+#loadingSkeleton { color: #AAA !important; }
