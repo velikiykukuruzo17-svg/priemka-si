@@ -352,3 +352,70 @@ select option, .autocomplete-list {
 
 /* Контент поверх частиц */
 #appContent, #loginScreen { position: relative; z-index: 1; }
+/* Исправление белого фона в приёмке СИ */
+#priemkaContent .device-block {
+    background: linear-gradient(135deg, rgba(15, 25, 60, 0.7), rgba(10, 20, 50, 0.5)) !important;
+    border: 1px solid rgba(0, 255, 136, 0.08) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+#priemkaContent .device-title {
+    color: #e8f5e9 !important;
+}
+
+#priemkaContent .device-number {
+    background: linear-gradient(135deg, #00c853, #009624) !important;
+    color: #fff !important;
+}
+
+#priemkaContent input[type="text"] {
+    background: rgba(15, 25, 60, 0.6) !important;
+    color: #fff !important;
+    border: 1px solid rgba(0, 255, 136, 0.1) !important;
+}
+
+#priemkaContent .field-group label {
+    color: rgba(255,255,255,0.7) !important;
+}
+
+#priemkaContent .autocomplete-list {
+    background: #0f1932 !important;
+    border: 1px solid rgba(0, 255, 136, 0.12) !important;
+}
+
+#priemkaContent .autocomplete-list li {
+    color: #fff !important;
+    border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+#priemkaContent .autocomplete-list li:active {
+    background: #00c853 !important;
+    color: #fff !important;
+}
+
+#priemkaContent .serial-dual-block {
+    background: rgba(15, 25, 60, 0.4) !important;
+    border: 1px solid rgba(0, 255, 136, 0.06) !important;
+}
+
+#priemkaContent .voice-variants {
+    background: rgba(15, 25, 60, 0.8) !important;
+    border: 1px solid rgba(0, 255, 136, 0.1) !important;
+}
+
+#priemkaContent .voice-variant-item {
+    background: rgba(255,255,255,0.03) !important;
+    color: #fff !important;
+}
+
+#priemkaContent .voice-variant-item:active {
+    background: #00c853 !important;
+}
+
+#mainContent {
+    background: transparent !important;
+}
+
+#loadingSkeleton {
+    color: rgba(255,255,255,0.5) !important;
+}
