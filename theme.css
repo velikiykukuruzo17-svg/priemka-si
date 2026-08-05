@@ -1,0 +1,429 @@
+/* ============ ТЕМА В СТИЛЕ ЯНДЕКС МУЗЫКИ ============ */
+
+/* Основной фон */
+body {
+    background: #0D0D0D !important;
+    color: #FFFFFF !important;
+}
+
+/* Шапка */
+.header h1 {
+    color: #FFFFFF !important;
+    font-weight: 700 !important;
+}
+
+.header p {
+    color: #AAAAAA !important;
+}
+
+/* Меню */
+.menu-card {
+    background: #1A1A1A !important;
+    border-radius: 20px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3) !important;
+    transition: all 0.3s ease !important;
+    border: 1px solid #2A2A2A !important;
+}
+
+.menu-card:active {
+    transform: scale(0.97) !important;
+    background: #252525 !important;
+}
+
+.menu-card h3 {
+    color: #FFFFFF !important;
+}
+
+.menu-card p {
+    color: #AAAAAA !important;
+}
+
+/* Кнопки */
+.btn-ios {
+    background: #FFD54F !important;
+    color: #0D0D0D !important;
+    border-radius: 14px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+}
+
+.btn-ios:active {
+    transform: scale(0.95) !important;
+    opacity: 0.9 !important;
+}
+
+.btn-ios:disabled {
+    background: #3A3A3A !important;
+    color: #666 !important;
+}
+
+.btn-ios-gray {
+    background: #2A2A2A !important;
+    color: #FFFFFF !important;
+    border-radius: 14px !important;
+}
+
+.btn-ios-green {
+    background: #4CAF50 !important;
+    border-radius: 14px !important;
+}
+
+.btn-ios-orange {
+    background: #FF9500 !important;
+    border-radius: 14px !important;
+}
+
+.btn-back {
+    color: #FFD54F !important;
+}
+
+.btn-logout {
+    color: #FF5252 !important;
+}
+
+.btn-ios-icon {
+    background: #2A2A2A !important;
+    color: #FFFFFF !important;
+    border-radius: 50% !important;
+    transition: all 0.3s ease !important;
+}
+
+.btn-ios-icon:active {
+    background: #3A3A3A !important;
+    transform: scale(0.9) !important;
+}
+
+.btn-ios-icon.green { background: #4CAF50 !important; }
+.btn-ios-icon.red { background: #FF5252 !important; }
+.btn-ios-icon.pink { background: #FF2D55 !important; }
+
+/* Вкладки */
+.tabs {
+    background: #1A1A1A !important;
+    border-radius: 12px !important;
+}
+
+.tab {
+    color: #888 !important;
+    transition: all 0.3s ease !important;
+}
+
+.tab.active {
+    background: #FFD54F !important;
+    color: #0D0D0D !important;
+    font-weight: 700 !important;
+}
+
+/* Карточки приборов */
+.group-card {
+    background: #1A1A1A !important;
+    border-radius: 16px !important;
+    border: 1px solid #2A2A2A !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+    border-left: 4px solid #FFD54F !important;
+}
+
+.group-card.transferred-card {
+    border-left-color: #666 !important;
+}
+
+.group-card .company-name {
+    color: #FFFFFF !important;
+}
+
+.group-card .act-date,
+.group-card .employee-line {
+    color: #AAAAAA !important;
+}
+
+.device-mini {
+    color: #DDD !important;
+    border-bottom: 1px solid #2A2A2A !important;
+}
+
+.device-mini b {
+    color: #FFFFFF !important;
+}
+
+/* Статусы карточек */
+.card-status.lab {
+    background: rgba(255,149,0,0.2) !important;
+    color: #FF9500 !important;
+}
+
+.card-status.done {
+    background: rgba(76,175,80,0.2) !important;
+    color: #4CAF50 !important;
+}
+
+.card-status.transferred {
+    background: rgba(100,100,255,0.2) !important;
+    color: #6496FF !important;
+}
+
+/* Статусы приборов */
+.stat-badge.blue { background: rgba(0,122,255,0.2) !important; color: #4DA3FF !important; }
+.stat-badge.green { background: rgba(76,175,80,0.2) !important; color: #4CAF50 !important; }
+.stat-badge.orange { background: rgba(255,149,0,0.2) !important; color: #FF9500 !important; }
+.stat-badge.red { background: rgba(255,82,82,0.2) !important; color: #FF5252 !important; }
+.stat-badge.gray { background: rgba(255,255,255,0.1) !important; color: #AAA !important; }
+
+/* Поля ввода */
+input, select, textarea {
+    background: #2A2A2A !important;
+    color: #FFFFFF !important;
+    border: 1px solid #3A3A3A !important;
+    border-radius: 12px !important;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: #FFD54F !important;
+    outline: none !important;
+}
+
+input::placeholder, textarea::placeholder {
+    color: #666 !important;
+}
+
+/* Поле поиска */
+#deviceSearch {
+    background: #2A2A2A !important;
+    color: #FFFFFF !important;
+    border: 1px solid #3A3A3A !important;
+    border-radius: 12px !important;
+}
+
+/* Модальные окна */
+.modal-content {
+    background: #1A1A1A !important;
+    color: #FFFFFF !important;
+    border-radius: 20px !important;
+}
+
+.modal-content h3 {
+    color: #FFFFFF !important;
+}
+
+.modal-content p {
+    color: #AAA !important;
+}
+
+/* Календарь */
+.calendar-grid .day {
+    color: #FFFFFF !important;
+    transition: all 0.2s ease !important;
+}
+
+.calendar-grid .day.other { color: #444 !important; }
+.calendar-grid .day.today { border: 2px solid #FFD54F !important; }
+
+.calendar-grid .day.urgent { background: #FF5252 !important; }
+.calendar-grid .day.soon { background: #FF9500 !important; }
+.calendar-grid .day.warning { background: #FFD54F !important; color: #0D0D0D !important; }
+.calendar-grid .day.normal { background: #4CAF50 !important; }
+
+.calendar-nav .month-label {
+    color: #FFFFFF !important;
+    font-weight: 700 !important;
+}
+
+.calendar-nav button {
+    color: #FFD54F !important;
+    font-size: 22px !important;
+}
+
+/* Прайс */
+.price-section {
+    background: #1A1A1A !important;
+    border-radius: 16px !important;
+    border: 1px solid #2A2A2A !important;
+}
+
+.price-section h3 {
+    color: #FFD54F !important;
+    border-bottom-color: #2A2A2A !important;
+}
+
+.price-table td {
+    color: #DDD !important;
+    border-bottom: 1px solid #2A2A2A !important;
+}
+
+/* Архив актов */
+.act-item {
+    background: #1A1A1A !important;
+    border: 1px solid #2A2A2A !important;
+    color: #FFFFFF !important;
+}
+
+/* Ремонт */
+.repair-card {
+    background: #1A1A1A !important;
+    border: 1px solid #2A2A2A !important;
+    border-left: 4px solid #FF9500 !important;
+}
+
+.month-group {
+    background: #1A1A1A !important;
+}
+
+.month-group .month-header {
+    color: #FFFFFF !important;
+}
+
+/* Срочные поверки */
+.urgent-block {
+    background: rgba(255,82,82,0.1) !important;
+    border-color: #FF5252 !important;
+}
+
+.urgent-block h3 {
+    color: #FF5252 !important;
+}
+
+/* Автозаполнение */
+.autocomplete-list {
+    background: #2A2A2A !important;
+    border-color: #3A3A3A !important;
+    border-radius: 0 0 12px 12px !important;
+}
+
+.autocomplete-list li {
+    color: #FFFFFF !important;
+    border-bottom-color: #3A3A3A !important;
+}
+
+.autocomplete-list li:active {
+    background: #FFD54F !important;
+    color: #0D0D0D !important;
+}
+
+/* Приборы в приёмке */
+.device-block {
+    background: #1A1A1A !important;
+    border-radius: 16px !important;
+    border: 1px solid #2A2A2A !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+}
+
+.device-title {
+    color: #FFFFFF !important;
+}
+
+.device-number {
+    background: #FFD54F !important;
+    color: #0D0D0D !important;
+}
+
+.field-group label {
+    color: #AAA !important;
+}
+
+/* Кнопки действий в таблице */
+.btn-sm.blue { background: #4DA3FF !important; }
+.btn-sm.gray { background: #555 !important; }
+.btn-sm.green { background: #4CAF50 !important; }
+.btn-sm.orange { background: #FF9500 !important; }
+.btn-sm.red { background: #FF5252 !important; }
+
+/* Статус загрузки */
+.status {
+    color: #AAA !important;
+}
+
+.status.success { color: #4CAF50 !important; }
+.status.error { color: #FF5252 !important; }
+.status.loading { color: #FFD54F !important; }
+
+/* Экран входа */
+#loginScreen {
+    background: #0D0D0D !important;
+}
+
+#loginScreen h2 {
+    color: #FFFFFF !important;
+}
+
+#loginScreen p {
+    color: #AAA !important;
+}
+
+#loginScreen input {
+    background: #1A1A1A !important;
+    color: #FFFFFF !important;
+    border: 1px solid #2A2A2A !important;
+    border-radius: 14px !important;
+}
+
+#loginScreen input:focus {
+    border-color: #FFD54F !important;
+}
+
+#loginError {
+    color: #FF5252 !important;
+}
+
+/* Плавные переходы */
+* {
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease !important;
+}
+
+/* Скроллбар */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1A1A1A;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #3A3A3A;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.group-card, .device-block, .menu-card {
+    animation: fadeIn 0.3s ease !important;
+}
+
+/* Модальное окно календаря */
+#dayModal > div {
+    background: #1A1A1A !important;
+    color: #FFFFFF !important;
+}
+
+#dayModalTitle {
+    color: #FFFFFF !important;
+}
+
+#dayModal .group-card {
+    background: #222 !important;
+    border-color: #333 !important;
+}
+
+#dayModal .company-name {
+    color: #FFD54F !important;
+}
+
+/* Адаптация для телефона */
+@media(max-width:500px){
+    .menu-card {
+        border-radius: 16px !important;
+        padding: 14px !important;
+    }
+    
+    .group-card {
+        border-radius: 14px !important;
+        padding: 10px !important;
+    }
+}
