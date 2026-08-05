@@ -1,556 +1,349 @@
-/* ============ ТЕМА В СТИЛЕ ЯНДЕКС МУЗЫКИ v2 ============ */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+/* ============ ТЕМА BITRIX24 SPACE ============ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 * {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
+/* Космический фон */
 body {
-    background: linear-gradient(180deg, #1A1A2E 0%, #0D0D0D 50%, #000000 100%) !important;
+    background: #0a0e27 !important;
+    background-image: 
+        radial-gradient(ellipse at 20% 50%, rgba(0, 255, 136, 0.04) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(0, 200, 255, 0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(100, 0, 255, 0.03) 0%, transparent 50%) !important;
     color: #FFFFFF !important;
     min-height: 100vh !important;
 }
 
+/* Звёздная пыль (лёгкая) */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.15), transparent),
+        radial-gradient(1px 1px at 25% 35%, rgba(255,255,255,0.1), transparent),
+        radial-gradient(1px 1px at 40% 55%, rgba(255,255,255,0.12), transparent),
+        radial-gradient(1px 1px at 55% 25%, rgba(255,255,255,0.08), transparent),
+        radial-gradient(1px 1px at 70% 65%, rgba(255,255,255,0.1), transparent),
+        radial-gradient(1px 1px at 85% 45%, rgba(255,255,255,0.12), transparent),
+        radial-gradient(2px 2px at 15% 75%, rgba(0,255,136,0.12), transparent),
+        radial-gradient(2px 2px at 60% 10%, rgba(0,200,255,0.1), transparent),
+        radial-gradient(2px 2px at 90% 85%, rgba(100,0,255,0.1), transparent);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Шапка */
 .header {
-    background: rgba(255,255,255,0.03) !important;
-    backdrop-filter: blur(20px) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
+    background: rgba(15, 20, 50, 0.7) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
     border-radius: 20px !important;
     padding: 16px !important;
-    border: 1px solid rgba(255,255,255,0.06) !important;
+    border: 1px solid rgba(0, 255, 136, 0.15) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.03) !important;
 }
 
 .header h1 {
-    background: linear-gradient(135deg, #FFD54F, #FF9500) !important;
+    background: linear-gradient(135deg, #00ff88, #00c8ff) !important;
     -webkit-background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     font-weight: 800 !important;
+    letter-spacing: -0.5px !important;
 }
 
+/* Карточки меню */
 .menu-card {
-    background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)) !important;
-    border-radius: 24px !important;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    border: 1px solid rgba(255,255,255,0.08) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
+    background: linear-gradient(135deg, rgba(15, 25, 60, 0.8), rgba(10, 20, 50, 0.6)) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(0, 255, 136, 0.08) inset !important;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border: 1px solid rgba(0, 255, 136, 0.1) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
     position: relative !important;
     overflow: hidden !important;
 }
 
-.menu-card::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    background: linear-gradient(135deg, rgba(255,213,79,0.1), transparent) !important;
-    opacity: 0 !important;
-    transition: opacity 0.3s ease !important;
+.menu-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(0, 255, 136, 0.06) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
 }
 
-.menu-card:hover::before { opacity: 1 !important; }
+.menu-card:hover::after { opacity: 1; }
 
 .menu-card:active {
-    transform: scale(0.96) !important;
-    box-shadow: 0 4px 16px rgba(255,213,79,0.2) !important;
+    transform: scale(0.97);
+    box-shadow: 0 2px 12px rgba(0, 255, 136, 0.2), 0 1px 0 rgba(0, 255, 136, 0.15) inset;
 }
 
-.menu-icon { filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)) !important; }
+.menu-card h3 { color: #e8f5e9 !important; }
+.menu-card p { color: rgba(255,255,255,0.5) !important; }
 
+.menu-icon { filter: drop-shadow(0 4px 8px rgba(0,255,136,0.2)); }
+
+/* Имя пользователя */
 #menuUserName {
-    background: linear-gradient(135deg, #FFD54F, #FF9500) !important;
+    background: linear-gradient(135deg, #00ff88, #00c8ff) !important;
     -webkit-background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     font-weight: 700 !important;
 }
 
+/* Кнопки */
 .btn-ios {
-    background: linear-gradient(135deg, #FFD54F, #FFB300) !important;
-    color: #0D0D0D !important;
-    border-radius: 16px !important;
-    font-weight: 700 !important;
-    box-shadow: 0 4px 16px rgba(255,213,79,0.3) !important;
+    background: linear-gradient(135deg, #00c853, #00a844) !important;
+    color: #fff !important;
+    border-radius: 14px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 16px rgba(0, 200, 83, 0.25) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    letter-spacing: 0.5px !important;
+    letter-spacing: 0.3px !important;
 }
 
 .btn-ios:hover {
-    box-shadow: 0 6px 24px rgba(255,213,79,0.5) !important;
-    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 24px rgba(0, 200, 83, 0.4) !important;
+    transform: translateY(-1px);
 }
 
 .btn-ios:active {
-    transform: scale(0.95) !important;
-    box-shadow: 0 2px 8px rgba(255,213,79,0.3) !important;
+    transform: scale(0.96);
+    box-shadow: 0 2px 8px rgba(0, 200, 83, 0.3) !important;
 }
 
 .btn-ios-green {
-    background: linear-gradient(135deg, #4CAF50, #2E7D32) !important;
-    box-shadow: 0 4px 16px rgba(76,175,80,0.3) !important;
+    background: linear-gradient(135deg, #00c853, #009624) !important;
+    box-shadow: 0 4px 20px rgba(0, 200, 83, 0.3) !important;
 }
 
 .btn-ios-orange {
-    background: linear-gradient(135deg, #FF9500, #E65100) !important;
-    box-shadow: 0 4px 16px rgba(255,149,0,0.3) !important;
+    background: linear-gradient(135deg, #ff6d00, #e65100) !important;
+    box-shadow: 0 4px 16px rgba(255, 109, 0, 0.25) !important;
 }
 
 .btn-ios-gray {
-    background: rgba(255,255,255,0.08) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-    backdrop-filter: blur(10px) !important;
+    background: rgba(255,255,255,0.06) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    backdrop-filter: blur(12px) !important;
+    color: rgba(255,255,255,0.8) !important;
 }
 
+/* Вкладки */
 .tabs {
-    background: rgba(255,255,255,0.05) !important;
+    background: rgba(15, 25, 60, 0.5) !important;
     border-radius: 14px !important;
     padding: 4px !important;
-    backdrop-filter: blur(10px) !important;
+    backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(0, 255, 136, 0.08) !important;
 }
 
 .tab {
     border-radius: 11px !important;
     font-weight: 600 !important;
+    color: rgba(255,255,255,0.5) !important;
     transition: all 0.3s ease !important;
 }
 
 .tab.active {
-    background: linear-gradient(135deg, #FFD54F, #FFB300) !important;
-    color: #0D0D0D !important;
-    box-shadow: 0 2px 8px rgba(255,213,79,0.3) !important;
+    background: linear-gradient(135deg, #00c853, #009624) !important;
+    color: #fff !important;
+    box-shadow: 0 2px 12px rgba(0, 200, 83, 0.3) !important;
 }
 
+/* Карточки */
 .group-card {
-    background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)) !important;
-    border-radius: 20px !important;
-    border: 1px solid rgba(255,255,255,0.08) !important;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
+    background: linear-gradient(135deg, rgba(15, 25, 60, 0.7), rgba(10, 20, 50, 0.5)) !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(0, 255, 136, 0.08) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(255,255,255,0.02) inset !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
     transition: all 0.3s ease !important;
-    border-left: 4px solid #FFD54F !important;
+    border-left: 3px solid #00c853 !important;
 }
 
 .group-card:hover {
-    border-color: rgba(255,255,255,0.15) !important;
-    box-shadow: 0 8px 30px rgba(255,213,79,0.1) !important;
+    border-color: rgba(0, 255, 136, 0.2) !important;
+    box-shadow: 0 8px 32px rgba(0, 200, 83, 0.1), 0 1px 0 rgba(0,255,136,0.05) inset !important;
 }
 
 .group-card .company-name {
     font-weight: 700 !important;
-    font-size: 16px !important;
-    background: linear-gradient(135deg, #FFFFFF, #CCC) !important;
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
+    color: #e8f5e9 !important;
 }
 
+/* Поля ввода */
 input, select, textarea {
-    background: rgba(255,255,255,0.05) !important;
+    background: rgba(15, 25, 60, 0.6) !important;
     color: #FFFFFF !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-    border-radius: 14px !important;
+    border: 1px solid rgba(0, 255, 136, 0.1) !important;
+    border-radius: 12px !important;
     transition: all 0.3s ease !important;
-    backdrop-filter: blur(10px) !important;
 }
 
 input:focus, select:focus, textarea:focus {
-    border-color: #FFD54F !important;
-    box-shadow: 0 0 0 3px rgba(255,213,79,0.15) !important;
-    background: rgba(255,255,255,0.08) !important;
+    border-color: #00c853 !important;
+    box-shadow: 0 0 0 3px rgba(0, 200, 83, 0.12) !important;
+    background: rgba(20, 30, 70, 0.8) !important;
 }
 
-#deviceSearch {
-    background: rgba(255,255,255,0.05) !important;
-    border-radius: 14px !important;
-    font-size: 15px !important;
-}
-
-.calendar-grid .day {
-    border-radius: 50% !important;
-    width: 36px !important;
-    height: 36px !important;
-    line-height: 36px !important;
-    margin: 2px auto !important;
-    font-weight: 600 !important;
-    transition: all 0.2s ease !important;
-}
-
-.calendar-grid .day:hover {
-    background: rgba(255,213,79,0.2) !important;
-    transform: scale(1.1) !important;
-}
-
+/* Календарь */
 .calendar-grid .day.today {
-    border: 2px solid #FFD54F !important;
-    box-shadow: 0 0 12px rgba(255,213,79,0.3) !important;
+    border: 2px solid #00c853 !important;
+    box-shadow: 0 0 16px rgba(0, 200, 83, 0.3) !important;
 }
 
 .calendar-grid .day.urgent {
-    background: linear-gradient(135deg, #FF5252, #D32F2F) !important;
-    box-shadow: 0 2px 8px rgba(255,82,82,0.4) !important;
+    background: linear-gradient(135deg, #ff1744, #d50000) !important;
 }
 
 .calendar-grid .day.soon {
-    background: linear-gradient(135deg, #FF9500, #E65100) !important;
-    box-shadow: 0 2px 8px rgba(255,149,0,0.4) !important;
+    background: linear-gradient(135deg, #ff6d00, #e65100) !important;
 }
 
 .calendar-grid .day.warning {
-    background: linear-gradient(135deg, #FFD54F, #FFB300) !important;
-    color: #0D0D0D !important;
-    box-shadow: 0 2px 8px rgba(255,213,79,0.4) !important;
+    background: linear-gradient(135deg, #ffd600, #ffab00) !important;
+    color: #1a1a1a !important;
 }
 
 .calendar-grid .day.normal {
-    background: linear-gradient(135deg, #4CAF50, #2E7D32) !important;
-    box-shadow: 0 2px 8px rgba(76,175,80,0.4) !important;
+    background: linear-gradient(135deg, #00c853, #009624) !important;
 }
 
-.modal-content {
-    background: linear-gradient(180deg, #1E1E30, #1A1A1A) !important;
-    border-radius: 24px !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
-    backdrop-filter: blur(20px) !important;
-}
-
-.modal-content select { background: rgba(255,255,255,0.08) !important; }
-
+/* Статусы */
 .card-status.lab {
-    background: rgba(255,149,0,0.15) !important;
-    box-shadow: 0 0 10px rgba(255,149,0,0.2) !important;
+    background: rgba(255, 109, 0, 0.15) !important;
+    color: #ff9100 !important;
 }
 
 .card-status.done {
-    background: rgba(76,175,80,0.15) !important;
-    box-shadow: 0 0 10px rgba(76,175,80,0.2) !important;
+    background: rgba(0, 200, 83, 0.15) !important;
+    color: #00e676 !important;
 }
 
 .card-status.transferred {
-    background: rgba(100,150,255,0.15) !important;
-    box-shadow: 0 0 10px rgba(100,150,255,0.2) !important;
+    background: rgba(0, 200, 255, 0.15) !important;
+    color: #00b0ff !important;
 }
 
-.price-section {
-    background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)) !important;
+/* Модальные окна */
+.modal-content, #dayModal > div {
+    background: linear-gradient(180deg, rgba(15, 25, 60, 0.98), rgba(10, 20, 50, 0.95)) !important;
     border-radius: 20px !important;
-    border: 1px solid rgba(255,255,255,0.08) !important;
-    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(0, 255, 136, 0.12) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+    backdrop-filter: blur(24px) !important;
 }
 
-.price-section h3 {
-    background: linear-gradient(135deg, #FFD54F, #FF9500) !important;
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    font-weight: 700 !important;
-}
+/* Скроллбар */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0, 255, 136, 0.15); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0, 255, 136, 0.3); }
 
-::-webkit-scrollbar { width: 5px !important; }
-::-webkit-scrollbar-track { background: transparent !important; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1) !important; border-radius: 10px !important; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,213,79,0.3) !important; }
-
+/* Анимация появления */
 @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(20px) scale(0.95); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .group-card, .menu-card, .device-block, .price-section {
-    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(255,213,79,0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(255,213,79,0); }
-    100% { box-shadow: 0 0 0 0 rgba(255,213,79,0); }
+/* Анимация пульса для зелёных кнопок */
+@keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(0, 200, 83, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(0, 200, 83, 0.5); }
 }
 
-.btn-ios-green:not(:disabled) { animation: pulse 2s infinite !important; }
-
-#loginScreen { background: linear-gradient(180deg, #1A1A2E, #0D0D0D) !important; }
-
-#loginScreen input {
-    background: rgba(255,255,255,0.05) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-    border-radius: 16px !important;
-    font-size: 16px !important;
-    padding: 16px !important;
+.btn-ios-green:not(:disabled) {
+    animation: glowPulse 3s infinite;
 }
 
+/* Стат-бейджи */
 .stat-badge {
     border-radius: 20px !important;
     padding: 6px 12px !important;
     font-weight: 600 !important;
-    letter-spacing: 0.5px !important;
+    letter-spacing: 0.3px !important;
     backdrop-filter: blur(10px) !important;
 }
 
-.stat-badge.blue { background: rgba(0,122,255,0.2) !important; color: #4DA3FF !important; }
-.stat-badge.green { background: rgba(76,175,80,0.2) !important; color: #4CAF50 !important; }
-.stat-badge.orange { background: rgba(255,149,0,0.2) !important; color: #FF9500 !important; }
-.stat-badge.red { background: rgba(255,82,82,0.2) !important; color: #FF5252 !important; }
-.stat-badge.gray { background: rgba(255,255,255,0.1) !important; color: #AAA !important; }
+.stat-badge.blue { background: rgba(0, 176, 255, 0.15) !important; color: #40c4ff !important; }
+.stat-badge.green { background: rgba(0, 200, 83, 0.15) !important; color: #00e676 !important; }
+.stat-badge.orange { background: rgba(255, 109, 0, 0.15) !important; color: #ff9100 !important; }
+.stat-badge.red { background: rgba(255, 23, 68, 0.15) !important; color: #ff5252 !important; }
+.stat-badge.gray { background: rgba(255,255,255,0.06) !important; color: rgba(255,255,255,0.5) !important; }
 
-/* ============ ФИЛЬТРЫ ПОИСКА ============ */
+/* Фильтры поиска */
 .search-filters {
-    background: rgba(255,255,255,0.05) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-    backdrop-filter: blur(10px) !important;
+    background: rgba(15, 25, 60, 0.5) !important;
+    border: 1px solid rgba(0, 255, 136, 0.1) !important;
+    backdrop-filter: blur(12px) !important;
 }
 
-.search-filters input,
-.search-filters select {
-    background: rgba(255,255,255,0.08) !important;
-    color: #FFFFFF !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
+/* Выпадающие списки */
+select option, .autocomplete-list {
+    background: #0f1932 !important;
+    color: #fff !important;
 }
 
-.search-filters input::placeholder { color: #888 !important; }
-
-.search-filters select option {
-    background: #1A1A1A !important;
-    color: #FFFFFF !important;
+/* Прайс */
+.price-section {
+    background: linear-gradient(135deg, rgba(15, 25, 60, 0.7), rgba(10, 20, 50, 0.5)) !important;
+    border: 1px solid rgba(0, 255, 136, 0.08) !important;
 }
 
-#toggleFiltersBtn { transition: all 0.3s ease !important; }
-
-/* ============ ВСЕ ОСТАЛЬНЫЕ ЭЛЕМЕНТЫ ============ */
-.urgent-block {
-    background: rgba(255,82,82,0.08) !important;
-    border: 1px solid rgba(255,82,82,0.3) !important;
-    backdrop-filter: blur(10px) !important;
+.price-section h3 {
+    background: linear-gradient(135deg, #00ff88, #00c8ff) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
 }
 
-.urgent-block h3 { color: #FF5252 !important; }
-.urgent-block .urgent-item { color: #DDD !important; border-bottom: 1px solid rgba(255,255,255,0.06) !important; }
-
-#dayModal > div {
-    background: linear-gradient(180deg, #1E1E30, #1A1A1A) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.6) !important;
-    backdrop-filter: blur(20px) !important;
+/* Экран входа */
+#loginScreen {
+    background: #0a0e27 !important;
+    background-image: 
+        radial-gradient(ellipse at 50% 30%, rgba(0, 255, 136, 0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 70%, rgba(0, 200, 255, 0.04) 0%, transparent 50%) !important;
 }
 
-#dayModal > div > div:first-child { background: transparent !important; }
-#dayModalTitle { color: #FFFFFF !important; background: transparent !important; }
-
-#dayModal .group-card {
-    background: rgba(255,255,255,0.03) !important;
-    border: 1px solid rgba(255,255,255,0.06) !important;
-    border-left: 4px solid #FFD54F !important;
+#loginScreen input {
+    background: rgba(15, 25, 60, 0.7) !important;
+    border: 1px solid rgba(0, 255, 136, 0.12) !important;
+    border-radius: 16px !important;
+    font-size: 16px !important;
+    padding: 16px !important;
+    color: #fff !important;
 }
 
-#dayModal .company-name { color: #FFFFFF !important; }
-#dayModal .act-date, #dayModal .employee-line { color: #AAA !important; }
-#dayModal .device-mini { color: #CCC !important; border-bottom: 1px solid rgba(255,255,255,0.06) !important; }
-#dayModalClose { color: #FF5252 !important; }
-
-#calDayInfo { color: #AAA !important; }
-.calendar-nav .month-label { color: #FFFFFF !important; }
-
-#archiveContent { color: #FFFFFF !important; }
-#archiveContent .act-item {
-    background: rgba(255,255,255,0.03) !important;
-    border: 1px solid rgba(255,255,255,0.06) !important;
-    color: #FFFFFF !important;
-}
-#archiveContent .act-item b { color: #FFD54F !important; }
-
-#statusModal .modal-content, #cardStatusModal .modal-content,
-#repairStatusModal .modal-content, #messageModal .modal-content,
-#actsModal .modal-content {
-    background: linear-gradient(180deg, #1E1E30, #1A1A1A) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-    color: #FFFFFF !important;
+#loginScreen input:focus {
+    border-color: #00c853 !important;
+    box-shadow: 0 0 0 3px rgba(0, 200, 83, 0.15) !important;
 }
 
-#statusModal h3, #cardStatusModal h3, #repairStatusModal h3,
-#messageModal h3, #actsModal h3 { color: #FFFFFF !important; }
-
-#statusModal p, #cardStatusModal p, #repairStatusModal p,
-#messageModal p { color: #AAA !important; }
-
-#statusModal select, #cardStatusModal select,
-#repairStatusModal select, #messageModal select {
-    background: rgba(255,255,255,0.08) !important;
-    color: #FFFFFF !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-}
-
-#statusModal select option, #cardStatusModal select option,
-#repairStatusModal select option, #messageModal select option {
-    background: #1A1A1A !important;
-    color: #FFFFFF !important;
-}
-
-#statusModal input, #cardStatusModal input,
-#repairStatusModal input, #messageModal input,
-#messageModal textarea {
-    background: rgba(255,255,255,0.08) !important;
-    color: #FFFFFF !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-}
-
-#statusModal input::placeholder, #messageModal textarea::placeholder { color: #888 !important; }
-
-#actsList .act-item {
-    background: rgba(255,255,255,0.03) !important;
-    border: 1px solid rgba(255,255,255,0.06) !important;
-    color: #FFFFFF !important;
-}
-#actsList .act-item b { color: #FFD54F !important; }
-
-#devicesContainer { color: #FFFFFF !important; }
-.section-title { color: #AAA !important; }
-.hint { color: #888 !important; }
-.serial-hint { color: #888 !important; }
-
-.voice-variants {
-    background: rgba(255,255,255,0.05) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-    border-radius: 12px !important;
-}
-
-.voice-variant-item {
-    background: rgba(255,255,255,0.03) !important;
-    color: #FFFFFF !important;
-    border-radius: 8px !important;
-}
-
-.voice-variant-item:active { background: #FFD54F !important; color: #0D0D0D !important; }
-
-.device-note input {
-    background: rgba(255,255,255,0.08) !important;
-    color: #FFFFFF !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-}
-
-select option { background: #1A1A1A !important; color: #FFFFFF !important; }
-.saved-indicator { color: #4CAF50 !important; }
-#settingsPanel label { color: #AAA !important; }
-#settingsStatus { color: #4CAF50 !important; }
-
-.price-table td:first-child { color: #DDD !important; }
-.price-table td:last-child { color: #FFD54F !important; }
-
+/* Ремонт */
 .repair-card {
-    background: rgba(255,255,255,0.03) !important;
-    border: 1px solid rgba(255,255,255,0.06) !important;
-    border-left: 4px solid #FF9500 !important;
-}
-.repair-card .device-mini { color: #DDD !important; }
-
-.month-group {
-    background: rgba(255,255,255,0.03) !important;
-    border: 1px solid rgba(255,255,255,0.06) !important;
-}
-.month-group .month-header { color: #FFD54F !important; }
-
-#filterRow {
-    background: rgba(255,255,255,0.05) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
+    background: rgba(15, 25, 60, 0.6) !important;
+    border-left: 3px solid #ff6d00 !important;
 }
 
-.checkbox-row { color: #DDD !important; }
-.checkbox-row input { accent-color: #FFD54F !important; }
-
-.serial-dual-block {
-    background: rgba(255,255,255,0.05) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
+/* Уведомления */
+.urgent-block {
+    background: rgba(255, 23, 68, 0.08) !important;
+    border: 1px solid rgba(255, 23, 68, 0.2) !important;
+    backdrop-filter: blur(10px) !important;
 }
-.serial-dual-row label { color: #AAA !important; }
-
-.spinner { border-color: rgba(255,255,255,0.1) !important; border-top-color: #FFD54F !important; }
-
-#statusModal, #cardStatusModal, #repairStatusModal,
-#messageModal, #actsModal, #dayModal {
-    background: rgba(0,0,0,0.7) !important;
-    backdrop-filter: blur(4px) !important;
-}
-
-/* ============ ПРИЁМКА СИ ============ */
-#priemkaContent { color: #FFFFFF !important; }
-#priemkaContent .section-title { color: #AAA !important; }
-
-#companyInput {
-    background: rgba(255,255,255,0.08) !important;
-    color: #FFFFFF !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-}
-#companyInput::placeholder { color: #888 !important; }
-
-#companyList {
-    background: #1A1A1A !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-}
-#companyList li {
-    color: #FFFFFF !important;
-    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
-}
-#companyList li:active { background: #FFD54F !important; color: #0D0D0D !important; }
-
-#priemkaContent .device-block {
-    background: rgba(255,255,255,0.03) !important;
-    border: 1px solid rgba(255,255,255,0.08) !important;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
-}
-#priemkaContent .device-title { color: #FFFFFF !important; }
-#priemkaContent .device-number { background: #FFD54F !important; color: #0D0D0D !important; }
-#priemkaContent .field-group label { color: #AAA !important; }
-
-#priemkaContent input[type="text"] {
-    background: rgba(255,255,255,0.08) !important;
-    color: #FFFFFF !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-}
-#priemkaContent input[type="text"]::placeholder { color: #888 !important; }
-#priemkaContent input[type="text"]:focus { border-color: #FFD54F !important; }
-
-#priemkaContent .checkbox-row { color: #DDD !important; }
-#priemkaContent .checkbox-row input { accent-color: #FFD54F !important; }
-#priemkaContent .hint { color: #888 !important; }
-#priemkaContent .saved-indicator { color: #4CAF50 !important; }
-#priemkaContent .status { color: #AAA !important; }
-
-#priemkaContent .btn-ios-icon {
-    background: rgba(255,255,255,0.08) !important;
-    color: #FFFFFF !important;
-}
-#priemkaContent .btn-ios-icon.green { background: rgba(76,175,80,0.3) !important; }
-#priemkaContent .btn-ios-icon.red { background: rgba(255,82,82,0.3) !important; }
-#priemkaContent .btn-ios-icon.pink { background: rgba(255,45,85,0.3) !important; }
-#priemkaContent .save-btn { background: #FFD54F !important; color: #0D0D0D !important; }
-
-#priemkaContent .serial-dual-block {
-    background: rgba(255,255,255,0.05) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-}
-#priemkaContent .serial-dual-row label { color: #AAA !important; }
-#priemkaContent .serial-hint { color: #888 !important; }
-
-#priemkaContent .voice-variants {
-    background: rgba(255,255,255,0.05) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-}
-#priemkaContent .voice-variant-item {
-    background: rgba(255,255,255,0.03) !important;
-    color: #FFFFFF !important;
-}
-#priemkaContent .voice-variant-item:active { background: #FFD54F !important; color: #0D0D0D !important; }
-
-#priemkaContent select option { background: #1A1A1A !important; color: #FFFFFF !important; }
-
-#priemkaContent .autocomplete-list {
-    background: #1A1A1A !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-}
-#priemkaContent .autocomplete-list li {
-    color: #FFFFFF !important;
-    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
-}
-#priemkaContent .autocomplete-list li:active { background: #FFD54F !important; color: #0D0D0D !important; }
-
-#loadingSkeleton { color: #AAA !important; }
