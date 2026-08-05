@@ -419,3 +419,44 @@ select option, .autocomplete-list {
 #loadingSkeleton {
     color: rgba(255,255,255,0.5) !important;
 }
+/* Исправление белой полосы в модальном окне календаря */
+#dayModal > div > div:first-child {
+    background: transparent !important;
+}
+
+#dayModal > div {
+    background: linear-gradient(180deg, rgba(15, 25, 60, 0.98), rgba(10, 20, 50, 0.95)) !important;
+    border: 1px solid rgba(0, 255, 136, 0.12) !important;
+}
+
+#dayModalTitle {
+    color: #fff !important;
+    background: transparent !important;
+}
+
+#dayModalClose {
+    color: #ff5252 !important;
+}
+
+#dayModal .group-card {
+    background: linear-gradient(135deg, rgba(15, 25, 60, 0.7), rgba(10, 20, 50, 0.5)) !important;
+    border: 1px solid rgba(0, 255, 136, 0.08) !important;
+}
+
+#dayModal .company-name {
+    color: #e8f5e9 !important;
+}
+
+#dayModal .act-date,
+#dayModal .employee-line {
+    color: rgba(255,255,255,0.5) !important;
+}
+
+#dayModal .device-mini {
+    color: #ddd !important;
+    border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+#dayModal .card-status.lab { background: rgba(255, 109, 0, 0.15) !important; color: #ff9100 !important; }
+#dayModal .card-status.done { background: rgba(0, 200, 83, 0.15) !important; color: #00e676 !important; }
+#dayModal .card-status.transferred { background: rgba(0, 200, 255, 0.15) !important; color: #00b0ff !important; }
