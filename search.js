@@ -15,18 +15,17 @@ function initSearch() {
         oldSearch.parentElement.remove();
     }
     
-    // Проверяем что ещё не добавлен
     if (document.getElementById('newSearchPanel')) return;
 
-    // Создаём новый поиск
     var panel = document.createElement('div');
     panel.id = 'newSearchPanel';
     panel.innerHTML = 
         '<div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">' +
         '<input type="text" id="deviceSearch" placeholder="🔍 Поиск по номеру, компании или названию" style="flex:1;padding:10px;border:1px solid #E5E5EA;border-radius:10px;font-size:14px">' +
         '<button id="searchBtn" style="width:40px;height:40px;border-radius:10px;background:#007AFF;color:#fff;border:none;font-size:18px;cursor:pointer">🔍</button>' +
+        '<button id="toggleFiltersBtn" style="height:40px;border-radius:10px;background:#8E8E93;color:#fff;border:none;font-size:13px;cursor:pointer;padding:0 10px;white-space:nowrap">⚙️ Фильтры</button>' +
         '</div>' +
-        '<div style="display:flex;gap:6px;margin-bottom:10px;align-items:center;flex-wrap:wrap">' +
+        '<div id="filtersContainer" style="display:none;gap:6px;margin-bottom:10px;align-items:center;flex-wrap:wrap;padding:10px;background:#F9F9F9;border-radius:12px">' +
         '<input type="date" id="filterDateFrom" style="flex:1;min-width:100px;padding:7px;border:1px solid #E5E5EA;border-radius:8px;font-size:11px">' +
         '<span style="font-size:11px;color:#8E8E93">—</span>' +
         '<input type="date" id="filterDateTo" style="flex:1;min-width:100px;padding:7px;border:1px solid #E5E5EA;border-radius:8px;font-size:11px">' +
@@ -34,19 +33,20 @@ function initSearch() {
         '<button id="resetBtn" style="padding:7px 10px;background:#FF3B30;color:#fff;border:none;border-radius:8px;font-size:11px;cursor:pointer">✕</button>' +
         '</div>';
 
-    // Вставляем перед statsRow
     var statsRow = document.getElementById('statsRow');
     if (statsRow) {
         statsRow.before(panel);
     }
     
-    // Вешаем обработчики
+    // Обработчики
     var searchInput = document.getElementById('deviceSearch');
     var searchBtn = document.getElementById('searchBtn');
+    var toggleBtn = document.getElementById('toggleFiltersBtn');
     var filterDateFrom = document.getElementById('filterDateFrom');
     var filterDateTo = document.getElementById('filterDateTo');
     var filterCompany = document.getElementById('filterCompany');
     var resetBtn = document.getElementById('resetBtn');
+    var filtersContainer = document.getElementById('filtersContainer');
 
     if (searchInput) {
         searchInput.oninput = function() {
@@ -58,12 +58,31 @@ function initSearch() {
         };
     }
     if (searchBtn) searchBtn.onclick = doFilter;
+    
+    // Кнопка сворачивания/разворачивания фильтров
+    if (toggleBtn) {
+        toggleBtn.onclick = function() {
+            if (filtersContainer.style.display === 'none') {
+                filtersContainer.style.display = 'flex';
+                toggleBtn.textContent = '▲ Фильтры';
+                toggleBtn.style.background = '#007AFF';
+                updateCompanyList();
+            } else {
+                filtersContainer.style.display = 'none';
+                toggleBtn.textContent = '⚙️ Фильтры';
+                toggleBtn.style.background = '#8E8E93';
+            }
+        };
+    }
+    
     if (filterDateFrom) filterDateFrom.onchange = doFilter;
     if (filterDateTo) filterDateTo.onchange = doFilter;
     if (filterCompany) filterCompany.onchange = doFilter;
-    if (resetBtn) resetBtn.onclick = resetFilter;
+    if (resetBtn) resetBtn.onclick = function() {
+        resetFilter();
+        setTimeout(updateCompanyList, 300);
+    };
     
-    // Заполняем компании
     updateCompanyList();
 }
 
@@ -93,13 +112,11 @@ function doFilter() {
     if (dt) dateTo = dt.value;
     if (fc) company = fc.value;
 
-    // Если ничего не выбрано - обычная загрузка
     if (query === '' && dateFrom === '' && dateTo === '' && company === '') {
         loadDevices();
         return;
     }
 
-    // Фильтруем
     var filtered = allDevicesCache.slice();
 
     if (query) {
@@ -136,14 +153,12 @@ function doFilter() {
         });
     }
 
-    // Применяем вкладку
     if (currentDeviceTab === 'repair') {
         filtered = filtered.filter(function(d) {
             return d.status === 'Ремонт' || d.status === 'Калибровка' || d.status === 'Настройка';
         });
         renderRepairTab(filtered);
     } else {
-        // Временно подменяем кеш
         var saved = allDevicesCache;
         allDevicesCache = filtered;
         renderDevicesFromCache('');
