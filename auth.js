@@ -1,4 +1,4 @@
-var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbytLIx9oJ4sxY_f7twnZcjXnacQrbVMjOg5illTrdBk2aT17ONRAvCq_cGFfV56aKkb/exec';
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwUwzsr0HFAtYLaHKHJ0dbS0J-iqWVQRBMzpmoPnDzEJkzb3r60lXi42vtDuxMJLgqI/exec';
 // ============ АВТОРИЗАЦИЯ И РОЛИ ============
 
 // Конфигурация
