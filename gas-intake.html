@@ -14,7 +14,7 @@
     html=html.split("SCRIPT_URL+'?action=").join("gasApiUrl()+'&action=gas_");
     html=html.split('form.action=SCRIPT_URL;').join('form.action=gasApiUrl();');
     html=html.replace('// КОНФИГУРАЦИЯ',"function gasApiUrl(){return SCRIPT_URL+'?section=gas';}\n// КОНФИГУРАЦИЯ");
-    html=html.replace('<script src="gas.js"><'+'/script>','<script src="gas-intake.js?v=2"><'+'/script><script src="gas-personal.js?v=2"><'+'/script>');
+    html=html.replace('<script src="gas.js"><'+'/script>','<script src="gas-intake.js?v=2"><'+'/script><script src="gas-personal.js?v=3"><'+'/script>');
     html=html.replace('<h1>📋 Меню</h1>','<h1>Газовые СИ</h1>');
     html=html.replace('<div id="mainMenu">','<div id="mainMenu"><a class="btn-back" href="index.html">В основное приложение</a>');
     html=html.replaceAll('📝 Приёмка СИ','Приёмка газовых СИ').replace('<h3>Приёмка СИ</h3>','<h3>Приёмка газовых СИ</h3>');
