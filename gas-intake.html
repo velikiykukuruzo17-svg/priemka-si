@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Газовые СИ</title></head>
+<body><p id="loading">Открываю газовую приёмку...</p>
+<script>
+(async function(){
+  try {
+    var response=await fetch('index.html',{cache:'no-cache'});
+    if(!response.ok)throw new Error('Не удалось загрузить форму: HTTP '+response.status);
+    var html=await response.text();
+    var required=['function initPriemkaMode','function submitAct','// КОНФИГУРАЦИЯ','<script src="gas.js"><'+'/script>'];
+    required.forEach(function(marker){if(!html.includes(marker))throw new Error('Структура основной формы изменилась: '+marker);});
+    html=html.replace('<title>Приёмка СИ</title>','<title>Газовые СИ — приёмка</title>');
+    ['priemkaFormData','cache_devices','cardStatusBackup'].forEach(function(key){html=html.split("'"+key+"'").join("'gas_"+key+"'");});
+    html=html.split("SCRIPT_URL+'?action=").join("gasApiUrl()+'&action=gas_");
+    html=html.split('form.action=SCRIPT_URL;').join('form.action=gasApiUrl();');
+    html=html.replace('// КОНФИГУРАЦИЯ',"function gasApiUrl(){return SCRIPT_URL+'?section=gas';}\n// КОНФИГУРАЦИЯ");
+    html=html.replace('<script src="gas.js"><'+'/script>','<script src="gas-intake.js"><'+'/script>');
+    html=html.replace('<h1>📋 Меню</h1>','<h1>Газовые СИ</h1>');
+    html=html.replace('<div id="mainMenu">','<div id="mainMenu"><a class="btn-back" href="index.html">В основное приложение</a>');
+    html=html.replaceAll('📝 Приёмка СИ','Приёмка газовых СИ').replace('<h3>Приёмка СИ</h3>','<h3>Приёмка газовых СИ</h3>');
+    document.open();document.write(html);document.close();
+  }catch(error){document.getElementById('loading').textContent=error.message;}
+})();
+</script></body></html>
