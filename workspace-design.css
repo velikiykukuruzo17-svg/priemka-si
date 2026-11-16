@@ -1,0 +1,54 @@
+/* Активно только в новом режиме. Никаких правил показа разделов или печати документов. */
+@media screen {
+#workspace-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:0 0 18px;padding:12px 14px;border:1px solid #475569;border-radius:14px;background:#16243d;color:#e5edff;font-size:14px}
+#workspace-controls[hidden]{display:none!important}
+#workspace-controls button{padding:9px 13px;border:1px solid #64748b;border-radius:9px;background:#223655;color:#fff;font-size:14px;cursor:pointer}
+#workspace-controls button[aria-pressed="true"]{background:#1d4ed8;border-color:#93c5fd}
+#workspace-controls [role="status"]{flex-basis:100%;font-size:13px;line-height:1.5}
+body.ws-modern{max-width:1240px!important;background:#090f23!important;background-image:radial-gradient(ellipse at 8% 15%,#112c4d,transparent 48%),radial-gradient(ellipse at 94% 72%,#22204d,transparent 50%)!important;color:#edf3ff!important;color-scheme:dark}
+body.ws-modern::before,body.ws-modern #particlesCanvas{display:none!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .header{padding:18px!important;border-radius:18px!important;background:linear-gradient(145deg,#172a47,#0e1930)!important;border:1px solid #364a69!important;box-shadow:0 8px 24px #00000026!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;gap:12px;flex-wrap:wrap}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) :is(h1,h2,h3,h4,.device-title,.company-name,.month-header){color:#edf3ff!important;-webkit-text-fill-color:#edf3ff!important;background-clip:border-box!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .header h1,body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .price-section h3{background:none!important;font-weight:700!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) :is(label,.act-date,.employee-line,.hint,.section-title,.serial-hint,.day-name){color:#b8c8e3!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) :is(.device-block,.group-card,.price-section,.month-group,.act-item,.search-filters,.serial-dual-block,.voice-variants,.menu-card){background:linear-gradient(145deg,#172a47,#0e1930)!important;color:#edf3ff!important;border:1px solid #364a69!important;border-radius:18px!important;box-shadow:0 8px 22px #00000026!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;animation:none!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .group-card{border-left:3px solid #78abff!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .group-card.transferred-card{border-left-color:#94a3b8!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .repair-card{background:#242438!important;border:1px solid #69543a!important;border-left:3px solid #ffbd75!important;border-radius:16px!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) :is(.device-mini,.devices-inner,.group-actions,.price-table td){border-color:#364a69!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .act-item,body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .act-item *{color:#edf3ff!important;-webkit-text-fill-color:#edf3ff!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .act-item:hover{background:#223655!important;border-color:#78abff!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),select,textarea){background:#0e1b30!important;color:#edf3ff!important;border:1px solid #526987!important;border-radius:11px!important;box-shadow:none!important;font-size:16px!important;min-width:0;transition:border-color .15s ease!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) :is(input,textarea)::placeholder{color:#9eb0cc!important;opacity:1}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) :is(input,select,textarea):focus{border-color:#93c5fd!important;box-shadow:0 0 0 3px #60a5fa30!important;background:#132540!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) :is(input[type="checkbox"],input[type="radio"]){accent-color:#78abff}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) :is(select option,.autocomplete-list,.voice-variant-item){background:#12213b!important;color:#edf3ff!important;border-color:#526987!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .autocomplete-list li{color:#edf3ff!important;border-color:#364a69!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) :is(.autocomplete-list li,.voice-variant-item):hover{background:#263f65!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) :is(.btn-ios,.btn-ios-green){background:linear-gradient(135deg,#377fec,#245cb8)!important;color:#fff!important;border:1px solid #6ca4ff!important;border-radius:12px!important;box-shadow:none!important;animation:none!important;transition:background .15s ease!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) :is(.btn-ios-gray,.btn-back){background:#192b46!important;color:#d9e8ff!important;border:1px solid #526987!important;border-radius:12px!important;box-shadow:none!important;text-decoration:none}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .btn-ios-orange{background:#80501d!important;color:#fff4df!important;border:1px solid #d49b55!important;box-shadow:none!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) :is(button:disabled,input:disabled,select:disabled,textarea:disabled){opacity:.6!important;cursor:not-allowed!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) :is(.btn-sm,.save-btn){border-radius:8px!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .tabs{background:#0e1930!important;border:1px solid #364a69!important;border-radius:14px!important;backdrop-filter:none!important;flex-wrap:wrap}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .tab{color:#b8c8e3!important;transition:background .15s ease!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .tab.active{background:#245cb8!important;color:#fff!important;box-shadow:none!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .device-number{background:#245cb8!important;color:#fff!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .calendar-nav{padding:12px;background:#12213b;border:1px solid #364a69;border-radius:14px}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .calendar-nav button{color:#bdd7ff!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .calendar-grid .day.today{border-color:#93c5fd!important;box-shadow:0 0 0 2px #93c5fd33!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .calendar-grid .day.other{color:#8c9ab5!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .urgent-block{background:#331d30!important;border:1px solid #aa5667!important;backdrop-filter:none!important}
+body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .status.success{color:#80e0b4!important} body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .status.error{color:#ffaaaa!important} body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .status.loading{color:#a8ceff!important}
+body.ws-modern :is(.modal-content,#dayModal>div){background:#12213b!important;color:#edf3ff!important;border:1px solid #526987!important;border-radius:20px!important;box-shadow:0 20px 60px #0008!important;backdrop-filter:none!important}
+body.ws-modern #dayModal>div>div:first-child{background:transparent!important}
+body.ws-modern #dayModalTitle{color:#edf3ff!important}
+body.ws-modern .gas-arshin-panel{background:#12213b!important;color:#edf3ff!important;border-color:#526987!important}
+body.ws-modern .gas-arshin-panel :is(h4,p,div){color:#d7e6ff!important}
+body.ws-modern .gas-arshin-panel tbody :is(tr,td){background:#182b47!important;color:#edf3ff!important;border-color:#526987!important}
+body.ws-modern .gas-arshin-panel tbody td::before{color:#afc7ea!important}
+body.ws-modern .gas-arshin-panel button:focus-visible,body.ws-modern :is(.ws-panel,.modal-content,#dayModal) :is(button,a,input,select,textarea,[tabindex]):focus-visible,#workspace-controls button:focus-visible{outline:3px solid #a7e4ff!important;outline-offset:3px!important}
+@media(max-width:560px){body.ws-modern{padding:16px!important}body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .header{padding:14px!important}body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .field-row{flex-wrap:wrap}body.ws-modern :is(.ws-panel,.modal-content,#dayModal) .autocomplete-wrap{min-width:0}#workspace-controls{padding:10px;gap:6px}}
+@media(prefers-reduced-motion:reduce){body.ws-modern :is(.ws-panel,.modal-content,#dayModal) :is(.btn-ios,.btn-ios-green,.tab,input,textarea,select){transition:none!important}}
+}
+@media print{#workspace-controls{display:none!important}}

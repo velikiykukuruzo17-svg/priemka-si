@@ -19,6 +19,7 @@
     html=html.replace('<h1>📋 Меню</h1>','<h1>Газовые СИ</h1>');
     html=html.replace('<div id="mainMenu">','<div id="mainMenu"><a class="btn-back" href="index.html">В основное приложение</a>');
     html=html.replaceAll('📝 Приёмка СИ','Приёмка газовых СИ').replace('<h3>Приёмка СИ</h3>','<h3>Приёмка газовых СИ</h3>');
+    html=html.replace('</body>','<script src="workspace-design.js?v=1"><'+'/script></body>');
     document.open();document.write(html);document.close();
   }catch(error){document.getElementById('loading').textContent=error.message;}
 })();
