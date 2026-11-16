@@ -52,3 +52,10 @@ var originalShow=showMode;showMode=function(mode){if(mode==='gas'){createGasSect
 var originalHide=hideAllModes;hideAllModes=function(){originalHide();if(node('gasMode'))node('gasMode').style.display='none';};
 window.addEventListener('load',createGasSection);
 })();
+
+// Переключатель оформления подключается только на основном входе.
+(function(){
+ if(/\/(menu-preview|gas-intake)\.html$/.test(location.pathname))return;
+ function load(){if(document.getElementById('menu-toggle-loader'))return;var s=document.createElement('script');s.id='menu-toggle-loader';s.src='menu-toggle.js?v=1';s.async=true;document.head.appendChild(s);}
+ if(document.readyState==='complete')load();else window.addEventListener('load',load,{once:true});
+})();
