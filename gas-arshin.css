@@ -1,0 +1,27 @@
+/* Только блок поверок газовых СИ. Поиск и документы не изменяются. */
+.gas-arshin-panel{box-sizing:border-box!important;max-width:100%!important;min-width:0!important;padding:18px!important;background:#f1f5f9!important;color:#111827!important;border:1px solid #94a3b8!important;border-radius:14px!important;font-size:16px!important;line-height:1.55!important;text-align:left!important}
+.gas-arshin-panel *{box-sizing:border-box;min-width:0;overflow-wrap:anywhere}
+.gas-arshin-panel h4{margin:0 0 10px!important;color:#111827!important;font-size:20px!important;line-height:1.35!important}
+.gas-arshin-panel>p{color:#1e293b!important;font-size:16px!important;line-height:1.55!important;margin:12px 0!important}
+.gas-arshin-panel>div{color:#334155!important;font-size:14px!important;line-height:1.5!important}
+.gas-arshin-panel table{display:block!important;width:100%!important;max-width:100%!important;margin:14px 0!important;border:0!important;border-collapse:separate!important;font-size:16px!important;background:transparent!important}
+.gas-arshin-panel thead{display:none!important}
+.gas-arshin-panel tbody{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:16px!important;width:100%!important}
+.gas-arshin-panel tbody tr{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:0 18px!important;padding:16px!important;border:1px solid #cbd5e1!important;border-radius:12px!important;background:#fff!important;color:#111827!important;width:100%!important}
+.gas-arshin-panel tbody td{display:flex!important;flex-direction:column!important;gap:4px!important;min-width:0!important;width:auto!important;padding:10px 0!important;border:0!important;border-bottom:1px solid #e2e8f0!important;background:#fff!important;color:#111827!important;font-size:16px!important;line-height:1.5!important;white-space:normal!important;overflow-wrap:anywhere!important;text-align:left!important}
+.gas-arshin-panel tbody td::before{display:block;color:#475569;font-size:14px;font-weight:600;line-height:1.4}
+.gas-arshin-panel tbody td:nth-child(1){grid-column:1/-1;font-size:18px!important;font-weight:700!important}
+.gas-arshin-panel tbody td:nth-child(7),.gas-arshin-panel tbody td:nth-child(8){grid-column:1/-1}
+.gas-arshin-panel tbody td:nth-child(6){font-weight:700!important}
+.gas-arshin-panel tbody td:nth-child(1)::before{content:"Модель / модификация"}
+.gas-arshin-panel tbody td:nth-child(2)::before{content:"Номер в Госреестре"}
+.gas-arshin-panel tbody td:nth-child(3)::before{content:"Заводской номер"}
+.gas-arshin-panel tbody td:nth-child(4)::before{content:"Дата поверки"}
+.gas-arshin-panel tbody td:nth-child(5)::before{content:"Действует до"}
+.gas-arshin-panel tbody td:nth-child(6)::before{content:"Результат поверки"}
+.gas-arshin-panel tbody td:nth-child(7)::before{content:"Свидетельство"}
+.gas-arshin-panel tbody td:nth-child(8)::before{content:"Организация-поверитель"}
+.gas-arshin-panel button{min-height:46px!important;max-width:100%!important;padding:11px 16px!important;margin:10px 8px 0 0!important;border:1px solid #1d4ed8!important;border-radius:10px!important;background:#1d4ed8!important;color:#fff!important;font-size:16px!important;line-height:1.4!important;font-weight:600!important;white-space:normal!important;cursor:pointer}
+.gas-arshin-panel button:disabled{background:#475569!important;border-color:#475569!important;color:#fff!important;cursor:wait}
+.gas-arshin-panel button:focus-visible{outline:3px solid #0f172a!important;outline-offset:3px!important}
+@media(max-width:520px){.gas-arshin-panel{padding:12px!important}.gas-arshin-panel tbody tr{grid-template-columns:minmax(0,1fr)!important;padding:12px!important}.gas-arshin-panel button{width:100%!important;margin-right:0!important}}

@@ -10,6 +10,7 @@
     var required=['function initPriemkaMode','function submitAct','// КОНФИГУРАЦИЯ','<script src="gas.js"><'+'/script>'];
     required.forEach(function(marker){if(!html.includes(marker))throw new Error('Структура основной формы изменилась: '+marker);});
     html=html.replace('<title>Приёмка СИ</title>','<title>Газовые СИ — приёмка</title>');
+    html=html.replace('</head>','<link rel="stylesheet" href="gas-arshin.css?v=1"></head>');
     ['priemkaFormData','cache_devices','cardStatusBackup'].forEach(function(key){html=html.split("'"+key+"'").join("'gas_"+key+"'");});
     html=html.split("SCRIPT_URL+'?action=").join("gasApiUrl()+'&action=gas_");
     html=html.split('form.action=SCRIPT_URL;').join('form.action=gasApiUrl();');
