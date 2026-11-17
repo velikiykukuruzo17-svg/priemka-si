@@ -24,3 +24,6 @@ css.onerror=function(){note.textContent='Не удалось загрузить 
 }
 if(document.readyState==='complete')init();else window.addEventListener('load',init,{once:true});
 })();
+
+// Независимый модуль монитора подключается только в основном приложении.
+(function(){if(/\/(menu-preview|gas-intake)\.html$/.test(location.pathname)||document.getElementById('workplace-monitor-loader'))return;var s=document.createElement('script');s.id='workplace-monitor-loader';s.src='workplace-monitor.js?v=1';s.async=true;document.head.appendChild(s);})();
